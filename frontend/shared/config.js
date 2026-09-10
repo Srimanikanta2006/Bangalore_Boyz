@@ -7,6 +7,7 @@
 window.CONFIG = {
   DATA_MODE: "live", // "live" | "mock"
   API_BASE_URL: "http://172.19.39.31:4000/api",
+  RESCUE_API_BASE_URL: "http://localhost:4001/api",
   DEMO_CREDENTIALS: {
     email: "government@climateshield.demo",
     password: "DemoGov@2024"

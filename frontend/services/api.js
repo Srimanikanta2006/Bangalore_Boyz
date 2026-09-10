@@ -27,9 +27,11 @@
 
   /**
    * Authenticated Fetch Wrapper
-   */
   async function authenticatedFetch(endpoint, options = {}) {
-    const baseUrl = window.CONFIG ? window.CONFIG.API_BASE_URL : config.API_BASE_URL;
+    let baseUrl = window.CONFIG ? window.CONFIG.API_BASE_URL : config.API_BASE_URL;
+    if (endpoint.startsWith("/rescue") && window.CONFIG && window.CONFIG.RESCUE_API_BASE_URL) {
+      baseUrl = window.CONFIG.RESCUE_API_BASE_URL;
+    }
     const url = endpoint.startsWith("http") ? endpoint : `${baseUrl}${endpoint.startsWith("/") ? "" : "/"}${endpoint}`;
 
     const token = getToken();
