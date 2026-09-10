@@ -1,6 +1,9 @@
 ﻿import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 
 import { explainWithGeminiOrFallback } from "./ai/geminiProvider.ts";
+import { computeHotspots, validateHistoricalIncidents } from "./ai/hotspotIntelligence.ts";
+import { SAMPLE_HISTORICAL_INCIDENTS } from "./ai/hotspotSampleData.ts";
+import type { HazardType } from "./ai/schemas.ts";
 import { toExplainRequest } from "./engine/explainAdapter.ts";
 import { simulateHazard } from "./engine/hazardSimulator.ts";
 import { PILOT_GRAPH } from "./engine/pilotGraph.ts";
@@ -144,6 +147,47 @@ const server = createServer(async (req, res) => {
         usedFallback: result.usedFallback,
         fallbackReason: result.fallbackReason ?? null,
         explanation: result.response,
+      });
+      return;
+    }
+
+    // GET /api/hotspots - returns recurring historical climate risk hotspots
+    // Query params: ?hazardType=flood&minScore=50&assetId=D07
+    if (req.method === "GET" && url.pathname === "/api/hotspots") {
+      const hazardFilter = url.searchParams.get("hazardType") as HazardType | null;
+      const minScoreParam = url.searchParams.get("minScore");
+      const assetFilter = url.searchParams.get("assetId");
+
+      const minScore = minScoreParam ? Number(minScoreParam) : undefined;
+      let hotspots = computeHotspots(SAMPLE_HISTORICAL_INCIDENTS, { minRecurrenceScore: minScore });
+
+      if (hazardFilter) {
+        hotspots = hotspots.filter((h) => h.hazardType === hazardFilter);
+      }
+      if (assetFilter) {
+        hotspots = hotspots.filter((h) => h.assetId.toLowerCase() === assetFilter.toLowerCase());
+      }
+
+      json(res, 200, {
+        totalHotspots: hotspots.length,
+        hotspots,
+      });
+      return;
+    }
+
+    // POST /api/hotspots/analyze - computes hotspots from dynamically supplied historical incidents
+    if (req.method === "POST" && url.pathname === "/api/hotspots/analyze") {
+      const raw = await readBody(req);
+      const body = raw ? JSON.parse(raw) : {};
+      const incidentsInput = Array.isArray(body.incidents) ? body.incidents : [];
+      const validated = validateHistoricalIncidents(incidentsInput);
+      const minScore = typeof body.minRecurrenceScore === "number" ? body.minRecurrenceScore : undefined;
+      const hotspots = computeHotspots(validated, { minRecurrenceScore: minScore });
+
+      json(res, 200, {
+        analyzedIncidents: validated.length,
+        totalHotspots: hotspots.length,
+        hotspots,
       });
       return;
     }
