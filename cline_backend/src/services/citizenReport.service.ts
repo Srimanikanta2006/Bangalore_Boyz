@@ -1,10 +1,10 @@
 import type { Prisma } from '@prisma/client';
 import { prisma } from '../db/prisma';
 import { Errors } from '../utils/errors';
-import { pointInZoneGeoJson } from '../utils/geo';
 import { nextCitizenReportCode } from '../utils/ids';
 import { AuditActions, recordAudit } from './audit.service';
 import { createIncident } from './incident.service';
+import { resolveZoneForPoint } from './zoneLookup.service';
 import { evidenceUrl } from '../middleware/upload';
 import type { AuthUser } from '../types/auth';
 
@@ -49,20 +49,6 @@ export interface UploadedEvidenceFile {
   filename: string;
   mimetype: string;
   size: number;
-}
-
-/** Never trust a client-supplied zone - always derive it from the point. */
-async function resolveZoneForPoint(latitude: number, longitude: number) {
-  const zones = await prisma.zone.findMany({
-    select: { id: true, name: true, code: true, boundaryGeoJson: true, dataQuality: true },
-  });
-  const ordered = [...zones].sort(
-    (a, b) => Number(b.dataQuality === 'REAL_GEOGRAPHIC') - Number(a.dataQuality === 'REAL_GEOGRAPHIC'),
-  );
-  for (const zone of ordered) {
-    if (pointInZoneGeoJson(latitude, longitude, zone.boundaryGeoJson)) return zone;
-  }
-  return null;
 }
 
 const reportInclude = { evidence: true, incident: { select: { id: true, incidentCode: true, status: true } } } satisfies Prisma.CitizenReportInclude;

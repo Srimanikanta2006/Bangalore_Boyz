@@ -1,9 +1,19 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Header } from '../../components/stitch/Header';
-import { Mock } from '../../components/stitch/Mock';
+import { resolveCoords, type GeoState } from '../../citizen/geo';
+import { reverseGeocode } from '../../citizen/reverseGeocode';
+import { submitSos, type SosThreat } from '../../citizen/api';
+import { ApiError } from '../../lib/api';
 
 type ServiceId = 'medical' | 'fire' | 'flood' | 'hazard';
+
+const SERVICE_TO_THREAT: Record<ServiceId, SosThreat> = {
+  medical: 'MEDICAL',
+  fire: 'FIRE_RESCUE',
+  flood: 'FLOOD_BOAT',
+  hazard: 'HAZARD_GAS',
+};
 
 interface ServiceOption {
   id: ServiceId;
@@ -61,7 +71,30 @@ export const SosEmergencyPage: React.FC = () => {
   const [isCountingDown, setIsCountingDown] = useState(false);
   const [countdownSeconds, setCountdownSeconds] = useState(3);
   const [isDispatched, setIsDispatched] = useState(false);
+  const [dispatchedCode, setDispatchedCode] = useState<string | null>(null);
+  const [dispatchError, setDispatchError] = useState<string | null>(null);
   const timerRef = useRef<number | null>(null);
+
+  const [coords, setCoords] = useState<GeoState | null>(null);
+  const [address, setAddress] = useState<string | null>(null);
+  const [locating, setLocating] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    const controller = new AbortController();
+    (async () => {
+      const geo = await resolveCoords();
+      if (cancelled) return;
+      setCoords(geo);
+      setLocating(false);
+      const addr = await reverseGeocode(geo.latitude, geo.longitude, controller.signal);
+      if (!cancelled) setAddress(addr);
+    })();
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -81,6 +114,28 @@ export const SosEmergencyPage: React.FC = () => {
     );
   };
 
+  const dispatchSos = async () => {
+    if (!coords) return;
+    setDispatchError(null);
+    try {
+      const result = await submitSos({
+        latitude: coords.latitude,
+        longitude: coords.longitude,
+        primaryThreat: SERVICE_TO_THREAT[selectedServices[0] ?? 'medical'],
+        note: address ?? undefined,
+        tags: [...selectedServices.slice(1).map((s) => SERVICE_TO_THREAT[s]), ...selectedTags],
+      });
+      setDispatchedCode(result.sosCode);
+      setIsDispatched(true);
+    } catch (err) {
+      setDispatchError(
+        err instanceof ApiError && err.code === 'LOCATION_OUTSIDE_COVERAGE'
+          ? 'Your location is outside the monitored coverage area.'
+          : 'Failed to send SOS. Please try again or call local emergency services directly.',
+      );
+    }
+  };
+
   const handleTriggerSos = () => {
     if (isDispatched) return;
 
@@ -93,6 +148,7 @@ export const SosEmergencyPage: React.FC = () => {
       return;
     }
 
+    setDispatchError(null);
     setIsCountingDown(true);
     setCountdownSeconds(3);
 
@@ -102,7 +158,7 @@ export const SosEmergencyPage: React.FC = () => {
           if (timerRef.current) clearInterval(timerRef.current);
           timerRef.current = null;
           setIsCountingDown(false);
-          setIsDispatched(true);
+          void dispatchSos();
           return 0;
         }
         return prev - 1;
@@ -147,15 +203,17 @@ export const SosEmergencyPage: React.FC = () => {
               </div>
               <div className="flex flex-col min-w-0 flex-1">
                 <div className="flex items-center gap-space-2xs flex-wrap">
-                  <span className="font-title-lg text-title-lg text-on-surface font-bold">
-                    <Mock label="Location">Downtown Waterfront</Mock>
+                  <span className="font-title-lg text-title-lg text-on-surface font-bold truncate">
+                    {locating ? 'Locating…' : address ?? 'Unknown area'}
                   </span>
-                  <span className="font-code-sm text-code-sm px-1.5 py-0.5 rounded bg-surface-container text-on-surface-variant font-bold">
-                    ±4m
-                  </span>
+                  {coords?.usingFallback && (
+                    <span className="font-code-sm text-code-sm px-1.5 py-0.5 rounded bg-surface-container text-on-surface-variant font-bold">
+                      DEMO
+                    </span>
+                  )}
                 </div>
                 <p className="font-code-sm text-code-sm text-on-surface-variant truncate mt-0.5">
-                  <Mock label="Coordinates">37.7749° N, 122.4194° W</Mock>
+                  {coords ? `${coords.latitude.toFixed(5)}° , ${coords.longitude.toFixed(5)}°` : '—'}
                 </p>
               </div>
               <button
@@ -273,29 +331,25 @@ export const SosEmergencyPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Live Satellite Imagery Visual Verification */}
+          {/* Honest disclaimer: internal alert only, not a 911/112 replacement */}
           <div className="px-edge-margin-mobile mb-space-md">
-            <div className="w-full bg-surface-container-lowest rounded-xl p-space-sm shadow-md flex items-center gap-space-sm">
-              <img
-                className="w-16 h-16 rounded-lg object-cover shrink-0"
-                alt="Satellite thermal aerial imagery of urban harbor flooded with water rescue coordinates overlay in high clarity"
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuDOl0bY7-w_K8vfOxIsIAUoxvWEkIxbs4U9yRrrmaoNXgEo7dUarVeHUcfh1qSpWxH_JzbGdPb09g8oH79x1tdllsSYWpURRfNQG1LLXFf59visaGaDTFna_aX4-BumOYG6FiS8eapXNf1sk0cLXLr8d5s_FfM4BAZ5Ul06HP0cVu9tBsTkNZawuP35H33oej8damzbInTzaIaxx7RnPfc5IFI-yaYqzJpdWLBmlh7eT7jeA8jJOxlY"
-              />
-              <div className="flex flex-col min-w-0">
-                <div className="flex items-center gap-1">
-                  <span className="font-label-sm text-label-sm uppercase font-bold text-on-surface tracking-wider">
-                    Sector Micro-Telemetry
-                  </span>
-                  <span className="w-1.5 h-1.5 rounded-full bg-secondary"></span>
-                </div>
-                <p className="font-body-sm text-body-sm text-on-surface-variant line-clamp-2 mt-0.5">
-                  <Mock label="Sector Scan">
-                    Automated visual sector scan active. Water level sensor +1.4m surge in Harbor District 04.
-                  </Mock>
-                </p>
-              </div>
+            <div className="w-full bg-surface-container rounded-xl p-space-sm shadow-sm flex items-start gap-space-sm">
+              <span className="material-symbols-outlined text-[20px] text-on-surface-variant shrink-0 mt-0.5">info</span>
+              <p className="font-body-sm text-body-sm text-on-surface-variant leading-snug">
+                This sends an internal alert to ClimateShield operators only — it does <strong>not</strong> dial 911/112.
+                For a life-threatening emergency, call local emergency services directly.
+              </p>
             </div>
           </div>
+
+          {dispatchError && (
+            <div className="px-edge-margin-mobile mb-space-md">
+              <div role="alert" className="rounded-xl bg-error-container/60 text-on-error-container px-space-sm py-space-xs flex items-center gap-2">
+                <span className="material-symbols-outlined text-[18px]">error</span>
+                <span className="font-body-sm text-body-sm">{dispatchError}</span>
+              </div>
+            </div>
+          )}
 
           {/* Bottom Trigger Confirmation HUD */}
           <div className="px-edge-margin-mobile flex flex-col gap-space-xs mt-auto">
@@ -311,7 +365,8 @@ export const SosEmergencyPage: React.FC = () => {
             {/* Exactly ONE Primary Operational Solid Red Button */}
             <div className="relative w-full">
               <button
-                className="w-full h-14 rounded-xl bg-error text-on-error font-title-lg text-title-lg font-bold shadow-lg flex items-center justify-center gap-space-xs transition-all active:scale-[0.98] overflow-hidden relative"
+                className="w-full h-14 rounded-xl bg-error text-on-error font-title-lg text-title-lg font-bold shadow-lg flex items-center justify-center gap-space-xs transition-all active:scale-[0.98] overflow-hidden relative disabled:opacity-60"
+                disabled={locating || isDispatched}
                 id="sos-trigger-btn"
                 onClick={handleTriggerSos}
                 type="button"
@@ -321,10 +376,12 @@ export const SosEmergencyPage: React.FC = () => {
                 </span>
                 <span id="sos-label">
                   {isDispatched
-                    ? 'SOS Dispatched • Units Alerted'
+                    ? `SOS ${dispatchedCode} Sent • Operators Alerted`
                     : isCountingDown
                     ? `Dispatching SOS in ${countdownSeconds}s (Tap to Abort)`
-                    : 'Send Emergency SOS'}
+                    : locating
+                      ? 'Locating…'
+                      : 'Send Emergency SOS'}
                 </span>
                 {/* Progress Bar for confirmation */}
                 <div

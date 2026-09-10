@@ -253,3 +253,33 @@ export function submitCitizenReport(input: SubmitCitizenReportInput): Promise<Ci
 export function fetchMyCitizenReports(): Promise<CitizenReport[]> {
   return api.get<CitizenReport[]>('/citizen/reports');
 }
+
+export type SosThreat = 'MEDICAL' | 'FIRE_RESCUE' | 'FLOOD_BOAT' | 'HAZARD_GAS';
+
+export interface SosEvent {
+  id: string;
+  sosCode: string;
+  latitude: number;
+  longitude: number;
+  primaryThreat: SosThreat;
+  peopleAffected: number | null;
+  note: string | null;
+  status: 'OPEN' | 'ACKNOWLEDGED' | 'DISPATCHED' | 'RESOLVED' | 'CANCELLED';
+  createdAt: string;
+  updatedAt: string;
+  incident: { id: string; incidentCode: string; status: string } | null;
+  disclaimer: string;
+}
+
+export interface SubmitSosInput {
+  latitude: number;
+  longitude: number;
+  primaryThreat: SosThreat;
+  peopleAffected?: number;
+  note?: string;
+  tags?: string[];
+}
+
+export function submitSos(input: SubmitSosInput): Promise<SosEvent> {
+  return api.post<SosEvent>('/citizen/sos', input);
+}

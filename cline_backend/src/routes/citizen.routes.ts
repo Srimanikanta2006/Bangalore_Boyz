@@ -5,6 +5,7 @@ import { evidenceUpload } from '../middleware/upload';
 import { CITIZEN_ROLES } from '../types/auth';
 import { citizenNearbyQuerySchema } from '../validators/citizen.schema';
 import { createCitizenReportSchema } from '../validators/citizenReport.schema';
+import { createSosSchema } from '../validators/sos.schema';
 import * as citizenController from '../controllers/citizen.controller';
 
 const router = Router();
@@ -63,5 +64,15 @@ router.get('/citizen/reports', authenticate, requireRole(...CITIZEN_ROLES), citi
 
 /** GET /api/citizen/reports/:id - own report detail + evidence (404 on foreign id). */
 router.get('/citizen/reports/:id', authenticate, requireRole(...CITIZEN_ROLES), citizenController.myReportDetail);
+
+/**
+ * POST /api/citizen/sos - emergency SOS. Always CRITICAL; auto-creates a
+ * linked Incident + notifies GOVERNMENT_ROLES operators (internal alert only,
+ * no external 911/112 dispatch integration).
+ */
+router.post('/citizen/sos', authenticate, requireRole(...CITIZEN_ROLES), validate(createSosSchema, 'body'), citizenController.submitSos);
+
+/** GET /api/citizen/sos - own SOS history only. */
+router.get('/citizen/sos', authenticate, requireRole(...CITIZEN_ROLES), citizenController.mySos);
 
 export default router;
