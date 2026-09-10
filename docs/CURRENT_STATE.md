@@ -31,11 +31,13 @@ This file acts as the live status dashboard for the project. Every team member a
 - [x] Deleted 17 obsolete / generic prototype admin pages (`DashboardPage`, `RiskMapPage`, `AssetsPage`, etc.)
 - [x] Frontend TypeScript build verified with 0 errors (`npm --prefix client run build`)
 - [x] Background dev servers healthy on port 5000 (Node API) and port 5173 (Vite Client)
+- [x] **P4 AI (grounded Gemini explanation layer) consolidated into `cline_backend`** — new `cline_backend/src/ai/` (schemas, controlled action catalog, runtime validation, deterministic fallback, Gemini provider) + `explainAdapter.ts` bridging the deterministic engine's verified facts (`getIncidentCascade`) into a grounded `ExplainRequest`. Exposed as `POST /api/incidents/:id/explain` (auth). No second risk engine added (cline_backend's deterministic engine remains the single source of truth); no websocket (frontend uses polling). Verified: `tsc --noEmit` clean, 45/45 unit tests pass, zero new dependencies. See PR #7 (`feat/p4-consolidate-server`).
 
 ---
 
 ## Currently Working On
 - Ready for backend team integration and shared live data feeds
+- P4 AI explanation layer merged pending review (PR #7); needs a live smoke test of `POST /api/incidents/:id/explain` once pointed at the shared Supabase DB (`GEMINI_API_KEY` optional — deterministic fallback works without it)
 
 ---
 
