@@ -11,13 +11,16 @@ import {
   CitySummaryStats,
   DataQualityStatus,
 } from '../types';
+import { getAuthToken } from '../lib/api';
 
 const API_BASE = import.meta.env.VITE_API_URL || '/api';
 
-// JWT header hook: if localStorage has 'cs_token', attach it as a Bearer token
-// to every outgoing request. No login UI this round.
+// JWT header hook: attaches the SAME token the app's single auth system
+// (lib/api.ts + AuthContext, populated by the real POST /api/auth/login) keeps
+// in memory/localStorage. There is only one token store in the app - do not
+// reintroduce a second one here.
 function authHeaders(): Record<string, string> {
-  const token = typeof localStorage !== 'undefined' ? localStorage.getItem('cs_token') : null;
+  const token = getAuthToken();
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
@@ -260,28 +263,10 @@ function jsonInit(method: string, payload?: unknown): RequestInit {
   };
 }
 
-// (a) Auth — POST /api/auth/login. Stores the JWT under 'cs_token' on success.
-export interface LoginResult {
-  user: {
-    id: string;
-    name: string;
-    email: string;
-    role: string;
-    departmentId?: string;
-    departmentName?: string;
-  };
-  token: string;
-  tokenType: string;
-  expiresIn: string;
-}
-
-export async function login(email: string, password: string): Promise<LoginResult> {
-  const data = await requestEnvelope<LoginResult>('/auth/login', jsonInit('POST', { email, password }));
-  if (data?.token) {
-    localStorage.setItem('cs_token', data.token);
-  }
-  return data;
-}
+// NOTE: login lives in one place only - `auth/authService.ts` (via `useAuth().login()`
+// in AuthContext), which is what LoginPage.tsx calls. Do not add a second login()
+// here; it would create a second, unsynchronized token store (this was a real
+// regression that has been fixed - see docs/MASTER_PLAN.md §7b).
 
 // (b) Government dashboard — GET /api/government/overview.
 export async function fetchGovernmentOverview(): Promise<any> {

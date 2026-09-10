@@ -38,15 +38,19 @@ import { ScreenSwitcher } from './components/stitch/ScreenSwitcher';
 
 // Auth
 import { RequireAuth } from './auth/RequireAuth';
+import { GOV_HQ_ROLES, FIELD_ROLES } from './auth/types';
 
 /** Wraps a citizen page in the CITIZEN-only route guard. */
 const Citizen = (element: React.ReactNode) => <RequireAuth roles={['CITIZEN']}>{element}</RequireAuth>;
 
-/** Government API routes require the JWT issued by the local Express API. */
-const RequireGovernmentLogin: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const token = typeof window !== 'undefined' ? (localStorage.getItem('cs_token') || localStorage.getItem('cs_auth_token')) : null;
-  return token ? <>{children}</> : <Navigate to="/login" replace />;
-};
+/** Government HQ desktop console: ADMIN/GOVERNMENT_OPERATOR/DISPATCHER/ANALYST. */
+const GovHq = (element: React.ReactNode) => <RequireAuth roles={GOV_HQ_ROLES}>{element}</RequireAuth>;
+
+/**
+ * Government Mobile + Rescue: both are the FIELD_OPERATOR backend role (see
+ * docs/MASTER_PLAN.md §1) - same role guard, different page sets.
+ */
+const Field = (element: React.ReactNode) => <RequireAuth roles={FIELD_ROLES}>{element}</RequireAuth>;
 
 export const App: React.FC = () => {
   return (
@@ -56,7 +60,7 @@ export const App: React.FC = () => {
 
       <Routes>
         {/* Default Landing: Government HQ Command Center */}
-        <Route path="/" element={<RequireGovernmentLogin><GovCommandCenterPage /></RequireGovernmentLogin>} />
+        <Route path="/" element={GovHq(<GovCommandCenterPage />)} />
 
         {/* 1. Shared Gateway */}
         <Route path="/login" element={<LoginPage />} />
@@ -70,25 +74,25 @@ export const App: React.FC = () => {
         <Route path="/citizen/sos" element={Citizen(<SosEmergencyPage />)} />
         <Route path="/citizen/report" element={Citizen(<HazardReportPage />)} />
 
-        {/* 3. Rescue Tactical Routes */}
-        <Route path="/rescue/tactical" element={<RescueTacticalMapPage />} />
-        <Route path="/rescue/mission/:id" element={<RescueMissionDossierPage />} />
-        <Route path="/rescue/navigate/:id" element={<RescueActiveNavPage />} />
-        <Route path="/rescue/hazard/:id" element={<RescueHazardDetailPage />} />
-        <Route path="/rescue/report/:id" element={<RescueStatusReportPage />} />
-        <Route path="/rescue/console" element={<RescueCommandConsolePage />} />
+        {/* 3. Rescue Tactical Routes (FIELD_OPERATOR-guarded) */}
+        <Route path="/rescue/tactical" element={Field(<RescueTacticalMapPage />)} />
+        <Route path="/rescue/mission/:id" element={Field(<RescueMissionDossierPage />)} />
+        <Route path="/rescue/navigate/:id" element={Field(<RescueActiveNavPage />)} />
+        <Route path="/rescue/hazard/:id" element={Field(<RescueHazardDetailPage />)} />
+        <Route path="/rescue/report/:id" element={Field(<RescueStatusReportPage />)} />
+        <Route path="/rescue/console" element={Field(<RescueCommandConsolePage />)} />
 
-        {/* 4. Government Mobile Field Routes */}
-        <Route path="/gov/mobile/map" element={<GovMobileMapPage />} />
-        <Route path="/gov/mobile/triage" element={<GovMobileTriagePage />} />
-        <Route path="/gov/mobile/tasks" element={<GovMobileTasksPage />} />
+        {/* 4. Government Mobile Field Routes (FIELD_OPERATOR-guarded) */}
+        <Route path="/gov/mobile/map" element={Field(<GovMobileMapPage />)} />
+        <Route path="/gov/mobile/triage" element={Field(<GovMobileTriagePage />)} />
+        <Route path="/gov/mobile/tasks" element={Field(<GovMobileTasksPage />)} />
 
-        {/* 5. Government HQ Desktop Routes */}
-        <Route path="/gov/overview" element={<RequireGovernmentLogin><GovCommandCenterPage /></RequireGovernmentLogin>} />
-        <Route path="/gov/critical-assets" element={<RequireGovernmentLogin><GovCriticalAssetMonitorPage /></RequireGovernmentLogin>} />
-        <Route path="/gov/zone-cascade/:id" element={<RequireGovernmentLogin><GovZoneCascadePage /></RequireGovernmentLogin>} />
-        <Route path="/gov/simulator" element={<RequireGovernmentLogin><GovSimulatorPage /></RequireGovernmentLogin>} />
-        <Route path="/gov/response-center" element={<RequireGovernmentLogin><GovResponseCenterPage /></RequireGovernmentLogin>} />
+        {/* 5. Government HQ Desktop Routes (GOV_HQ_ROLES-guarded) */}
+        <Route path="/gov/overview" element={GovHq(<GovCommandCenterPage />)} />
+        <Route path="/gov/critical-assets" element={GovHq(<GovCriticalAssetMonitorPage />)} />
+        <Route path="/gov/zone-cascade/:id" element={GovHq(<GovZoneCascadePage />)} />
+        <Route path="/gov/simulator" element={GovHq(<GovSimulatorPage />)} />
+        <Route path="/gov/response-center" element={GovHq(<GovResponseCenterPage />)} />
 
         {/* Legacy / Console Redirects */}
         <Route path="/console" element={<Navigate to="/gov/overview" replace />} />
