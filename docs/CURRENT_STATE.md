@@ -29,7 +29,7 @@ This file acts as the live status dashboard for the project. Every team member a
 - [x] Standard project documentation hierarchy created (`docs/`)
 - [x] Environment variable template created (`.env.example`)
 - [x] Security-hardened Git ignore rules configured (`.gitignore`)
-- [x] Supabase team multi-developer workflow documented
+- [x] Docker PostgreSQL local development workflow documented
 - [x] Completed Phase 1: Decoupled Citizen and Rescue roles, eliminated cross-role routing confusion, built `CitizenActiveNavPage.tsx` (Stitch Screen 23), and updated navigation topologies across all mobile views
 - [x] Completed Master Stitch Reconstruction: All 22 Stitch screens faithfully reconstructed in React + Tailwind across 4 isolated roles (Citizen: 8, Rescue: 6, Gov Mobile: 3, Gov HQ: 5)
 - [x] Deleted 17 obsolete / generic prototype admin pages (`DashboardPage`, `RiskMapPage`, `AssetsPage`, etc.)
@@ -41,7 +41,8 @@ This file acts as the live status dashboard for the project. Every team member a
 
 ## Currently Working On
 - Ready for backend team integration and shared live data feeds
-- P4 AI explanation layer merged pending review (PR #7); needs a live smoke test of `POST /api/incidents/:id/explain` once pointed at the shared Supabase DB (`GEMINI_API_KEY` optional — deterministic fallback works without it)
+- P4 AI explanation layer merged pending review (PR #7); needs a live smoke test of `POST /api/incidents/:id/explain` against local Docker PostgreSQL (`GEMINI_API_KEY` optional — deterministic fallback works without it)
+- Local runtime standardized on Docker PostgreSQL (`cline_backend/docker-compose.yml`). Government HQ now requires the API JWT and refreshes PostgreSQL operational state every 15 seconds plus live Open-Meteo observations every 60 seconds.
 
 ---
 
@@ -54,12 +55,12 @@ This file acts as the live status dashboard for the project. Every team member a
 - [ ] Await Hackathon Problem Statement (PS) release
 - [ ] Finalize technology stack selections (Frontend, Backend, Frameworks)
 - [ ] Initialize frontend and backend application boilerplate
-- [ ] Setup Supabase database schema and initial migrations
+- [x] Run PostgreSQL schema migrations and seed data through Docker Compose
 
 ---
 
 ## Current Architecture
-- Refer to `docs/ARCHITECTURE.md` (Shared Supabase backend, modular agent orchestration).
+- Refer to `docs/ARCHITECTURE.md` (Docker PostgreSQL backend, modular agent orchestration).
 
 ---
 
@@ -69,7 +70,7 @@ This file acts as the live status dashboard for the project. Every team member a
 ---
 
 ## Database State
-- Supabase shared project connected. Schema initialization pending problem statement.
+- Docker PostgreSQL is the local source of application state. Prisma migrations and seed data are applied from `cline_backend/`.
 
 ---
 

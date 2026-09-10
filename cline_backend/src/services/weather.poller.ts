@@ -43,6 +43,11 @@ export async function pollZonesOnce(): Promise<number> {
 
 export function startWeatherPoller(): void {
   if (env.isTest || env.WEATHER_POLL_INTERVAL_MINUTES <= 0 || timer) return;
+  // Write an initial observation immediately so Docker Postgres has a fresh
+  // snapshot after every API restart rather than waiting for the first interval.
+  void pollZonesOnce().catch((err) => {
+    console.error(JSON.stringify({ level: 'warn', scope: 'weather-poller', message: err instanceof Error ? err.message : String(err) }));
+  });
   timer = setInterval(() => {
     void pollZonesOnce().catch(() => undefined);
   }, env.WEATHER_POLL_INTERVAL_MINUTES * 60_000);

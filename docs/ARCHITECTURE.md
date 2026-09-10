@@ -24,7 +24,7 @@ This document describes the high-level architecture of the `Bangalore_Boyz` proj
             v                                     v
 +-----------------------+             +-----------------------+
 |   Database & Backend  |             |     AI Agents &       |
-|      (Supabase)       |             |     Orchestration     |
+| (Docker PostgreSQL)   |             |     Orchestration     |
 +-----------------------+             +-----------------------+
 ```
 
@@ -42,10 +42,10 @@ This document describes the high-level architecture of the `Bangalore_Boyz` proj
 * **Tech Stack**: [STATUS: UNDECIDED - To be updated based on problem statement]
 * **Responsibilities**: Execute business logic, manage authentication, interface with database and AI agent orchestration layers.
 
-### 3. Database & Backend Services (Supabase)
-* **Provider**: Supabase
-* **Responsibilities**: Persistent storage (PostgreSQL), Authentication, Storage, Realtime subscriptions.
-* **Access Model**: Shared Supabase project accessed by team members using individual developer accounts.
+### 3. Database (Docker PostgreSQL)
+* **Provider**: Local Docker Compose service (`cline_backend/docker-compose.yml`, PostgreSQL 16).
+* **Responsibilities**: Persistent application state used by the Express API through Prisma.
+* **Access Model**: The API is the only database client used by the frontend. The named Docker volume persists local development data.
 
 ### 4. AI Agents & Orchestration Layer
 * **Purpose**: Autonomous task execution, data analysis, and domain-specific AI processing.
@@ -58,4 +58,4 @@ This document describes the high-level architecture of the `Bangalore_Boyz` proj
 
 1. **Frontend / Backend Separation**: The frontend communicates exclusively via defined REST/GraphQL APIs or SDK interfaces.
 2. **Orchestration / Agent Isolation**: Individual AI agents perform modular tasks and pass structured outputs back to the orchestrator.
-3. **Database Security**: All database access is governed by Supabase Row-Level Security (RLS) policies and environment-scoped client credentials.
+3. **Database Security**: The frontend never connects directly to PostgreSQL; the API validates JWTs and performs all database access through Prisma.

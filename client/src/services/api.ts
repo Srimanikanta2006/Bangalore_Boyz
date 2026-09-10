@@ -288,6 +288,79 @@ export async function fetchGovernmentOverview(): Promise<any> {
   return requestEnvelope<any>('/government/overview');
 }
 
+export interface LiveWeather {
+  provider: string;
+  dataQuality: 'LIVE_OBSERVED' | 'FORECAST';
+  observedAt: string | null;
+  fetchedAt: string;
+  temperatureC: number | null;
+  apparentTemperatureC: number | null;
+  humidityPercent: number | null;
+  precipitationMm: number | null;
+  rainfallMmPerHour: number | null;
+  windSpeedKmh: number | null;
+  windDirectionCardinal: string | null;
+  weatherCondition: string | null;
+}
+
+/**
+ * Current provider observation. The backend owns the provider call and its
+ * short cache; the browser never needs an external-weather API key.
+ */
+export async function fetchLiveWeather(latitude: number, longitude: number): Promise<LiveWeather> {
+  const params = new URLSearchParams({ latitude: String(latitude), longitude: String(longitude) });
+  return requestEnvelope<LiveWeather>(`/weather/current?${params.toString()}`);
+}
+
+// Location overview — GET /api/location/overview?latitude=&longitude=&radiusKm=
+// One coordinate -> live weather (Open-Meteo) + containing zone + nearby real
+// infrastructure + weather-derived (MODELED) risk/severity. Everything is either
+// LIVE_OBSERVED or explicitly MODELED; nothing synthetic is presented as live.
+export type Severity = 'LOW' | 'MODERATE' | 'HIGH' | 'CRITICAL';
+
+export interface LocationOverview {
+  location: { latitude: number; longitude: number };
+  radiusKm: number;
+  weather: LiveWeather & {
+    derivedAssessment: {
+      dataQuality: 'MODELED';
+      floodSeverity: Severity | null;
+      heatSeverity: Severity | null;
+      windSeverity: Severity | null;
+      overallSeverity: Severity | null;
+      explanation: string | null;
+    };
+    zone: { id: string; name: string; code: string; boundaryDataQuality: string } | null;
+  };
+  zone: { id: string; name: string; code: string } | null;
+  nearbyAssets: Array<{
+    id: string; assetCode: string; name: string; type: string;
+    latitude: number; longitude: number; distanceKm: number;
+    criticality: string; operationalStatus: string; source: string;
+    dataQuality: string; zoneName: string;
+  }>;
+  hazards: Array<{ id: string; type: string; severity: Severity; status: string; dataQuality: string }>;
+  risk: {
+    dataQuality: 'MODELED';
+    model: string;
+    assets: Array<{ assetId: string; assetCode: string; name: string; type: string; distanceKm: number; risk: any }>;
+  };
+  cascade: any | null;
+}
+
+export async function fetchLocationOverview(
+  latitude: number,
+  longitude: number,
+  radiusKm = 5
+): Promise<LocationOverview> {
+  const params = new URLSearchParams({
+    latitude: String(latitude),
+    longitude: String(longitude),
+    radiusKm: String(radiusKm),
+  });
+  return requestEnvelope<LocationOverview>(`/location/overview?${params.toString()}`);
+}
+
 // (c) Zone cascade — GET /api/zones/:zoneId/cascade (accepts zone id or code).
 export async function fetchZoneCascade(zoneId: string): Promise<any> {
   return requestEnvelope<any>(`/zones/${encodeURIComponent(zoneId)}/cascade`);

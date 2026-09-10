@@ -3,8 +3,8 @@ import { env } from '../config/env';
 
 /**
  * Shared PrismaClient singleton.
- * Runtime queries use DATABASE_URL (pooled / Supabase pgBouncer);
- * migrations use DIRECT_URL (see prisma/schema.prisma).
+ * Runtime queries and migrations use the local Docker Postgres URLs from .env.
+ * DIRECT_URL remains separate so migration tooling can be configured independently.
  */
 export const prisma = new PrismaClient({
   log: env.isDev ? ['warn', 'error'] : ['error'],
