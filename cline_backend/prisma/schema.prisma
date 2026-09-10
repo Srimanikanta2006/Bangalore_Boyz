@@ -275,6 +275,8 @@ model Zone {
   historicalEvents  HistoricalEvent[]
   simulationResults SimulationResult[]
   weatherSnapshots  WeatherSnapshot[]
+  subscribers       Subscriber[]
+  sentAlerts        SentAlert[]
 
   @@index([riskLevel])
 }
@@ -647,3 +649,36 @@ model WeatherSnapshot {
   @@index([zoneId, createdAt])
   @@index([createdAt])
 }
+
+model Subscriber {
+  id        String   @id @default(cuid())
+  name      String
+  contact   String
+  channel   String   @default("SMS")
+  zoneId    String
+  zone      Zone     @relation(fields: [zoneId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  sentAlerts SentAlert[]
+
+  @@index([zoneId])
+}
+
+model SentAlert {
+  id           String     @id @default(cuid())
+  zoneId       String
+  zone         Zone       @relation(fields: [zoneId], references: [id], onDelete: Cascade)
+  subscriberId String?
+  subscriber   Subscriber? @relation(fields: [subscriberId], references: [id], onDelete: SetNull)
+  recipient    String
+  riskLevel    RiskLevel
+  message      String
+  channel      String     @default("sms_simulated")
+  status       String     @default("SENT")
+  createdAt    DateTime   @default(now())
+
+  @@index([zoneId, createdAt])
+  @@index([subscriberId])
+}
+

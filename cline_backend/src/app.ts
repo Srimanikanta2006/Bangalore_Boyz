@@ -25,6 +25,8 @@ import auditRoutes from './routes/audit.routes';
 import weatherRoutes from './routes/weather.routes';
 import locationRoutes from './routes/location.routes';
 import explainRoutes from './routes/explain.routes';
+import orchestrateRoutes from './routes/orchestrate.routes';
+import notificationRoutes from './routes/notification.routes';
 
 export function createApp() {
   const app = express();
@@ -65,6 +67,8 @@ export function createApp() {
   app.use('/api', weatherRoutes);
   app.use('/api', locationRoutes);
   app.use('/api', explainRoutes);
+  app.use('/api', orchestrateRoutes);
+  app.use('/api', notificationRoutes);
 
   // --- 404 + central error handler (must be last) ---
   app.use(notFoundHandler);

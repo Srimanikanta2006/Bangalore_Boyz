@@ -110,5 +110,19 @@ export async function createHazard(input: CreateHazardInput, user: AuthUser) {
     entityId: hazard.id,
     metadata: { type: hazard.type, severity: hazard.severity, zone: zone.name },
   });
+
+  // Automatically trigger simulated notifications if hazard risk tier is HIGH or CRITICAL
+  if (['HIGH', 'CRITICAL'].includes(hazard.severity as string)) {
+    try {
+      const { notifyZoneSubscribers } = await import('./notification.service');
+      await notifyZoneSubscribers(zone.id, hazard.severity as never, {
+        hazardType: hazard.type as string,
+      });
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error('[createHazard] Notification dispatch warning:', err);
+    }
+  }
+
   return hazard;
 }
