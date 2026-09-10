@@ -1,6 +1,14 @@
 ﻿import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 
 import { explainWithGeminiOrFallback } from "./ai/geminiProvider.ts";
+import {
+  computeHotspots,
+  VALID_HAZARDS,
+  validateHistoricalIncidentsDetailed,
+  validateHotspotConfig,
+} from "./ai/hotspotIntelligence.ts";
+import { SAMPLE_HISTORICAL_INCIDENTS } from "./ai/hotspotSampleData.ts";
+import type { HazardType } from "./ai/schemas.ts";
 import { toExplainRequest } from "./engine/explainAdapter.ts";
 import { simulateHazard } from "./engine/hazardSimulator.ts";
 import { PILOT_GRAPH } from "./engine/pilotGraph.ts";
@@ -144,6 +152,86 @@ const server = createServer(async (req, res) => {
         usedFallback: result.usedFallback,
         fallbackReason: result.fallbackReason ?? null,
         explanation: result.response,
+      });
+      return;
+    }
+
+    // GET /api/hotspots - returns recurring historical climate risk hotspots
+    // Query params: ?hazardType=flood&minScore=50&assetId=D07
+    if (req.method === "GET" && url.pathname === "/api/hotspots") {
+      const hazardParam = url.searchParams.get("hazardType");
+      const minScoreParam = url.searchParams.get("minScore");
+      const assetFilter = url.searchParams.get("assetId");
+
+      if (hazardParam && !VALID_HAZARDS.includes(hazardParam as HazardType)) {
+        json(res, 400, {
+          error: `Invalid hazardType '${hazardParam}'. Allowed: ${VALID_HAZARDS.join(", ")}`,
+        });
+        return;
+      }
+
+      let minScore: number | undefined;
+      if (minScoreParam !== null) {
+        minScore = Number(minScoreParam);
+        if (Number.isNaN(minScore) || minScore < 0 || minScore > 100) {
+          json(res, 400, { error: "minScore must be a number between 0 and 100." });
+          return;
+        }
+      }
+
+      let hotspots = computeHotspots(SAMPLE_HISTORICAL_INCIDENTS, { minRecurrenceScore: minScore });
+
+      if (hazardParam) {
+        hotspots = hotspots.filter((h) => h.hazardType === hazardParam);
+      }
+      if (assetFilter) {
+        hotspots = hotspots.filter((h) => h.assetId.toLowerCase() === assetFilter.toLowerCase());
+      }
+
+      json(res, 200, {
+        totalHotspots: hotspots.length,
+        hotspots,
+      });
+      return;
+    }
+
+    // POST /api/hotspots/analyze - computes hotspots from dynamically supplied historical incidents
+    // Returns full validation summary, rejections list, and computed hotspots
+    if (req.method === "POST" && url.pathname === "/api/hotspots/analyze") {
+      const raw = await readBody(req);
+      let body: Record<string, unknown> = {};
+      try {
+        body = raw ? (JSON.parse(raw) as Record<string, unknown>) : {};
+      } catch {
+        json(res, 400, { error: "Request body must be valid JSON." });
+        return;
+      }
+
+      const incidentsInput = Array.isArray(body.incidents) ? body.incidents : [];
+      const configValidation = validateHotspotConfig(body.config ?? {
+        minIncidentCount: typeof body.minIncidentCount === "number" ? body.minIncidentCount : undefined,
+        minRecurrenceScore: typeof body.minRecurrenceScore === "number" ? body.minRecurrenceScore : undefined,
+        halfLifeDays: typeof body.halfLifeDays === "number" ? body.halfLifeDays : undefined,
+      });
+
+      if (!configValidation.valid) {
+        json(res, 400, {
+          error: "Invalid hotspot configuration.",
+          details: configValidation.errors,
+        });
+        return;
+      }
+
+      const { valid, rejections } = validateHistoricalIncidentsDetailed(incidentsInput);
+      const hotspots = computeHotspots(valid, configValidation.config);
+
+      json(res, 200, {
+        totalReceived: incidentsInput.length,
+        validCount: valid.length,
+        rejectedCount: rejections.length,
+        rejections,
+        totalHotspots: hotspots.length,
+        hotspots,
       });
       return;
     }
