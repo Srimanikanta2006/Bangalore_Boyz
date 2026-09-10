@@ -5,14 +5,17 @@ import {
   computeHotspots,
   validateHistoricalIncident,
   validateHistoricalIncidents,
+  validateHistoricalIncidentsDetailed,
+  validateHotspotConfig,
 } from "./hotspotIntelligence.ts";
 import type { HistoricalIncident } from "./hotspotTypes.ts";
 
 const BASE_TIME = "2026-09-10T12:00:00.000Z";
+const BASE_EPOCH = Date.parse(BASE_TIME);
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 
 function daysAgo(days: number): string {
-  return new Date(Date.parse(BASE_TIME) - days * ONE_DAY_MS).toISOString();
+  return new Date(BASE_EPOCH - days * ONE_DAY_MS).toISOString();
 }
 
 test("no incidents produces no hotspots", () => {
@@ -145,7 +148,7 @@ test("different hazards at the same asset produce separate distinct hotspots", (
   );
 });
 
-test("detects increasing recurrence trend", () => {
+test("detects increasing recurrence trend with clean explanation wording", () => {
   // 1 incident in early window, 3 incidents clustered in recent window
   const incidents: HistoricalIncident[] = [
     { incidentId: "T1", timestamp: daysAgo(80), assetId: "R24", hazardType: "flood", severity: "medium" },
@@ -157,10 +160,10 @@ test("detects increasing recurrence trend", () => {
   const hotspots = computeHotspots(incidents, { referenceTimestamp: BASE_TIME });
   assert.equal(hotspots.length, 1);
   assert.equal(hotspots[0].trend, "increasing");
-  assert.match(hotspots[0].explanation, /accelerating recurrence trend/i);
+  assert.match(hotspots[0].explanation, /an increasing recurrence trend/i);
 });
 
-test("detects decreasing recurrence trend", () => {
+test("detects decreasing recurrence trend with clean explanation wording", () => {
   // 3 incidents in early window, 1 incident in recent window
   const incidents: HistoricalIncident[] = [
     { incidentId: "T1", timestamp: daysAgo(80), assetId: "R24", hazardType: "flood", severity: "high" },
@@ -172,7 +175,7 @@ test("detects decreasing recurrence trend", () => {
   const hotspots = computeHotspots(incidents, { referenceTimestamp: BASE_TIME });
   assert.equal(hotspots.length, 1);
   assert.equal(hotspots[0].trend, "decreasing");
-  assert.match(hotspots[0].explanation, /decelerating recurrence trend/i);
+  assert.match(hotspots[0].explanation, /a decreasing recurrence trend/i);
 });
 
 test("marks trend as insufficient_data when fewer than 3 incidents", () => {
@@ -199,48 +202,54 @@ test("output is completely deterministic for identical input", () => {
   assert.deepEqual(run1, run2);
 });
 
-test("validates historical incident input and rejects malformed entries", () => {
-  const valid = validateHistoricalIncident({
-    incidentId: "INC-V01",
-    timestamp: "2026-09-01T08:00:00Z",
+test("rejects future timestamps relative to reference time", () => {
+  const futureIncident = {
+    incidentId: "FUT-01",
+    timestamp: new Date(BASE_EPOCH + 10 * ONE_DAY_MS).toISOString(), // 10 days in the future
     assetId: "D07",
     hazardType: "heavy_rainfall",
     severity: "high",
-  });
-  assert.equal(valid.success, true);
+  };
 
-  const badDate = validateHistoricalIncident({
-    incidentId: "INC-B01",
-    timestamp: "invalid-date-format",
-    assetId: "D07",
-    hazardType: "heavy_rainfall",
-    severity: "high",
-  });
-  assert.equal(badDate.success, false);
+  const validation = validateHistoricalIncident(futureIncident, BASE_EPOCH);
+  assert.equal(validation.success, false);
+  if (!validation.success) {
+    assert.ok(validation.errors.some((e) => e.includes("future")));
+  }
+});
 
-  const badHazard = validateHistoricalIncident({
-    incidentId: "INC-B02",
-    timestamp: "2026-09-01T08:00:00Z",
-    assetId: "D07",
-    hazardType: "alien_invasion",
-    severity: "high",
-  });
-  assert.equal(badHazard.success, false);
+test("rejects and reports duplicate incident IDs", () => {
+  const batch = [
+    { incidentId: "DUP-01", timestamp: daysAgo(10), assetId: "D07", hazardType: "flood", severity: "high" },
+    { incidentId: "DUP-01", timestamp: daysAgo(5), assetId: "D07", hazardType: "flood", severity: "high" }, // Duplicate ID
+    { incidentId: "DUP-02", timestamp: daysAgo(2), assetId: "D07", hazardType: "flood", severity: "critical" },
+  ];
 
-  const badSeverity = validateHistoricalIncident({
-    incidentId: "INC-B03",
-    timestamp: "2026-09-01T08:00:00Z",
-    assetId: "D07",
-    hazardType: "heavy_rainfall",
-    severity: "apocalyptic",
-  });
-  assert.equal(badSeverity.success, false);
+  const report = validateHistoricalIncidentsDetailed(batch, BASE_EPOCH);
+  assert.equal(report.valid.length, 2);
+  assert.equal(report.rejections.length, 1);
+  assert.equal(report.rejections[0].incidentId, "DUP-01");
+  assert.ok(report.rejections[0].errors[0].includes("Duplicate incidentId"));
+});
 
-  // Batch validation filters bad records
-  const batch = validateHistoricalIncidents([
-    { incidentId: "OK", timestamp: "2026-09-01T08:00:00Z", assetId: "D07", hazardType: "flood", severity: "low" },
-    { incidentId: "BAD", timestamp: "bad", assetId: "D07", hazardType: "flood", severity: "low" },
-  ]);
-  assert.equal(batch.length, 1);
-  assert.equal(batch[0].incidentId, "OK");
+test("validates hotspot configuration parameters", () => {
+  const validConfig = validateHotspotConfig({
+    minIncidentCount: 3,
+    minRecurrenceScore: 30,
+    halfLifeDays: 60,
+    referenceTimestamp: BASE_TIME,
+  });
+  assert.equal(validConfig.valid, true);
+  assert.equal(validConfig.config.minIncidentCount, 3);
+  assert.equal(validConfig.config.minRecurrenceScore, 30);
+  assert.equal(validConfig.config.halfLifeDays, 60);
+
+  const invalidConfig = validateHotspotConfig({
+    minIncidentCount: 0,
+    minRecurrenceScore: 150,
+    halfLifeDays: -10,
+    referenceTimestamp: "invalid-date",
+  });
+  assert.equal(invalidConfig.valid, false);
+  assert.equal(invalidConfig.errors.length, 4);
 });

@@ -4,6 +4,8 @@ import type {
   Hotspot,
   HotspotConfig,
   HotspotTrend,
+  IncidentBatchValidationResult,
+  IncidentValidationRejection,
 } from "./hotspotTypes.ts";
 import type { HazardType, RiskLevel } from "./schemas.ts";
 
@@ -21,7 +23,7 @@ const SEVERITY_BASE_SCORES: Record<RiskLevel, number> = {
   critical: 100,
 };
 
-const VALID_HAZARDS: HazardType[] = [
+export const VALID_HAZARDS: HazardType[] = [
   "heavy_rainfall",
   "flood",
   "extreme_heat",
@@ -33,7 +35,7 @@ const VALID_HAZARDS: HazardType[] = [
   "storm_surge",
 ];
 
-const VALID_SEVERITIES: RiskLevel[] = ["low", "medium", "high", "critical"];
+export const VALID_SEVERITIES: RiskLevel[] = ["low", "medium", "high", "critical"];
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -44,17 +46,94 @@ function isNonEmptyString(value: unknown): value is string {
 }
 
 /**
- * Validates untrusted historical incident records coming from database or API payloads.
+ * Validates hotspot configuration parameters.
  */
-export function validateHistoricalIncident(input: unknown): { success: true; data: HistoricalIncident } | { success: false; errors: string[] } {
+export function validateHotspotConfig(config?: unknown): {
+  valid: boolean;
+  errors: string[];
+  config: Required<HotspotConfig>;
+} {
+  const errors: string[] = [];
+  const resolved: Required<HotspotConfig> = { ...DEFAULT_HOTSPOT_CONFIG };
+
+  if (config !== undefined && !isRecord(config)) {
+    return {
+      valid: false,
+      errors: ["HotspotConfig must be an object."],
+      config: resolved,
+    };
+  }
+
+  if (isRecord(config)) {
+    if (config.minIncidentCount !== undefined) {
+      if (typeof config.minIncidentCount !== "number" || !Number.isInteger(config.minIncidentCount) || config.minIncidentCount < 1) {
+        errors.push("minIncidentCount must be an integer >= 1.");
+      } else {
+        resolved.minIncidentCount = config.minIncidentCount;
+      }
+    }
+
+    if (config.minRecurrenceScore !== undefined) {
+      if (typeof config.minRecurrenceScore !== "number" || config.minRecurrenceScore < 0 || config.minRecurrenceScore > 100) {
+        errors.push("minRecurrenceScore must be a number between 0 and 100.");
+      } else {
+        resolved.minRecurrenceScore = config.minRecurrenceScore;
+      }
+    }
+
+    if (config.halfLifeDays !== undefined) {
+      if (typeof config.halfLifeDays !== "number" || config.halfLifeDays <= 0) {
+        errors.push("halfLifeDays must be a positive number.");
+      } else {
+        resolved.halfLifeDays = config.halfLifeDays;
+      }
+    }
+
+    if (config.referenceTimestamp !== undefined && config.referenceTimestamp !== 0) {
+      const parsed = typeof config.referenceTimestamp === "number"
+        ? config.referenceTimestamp
+        : Date.parse(String(config.referenceTimestamp));
+      if (Number.isNaN(parsed) || parsed <= 0) {
+        errors.push("referenceTimestamp must be a valid ISO string or epoch timestamp.");
+      } else {
+        resolved.referenceTimestamp = parsed;
+      }
+    }
+  }
+
+  return {
+    valid: errors.length === 0,
+    errors,
+    config: resolved,
+  };
+}
+
+/**
+ * Validates untrusted historical incident records coming from database or API payloads.
+ * Rejects future timestamps relative to refTimeMs.
+ */
+export function validateHistoricalIncident(
+  input: unknown,
+  refTimeMs: number = Date.now(),
+): { success: true; data: HistoricalIncident } | { success: false; errors: string[] } {
   if (!isRecord(input)) return { success: false, errors: ["Incident must be an object."] };
 
   const errors: string[] = [];
   if (!isNonEmptyString(input.incidentId)) errors.push("incidentId must be a non-empty string.");
   if (!isNonEmptyString(input.assetId)) errors.push("assetId must be a non-empty string.");
-  if (!isNonEmptyString(input.timestamp) || Number.isNaN(Date.parse(input.timestamp))) {
+
+  if (!isNonEmptyString(input.timestamp)) {
     errors.push("timestamp must be a valid ISO 8601 date string.");
+  } else {
+    const epoch = Date.parse(input.timestamp);
+    if (Number.isNaN(epoch)) {
+      errors.push("timestamp must be a valid ISO 8601 date string.");
+    } else if (epoch > refTimeMs + 5000) {
+      // 5s grace for slight clock skew
+      errors.push("timestamp cannot be in the future.");
+    }
   }
+
   if (!VALID_HAZARDS.includes(input.hazardType as HazardType)) {
     errors.push(`hazardType '${String(input.hazardType)}' is not recognized.`);
   }
@@ -83,16 +162,54 @@ export function validateHistoricalIncident(input: unknown): { success: true; dat
 }
 
 /**
- * Validates a list of historical incident records, filtering out malformed entries.
+ * Validates and deduplicates a batch of historical incidents, returning both valid records
+ * and detailed rejection entries for invalid or duplicate IDs.
  */
-export function validateHistoricalIncidents(inputs: unknown[]): HistoricalIncident[] {
-  if (!Array.isArray(inputs)) return [];
-  const valid: HistoricalIncident[] = [];
-  for (const item of inputs) {
-    const res = validateHistoricalIncident(item);
-    if (res.success) valid.push(res.data);
+export function validateHistoricalIncidentsDetailed(
+  inputs: unknown[],
+  refTimeMs: number = Date.now(),
+): IncidentBatchValidationResult {
+  if (!Array.isArray(inputs)) {
+    return { valid: [], rejections: [{ index: 0, errors: ["Expected array of historical incidents."] }] };
   }
-  return valid;
+
+  const valid: HistoricalIncident[] = [];
+  const rejections: IncidentValidationRejection[] = [];
+  const seenIds = new Set<string>();
+
+  inputs.forEach((item, index) => {
+    const rawId = isRecord(item) && typeof item.incidentId === "string" ? item.incidentId.trim() : undefined;
+    const result = validateHistoricalIncident(item, refTimeMs);
+
+    if (!result.success) {
+      rejections.push({ index, incidentId: rawId, errors: result.errors });
+      return;
+    }
+
+    if (seenIds.has(result.data.incidentId)) {
+      rejections.push({
+        index,
+        incidentId: result.data.incidentId,
+        errors: [`Duplicate incidentId '${result.data.incidentId}' encountered. Duplicate incidents are rejected.`],
+      });
+      return;
+    }
+
+    seenIds.add(result.data.incidentId);
+    valid.push(result.data);
+  });
+
+  return { valid, rejections };
+}
+
+/**
+ * Simple helper that validates and returns clean valid records.
+ */
+export function validateHistoricalIncidents(
+  inputs: unknown[],
+  refTimeMs: number = Date.now(),
+): HistoricalIncident[] {
+  return validateHistoricalIncidentsDetailed(inputs, refTimeMs).valid;
 }
 
 function calculateTrend(sortedIncidents: HistoricalIncident[]): HotspotTrend {
@@ -142,9 +259,9 @@ function generateExplanation(
 
   const trendDesc =
     trend === "increasing"
-      ? "an accelerating recurrence trend"
+      ? "an increasing recurrence trend"
       : trend === "decreasing"
-      ? "a decelerating recurrence trend"
+      ? "a decreasing recurrence trend"
       : trend === "stable"
       ? "a consistent recurrence pattern"
       : "insufficient history for trend analysis";
@@ -165,30 +282,44 @@ function generateExplanation(
  * Computes hotspot intelligence from historical incidents using a deterministic,
  * explainable multi-factor recurrence algorithm.
  *
- * Factors:
- * 1. Incident Frequency: Recency-weighted count of historical events.
- * 2. Recency: Exponential decay with configurable half-life (default: 90 days).
- * 3. Severity: Normalized weighted average of event severities.
- * 4. Hazard Repetition: Isolated per (asset, hazard) pairing.
- * 5. Timespan & Trend: Chronological distribution over observation window.
+ * ============================================================================
+ * ARCHITECTURAL DECISION: 55% Frequency / 45% Severity Weighting Ratio
+ * ============================================================================
+ * Why 55% Frequency:
+ *   A "Hotspot" fundamentally represents a recurring spatial failure bottleneck
+ *   rather than a one-off extreme event. An isolated high-severity incident is
+ *   an emergency response issue (handled by Person 2/AI), NOT a long-term capital
+ *   hotspot. Therefore, repetition (frequency of occurrence discounted by recency)
+ *   is assigned the majority weight (55%) to ensure true repeat failure points dominate.
+ *
+ * Why 45% Severity:
+ *   Among recurring hotspots, repeated catastrophic failures (e.g., hospital power/transit
+ *   disruption) must rank higher than repeated minor nuisances (e.g., minor roadside puddle).
+ *   The 45% severity weight ensures severe repeats outscore low-severity repeats while
+ *   preventing single isolated severe events from forming false hotspots.
+ * ============================================================================
  */
 export function computeHotspots(
   rawIncidents: HistoricalIncident[],
   options: HotspotConfig = {},
 ): Hotspot[] {
-  const minCount = options.minIncidentCount ?? DEFAULT_HOTSPOT_CONFIG.minIncidentCount;
-  const minScore = options.minRecurrenceScore ?? DEFAULT_HOTSPOT_CONFIG.minRecurrenceScore;
-  const halfLifeDays = options.halfLifeDays ?? DEFAULT_HOTSPOT_CONFIG.halfLifeDays;
+  const configValidation = validateHotspotConfig(options);
+  const cfg = configValidation.config;
 
-  const refTime = options.referenceTimestamp
-    ? typeof options.referenceTimestamp === "number"
-      ? options.referenceTimestamp
-      : Date.parse(options.referenceTimestamp)
+  const minCount = cfg.minIncidentCount;
+  const minScore = cfg.minRecurrenceScore;
+  const halfLifeDays = cfg.halfLifeDays;
+
+  const refTime = cfg.referenceTimestamp && cfg.referenceTimestamp > 0
+    ? cfg.referenceTimestamp
     : Date.now();
+
+  // Deduplicate and validate inputs up front
+  const validatedIncidents = validateHistoricalIncidents(rawIncidents, refTime);
 
   // 1. Group incidents by (assetId, hazardType)
   const groups = new Map<string, HistoricalIncident[]>();
-  for (const incident of rawIncidents) {
+  for (const incident of validatedIncidents) {
     const key = `${incident.assetId}::${incident.hazardType}`;
     const group = groups.get(key) ?? [];
     group.push(incident);
@@ -250,7 +381,7 @@ export function computeHotspots(
     // 3. Trend analysis
     const trend = calculateTrend(sorted);
 
-    // 4. Grounded Confidence (0.60 to 0.95 based on count)
+    // 4. Grounded Confidence (0.60 to 0.95 based on sample size)
     const confidence = Math.min(0.95, Math.round((0.6 + Math.min(sorted.length, 7) * 0.05) * 100) / 100);
 
     // 5. Deterministic Explanation

@@ -60,3 +60,14 @@ export interface HotspotConfig {
   /** Half-life in days for recency exponential decay (default: 90 days) */
   halfLifeDays?: number;
 }
+
+export interface IncidentValidationRejection {
+  index: number;
+  incidentId?: string;
+  errors: string[];
+}
+
+export interface IncidentBatchValidationResult {
+  valid: HistoricalIncident[];
+  rejections: IncidentValidationRejection[];
+}
