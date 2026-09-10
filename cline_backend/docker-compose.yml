@@ -21,6 +21,10 @@ services:
       POSTGRES_DB: climateshield
     ports:
       - "5432:5432"
+      # If 5432 is already taken on your machine (e.g. a native Postgres or a
+      # local Supabase CLI stack), remap here (e.g. "55432:5432") and update
+      # DATABASE_URL/DIRECT_URL in your own .env to match. Do not commit a
+      # changed host port here — it must match .env.example for the team.
     volumes:
       - climateshield_pgdata:/var/lib/postgresql/data
     healthcheck:
