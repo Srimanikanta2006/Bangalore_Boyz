@@ -39,3 +39,45 @@ Establish `AGENTS.md` and `docs/*` as the single source of truth for all AI codi
 
 ### Rationale
 Ensures portability, architectural consistency, and safety across all AI tools without relying on ephemeral chat histories.
+
+---
+
+## ADR-003: Multi-Agent Incident-Response Orchestrator (`agents/` + `orchestration/`)
+
+* **Date**: 2026-09-11
+* **Status**: Accepted
+
+### Context
+The single-shot grounded explanation endpoint (`POST /api/incidents/:id/explain`,
+`cline_backend/src/ai/`) proved the grounding pattern but is one LLM call. The
+architecture (`AGENTS.md §7`, `docs/ARCHITECTURE.md`) calls for an explicit
+orchestrator coordinating specialist agents with validated JSON exchange.
+
+### Decision
+Implement a top-level **`agents/`** library (Risk Analyst, Cascade, Dispatch
+Planner, Comms, Validation) and a top-level **`orchestration/`** coordinator that
+runs them in dependency order and emits a single **PROPOSED** `ResponsePlan`.
+Stack: **TypeScript/Node**, consistent with the existing AI layer; `agents/` is
+linked into `orchestration/` via a `file:` dependency. Tests use the built-in
+`node:test` runner via `tsx`. Zero runtime dependencies (global `fetch`).
+
+### Rationale
+1. **Reuses the proven grounding posture** — controlled action catalog, runtime
+   validation, engine-confidence ceiling, deterministic fallback.
+2. **AI is never a single point of failure** — every agent degrades to a
+   deterministic fallback; the pipeline runs fully offline with no API key.
+3. **Human-in-the-loop preserved** — output is always a PROPOSED plan requiring
+   operator approval; approved actions still flow through the unchanged
+   `POST /api/tasks` contract.
+4. **State is persisted** (`orchestration/.runs/`), not held in LLM memory
+   (`AGENTS.md §8`); agents are replaceable without losing run state.
+5. **Loose coupling** — the layer consumes verified facts (shape-compatible with
+   `getIncidentCascade()`) and emits structured JSON; no API/DB contract changes.
+
+### Alternatives Considered
+- **Extend the single explain call in-place**: less modular; harder to add/scale
+  specialist agents; doesn't match the documented orchestrator topology.
+- **Separate Python agent service**: adds a new runtime and dependency surface;
+  duplicates the existing TypeScript Gemini/grounding primitives.
+
+See `docs/ORCHESTRATION.md` for the full design.
