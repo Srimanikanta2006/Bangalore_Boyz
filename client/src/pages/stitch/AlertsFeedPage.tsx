@@ -3,96 +3,61 @@ import { useNavigate } from 'react-router-dom';
 import { Header } from '../../components/stitch/Header';
 import { BottomNav } from '../../components/stitch/BottomNav';
 import { SosFab } from '../../components/stitch/SosFab';
-import { Mock } from '../../components/stitch/Mock';
+import { useCitizenAlerts } from '../../citizen/useCitizenAlerts';
+import type { AlertCategory, CitizenAlert, Severity } from '../../citizen/api';
 
-interface AlertItem {
-  id: string;
-  hazardType: string;
-  hazardColor: string;
-  severity: 'HIGH' | 'MODERATE' | 'SAFE';
-  severityBg: string;
-  severityText: string;
-  severityDot: string;
-  borderLeftColor: string;
-  updatedTime: string;
-  title: string;
-  description: string;
-  actionText: string;
-  actionRoute: string;
-  tags: string[];
+const CATEGORY_META: Record<AlertCategory, { label: string; color: string }> = {
+  FLOOD: { label: 'Flood', color: '#06B6D4' },
+  HEAT: { label: 'Heat', color: '#D97706' },
+  STORM: { label: 'Storm', color: '#0051d5' },
+  WEATHER: { label: 'Weather', color: '#0090a9' },
+  CORRIDOR: { label: 'Corridor', color: '#16A34A' },
+};
+
+function severityStyle(sev: Severity) {
+  if (sev === 'HIGH' || sev === 'CRITICAL') {
+    return { bg: 'bg-[#FFEDD5]', text: 'text-[#C2410C]', dot: 'bg-[#EA580C]', bar: 'bg-[#EA580C]', accent: 'text-[#EA580C] hover:text-[#C2410C]', animate: true };
+  }
+  if (sev === 'MODERATE') {
+    return { bg: 'bg-[#FEF3C7]', text: 'text-[#B45309]', dot: 'bg-[#D97706]', bar: 'bg-[#D97706]', accent: 'text-[#B45309] hover:text-[#D97706]', animate: false };
+  }
+  return { bg: 'bg-[#DCFCE7]', text: 'text-[#15803D]', dot: 'bg-[#16A34A]', bar: 'bg-[#16A34A]', accent: 'text-secondary hover:text-secondary-container', animate: false };
 }
 
-const INITIAL_ALERTS: AlertItem[] = [
-  {
-    id: 'alert-1',
-    hazardType: 'Flash Flood',
-    hazardColor: '#06B6D4',
-    severity: 'HIGH',
-    severityBg: 'bg-[#FFEDD5]',
-    severityText: 'text-[#C2410C]',
-    severityDot: 'bg-[#EA580C]',
-    borderLeftColor: 'bg-[#EA580C]',
-    updatedTime: '4m ago',
-    title: 'Rapid Inundation on South Waterfront',
-    description:
-      'Water levels rising rapidly along 3rd and 5th avenues. Storm drains overloaded. Avoid low-elevation underpasses.',
-    actionText: 'View safe detour route',
-    actionRoute: '/citizen/routes',
-    tags: ['high', 'weather', 'corridors'],
-  },
-  {
-    id: 'alert-2',
-    hazardType: 'Heat Warning',
-    hazardColor: '#D97706',
-    severity: 'MODERATE',
-    severityBg: 'bg-[#FEF3C7]',
-    severityText: 'text-[#B45309]',
-    severityDot: 'bg-[#D97706]',
-    borderLeftColor: 'bg-[#D97706]',
-    updatedTime: '18m ago',
-    title: 'Extreme Urban Heat Island Anomaly',
-    description:
-      'Surface temperature exceeding 39°C in dense industrial sectors. 4 misting stations active at central transit plazas.',
-    actionText: 'Locate hydration station',
-    actionRoute: '/citizen/map',
-    tags: ['weather'],
-  },
-  {
-    id: 'alert-3',
-    hazardType: 'Storm Drainage',
-    hazardColor: '#0051d5',
-    severity: 'SAFE',
-    severityBg: 'bg-[#DCFCE7]',
-    severityText: 'text-[#15803D]',
-    severityDot: 'bg-[#16A34A]',
-    borderLeftColor: 'bg-[#16A34A]',
-    updatedTime: '32m ago',
-    title: 'Highline Arterial Corridor Cleared',
-    description:
-      'Culvert 4 pumping units deployed. Northbound lanes fully navigable for passenger vehicles.',
-    actionText: 'View corridor status',
-    actionRoute: '/citizen/routes',
-    tags: ['corridors'],
-  },
-];
+function actionFor(category: AlertCategory): { text: string; route: string } {
+  if (category === 'FLOOD' || category === 'CORRIDOR') return { text: 'View safe detour route', route: '/citizen/routes' };
+  if (category === 'HEAT') return { text: 'Locate cooling center', route: '/citizen/map' };
+  return { text: 'View live map', route: '/citizen/map' };
+}
+
+function updatedLabel(minutes: number | null): string {
+  if (minutes == null) return 'just now';
+  if (minutes < 1) return 'just now';
+  if (minutes < 60) return `${minutes}m ago`;
+  const h = Math.floor(minutes / 60);
+  return `${h}h ago`;
+}
 
 export const AlertsFeedPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [currentFilter, setCurrentFilter] = useState<'all' | 'high' | 'weather' | 'corridors'>('all');
 
+  const { data, loading, error, refetch } = useCitizenAlerts(5);
+  const allAlerts: CitizenAlert[] = data?.alerts ?? [];
+
   const filteredAlerts = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
-    return INITIAL_ALERTS.filter((item) => {
+    return allAlerts.filter((item) => {
       const textMatch =
         query === '' ||
         item.title.toLowerCase().includes(query) ||
         item.description.toLowerCase().includes(query) ||
-        item.hazardType.toLowerCase().includes(query);
+        item.category.toLowerCase().includes(query);
       const filterMatch = currentFilter === 'all' || item.tags.includes(currentFilter);
       return textMatch && filterMatch;
     });
-  }, [searchQuery, currentFilter]);
+  }, [searchQuery, currentFilter, allAlerts]);
 
   return (
     <div className="bg-surface text-on-surface font-body-md text-body-md min-h-screen flex flex-col relative w-full max-w-[440px] mx-auto shadow-2xl border-x border-outline-variant/20">
@@ -142,7 +107,7 @@ export const AlertsFeedPage: React.FC = () => {
               >
                 <span>All Alerts</span>
                 <span className="bg-surface-container-lowest/20 text-on-primary px-1.5 py-0.2 rounded-full font-label-sm text-[10px]">
-                  {INITIAL_ALERTS.length}
+                  {allAlerts.length}
                 </span>
               </button>
 
@@ -195,48 +160,74 @@ export const AlertsFeedPage: React.FC = () => {
             <span className="font-label-sm text-label-sm uppercase tracking-wider font-semibold">
               Active Citizen Advisories
             </span>
-            <span className="font-label-sm text-label-sm flex items-center gap-1 text-secondary font-medium">
-              <span className="material-symbols-outlined text-[14px]">sync</span>
-              <span>Auto-sync 30s</span>
-            </span>
+            <button
+              type="button"
+              onClick={refetch}
+              className="font-label-sm text-label-sm flex items-center gap-1 text-secondary font-medium hover:text-secondary-container transition-colors"
+            >
+              <span className={`material-symbols-outlined text-[14px] ${loading ? 'animate-spin' : ''}`}>sync</span>
+              <span>{loading ? 'Syncing…' : 'Refresh'}</span>
+            </button>
           </div>
+
+          {/* Error banner */}
+          {error && !loading && (
+            <div className="px-edge-margin-mobile pb-space-xs">
+              <div role="alert" className="flex items-center justify-between gap-2 rounded-lg bg-error-container/60 text-on-error-container px-3 py-2">
+                <span className="font-body-sm text-body-sm">Couldn’t load live alerts.</span>
+                <button type="button" onClick={refetch} className="font-label-sm text-label-sm font-bold underline">
+                  Retry
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Alerts Card List */}
           <div className="px-edge-margin-mobile flex flex-col gap-space-sm" id="alerts-container">
-            {filteredAlerts.map((alert) => (
+            {filteredAlerts.map((alert) => {
+              const s = severityStyle(alert.severity);
+              const cat = CATEGORY_META[alert.category];
+              const action = actionFor(alert.category);
+              return (
               <article
                 key={alert.id}
                 className="relative overflow-hidden bg-surface-container-lowest rounded-xl shadow-[0_4px_20px_-2px_rgba(15,23,42,0.08)] transition-transform duration-150 active:scale-[0.99]"
                 data-card={alert.tags.join(' ')}
               >
                 {/* Left Edge Severity Indicator Bar */}
-                <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${alert.borderLeftColor}`}></div>
+                <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${s.bar}`}></div>
 
                 <div className="pl-4 pr-space-md py-space-md flex flex-col gap-space-xs">
                   {/* Top Row: Hazard Pill + Severity Badge + Timestamp */}
                   <div className="flex items-center justify-between flex-wrap gap-1.5">
                     <div className="flex items-center gap-1.5">
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-surface-container font-label-sm text-label-sm font-bold text-on-surface">
-                        <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: alert.hazardColor }}></span>
-                        <Mock label="Hazard Type">{alert.hazardType}</Mock>
+                        <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: cat.color }}></span>
+                        {cat.label}
                       </span>
                       <span
-                        className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full ${alert.severityBg} ${alert.severityText} font-label-sm text-label-sm font-bold`}
+                        className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full ${s.bg} ${s.text} font-label-sm text-label-sm font-bold`}
                       >
-                        <span className={`w-1.5 h-1.5 rounded-full ${alert.severityDot} ${alert.severity === 'HIGH' ? 'animate-ping' : ''}`}></span>
+                        <span className={`w-1.5 h-1.5 rounded-full ${s.dot} ${s.animate ? 'animate-ping' : ''}`}></span>
                         {alert.severity}
+                      </span>
+                      <span
+                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-surface-container font-label-sm text-[10px] font-semibold text-on-surface-variant uppercase tracking-wide"
+                        title="Data provenance"
+                      >
+                        {alert.dataQuality}
                       </span>
                     </div>
                     <span className="font-label-sm text-label-sm text-outline tabular-nums flex items-center gap-1">
                       <span className="material-symbols-outlined text-[13px]">schedule</span>
-                      <Mock label="Update Delta">Updated {alert.updatedTime}</Mock>
+                      Updated {updatedLabel(alert.freshnessMinutes)}
                     </span>
                   </div>
 
                   {/* Body Text */}
                   <div className="mt-0.5">
                     <h2 className="font-title-lg text-title-lg text-on-surface font-bold leading-snug">
-                      <Mock label="Alert Headline">{alert.title}</Mock>
+                      {alert.title}
                     </h2>
                     <p className="font-body-md text-body-md text-on-surface-variant mt-1 leading-relaxed">
                       {alert.description}
@@ -246,17 +237,11 @@ export const AlertsFeedPage: React.FC = () => {
                   {/* Action Link & Share */}
                   <div className="pt-1 mt-0.5 flex items-center justify-between">
                     <button
-                      className={`group inline-flex items-center gap-1.5 font-label-md text-label-md font-bold ${
-                        alert.severity === 'HIGH'
-                          ? 'text-[#EA580C] hover:text-[#C2410C]'
-                          : alert.severity === 'MODERATE'
-                          ? 'text-[#B45309] hover:text-[#D97706]'
-                          : 'text-secondary hover:text-secondary-container'
-                      } transition-colors duration-150`}
+                      className={`group inline-flex items-center gap-1.5 font-label-md text-label-md font-bold ${s.accent} transition-colors duration-150`}
                       type="button"
-                      onClick={() => navigate(alert.actionRoute)}
+                      onClick={() => navigate(action.route)}
                     >
-                      <span>{alert.actionText}</span>
+                      <span>{action.text}</span>
                       <span className="material-symbols-outlined text-[16px] group-hover:translate-x-0.5 transition-transform duration-150">
                         arrow_forward
                       </span>
@@ -267,10 +252,19 @@ export const AlertsFeedPage: React.FC = () => {
                   </div>
                 </div>
               </article>
-            ))}
+              );
+            })}
+
+            {/* Loading skeleton (first load) */}
+            {loading && allAlerts.length === 0 && (
+              <div className="flex flex-col items-center justify-center py-12 text-center text-on-surface-variant">
+                <span className="material-symbols-outlined text-[24px] animate-spin mb-2">progress_activity</span>
+                <p className="font-body-sm text-body-sm">Loading live advisories…</p>
+              </div>
+            )}
 
             {/* Empty State */}
-            {filteredAlerts.length === 0 && (
+            {!loading && filteredAlerts.length === 0 && (
               <div
                 className="flex flex-col items-center justify-center py-12 px-4 text-center bg-surface-container-lowest rounded-xl shadow-sm"
                 id="no-alerts-state"

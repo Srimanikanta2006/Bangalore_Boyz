@@ -5,7 +5,7 @@ Base URL: `http://<host>:<PORT>/api` • JSON only • All timestamps ISO-8601 U
 ## Conventions
 
 - **Auth**: `Authorization: Bearer <jwt>` — required on every endpoint except `POST /api/auth/login` and `GET /api/health`.
-- **Roles**: `ADMIN`, `GOVERNMENT_OPERATOR`, `DISPATCHER`, `FIELD_OPERATOR`, `ANALYST`. Roles are resolved server-side from the verified JWT — never trusted from the client. `GOV = GOVERNMENT_OPERATOR | DISPATCHER | ADMIN`.
+- **Roles**: `ADMIN`, `GOVERNMENT_OPERATOR`, `DISPATCHER`, `FIELD_OPERATOR`, `ANALYST`, `CITIZEN`. Roles are resolved server-side from the verified JWT — never trusted from the client. `GOV = GOVERNMENT_OPERATOR | DISPATCHER | ADMIN`. `CITIZEN` is a separate, public-safety-facing role: it is fail-closed on every government endpoint (never included in any `requireRole(...)` list) and is additionally blocked from internal read endpoints (`/api/incidents*`, `/api/tasks*`, `/api/units*`, `/api/audit`, `/api/analytics/*`, `/api/simulations*`, `/api/departments*`, `/api/cascade/*`, `/api/response-center`, `/api/overview`, `/api/map/overlays`, `/api/map/units`) by an app-level guard. See **Citizen Experience** below for its own namespaced endpoints.
 - **Success envelope**: `{ "success": true, "data": ... }`.
 - **Lists**: `{ "items": [...], "pagination": { "page", "limit", "total", "totalPages", "hasMore" } }`.
 - **Error envelope**:
@@ -859,9 +859,74 @@ Errors: `400 VALIDATION_ERROR` · `401` · `502 WEATHER_PROVIDER_*` (when live w
 
 ---
 
+## Citizen Experience (public-safety endpoints)
+
+All endpoints below require `Authorization: Bearer <jwt>` for a `CITIZEN` account (`requireRole('CITIZEN')`) — other roles get `403 FORBIDDEN`. Demo account: `citizen@climateshield.demo` / `DemoGov@2024`. Every environmental value carries its own `dataQuality`; citizen-facing responses never include internal-only fields (unit callsigns, departments, SLA deadlines, audit metadata).
+
+### GET /api/citizen/nearby?latitude=&longitude=&radiusKm=&limit= — CITIZEN
+
+Sanitized public-safety snapshot for a point: containing ward, live Open-Meteo weather + Open-Meteo Air-Quality (US AQI, `LIVE_OBSERVED`, nullable on provider failure), active hazards, nearby public infrastructure (hospitals/clinics/shelters/cooling centers/roads/bridges — no vulnerability scores), a computed `safety` index (`SAFE|MODERATE|HIGH|CRITICAL`, deterministic from the worst active driver), and `corridorStatus` (`CLEAR|CAUTION|BLOCKED`).
+
+```json
+{
+  "success": true,
+  "data": {
+    "ward": { "id": "...", "name": "East Basin", "riskLevel": "CRITICAL", "population": 14200 },
+    "weather": { "dataQuality": "LIVE_OBSERVED", "temperatureC": 31.5, "modeledSeverity": "HIGH", "rainArrivalMinutes": 22 },
+    "airQuality": { "usAqi": 64, "category": "Moderate", "dataQuality": "LIVE_OBSERVED" },
+    "safety": { "level": "HIGH", "score": 74, "riskCount": 2 },
+    "corridorStatus": "CAUTION",
+    "hazards": [{ "type": "FLASH_FLOOD", "severity": "CRITICAL", "freshnessMinutes": 12, "dataQuality": "SYNTHETIC_DEMO" }],
+    "infrastructure": [{ "name": "St. Jude Regional Medical Center", "type": "HOSPITAL", "distanceKm": 0.8, "operationalStatus": "OPERATIONAL" }]
+  }
+}
+```
+
+### GET /api/citizen/alerts?latitude=&longitude=&radiusKm= — CITIZEN
+
+Computed advisories (worst-first) from active hazards + modeled live-weather severity + nearby road/bridge closures. No official IMD/CWC/DMA push feed is integrated. Each item: `{ id, category: FLOOD|HEAT|STORM|WEATHER|CORRIDOR, severity, title, description, source, dataQuality, issuedAt, freshnessMinutes, tags }`.
+
+### GET /api/citizen/hazards/:id — CITIZEN
+
+Raw measurements for the specific hazard record + a deterministic risk score / impacted roads & facilities / recommended actions **reused unmodified from the government cascade engine** (`getZoneCascade`) for that hazard's zone. `note` field honestly states the cascade reflects the zone's current most-severe active hazard (1:1 with the seed dataset; would need disambiguation if a zone ever has multiple concurrent active hazards).
+
+### POST /api/citizen/reports — CITIZEN (`multipart/form-data`)
+
+Fields: `category` (`FLASH_FLOOD|ROAD_BLOCKED|DOWNED_LINE|EXTREME_HEAT|WATER_MAIN|LANDSLIDE_MUD|STORM_DAMAGE|OTHER`), `description?`, `latitude`, `longitude`, `reportedSeverity?`, up to 3 files field `evidence` (jpg/png/webp, ≤5MB each). The zone is **derived server-side** via point-in-polygon — never trusted from the client. Auto-creates a linked `Incident` (status `NEW`, `dataQuality: ESTIMATED`) via the same `createIncident` used by government operators, so citizen reports enter the identical triage/dispatch workflow. Evidence is stored on local disk (`uploads/evidence/`) and served read-only at `/media/evidence/<file>`.
+
+```json
+{ "success": true, "data": { "reportCode": "CR-004", "status": "SUBMITTED", "incident": { "incidentCode": "INC-213", "status": "NEW" }, "evidence": [{ "url": "/media/evidence/<uuid>.jpg" }] } }
+```
+
+Errors: `422 LOCATION_OUTSIDE_COVERAGE` (point outside every known zone boundary) · `415 UNSUPPORTED_MEDIA_TYPE`.
+
+### GET /api/citizen/reports — CITIZEN
+
+Own reports only (ownership-scoped by `reporterId`), newest first.
+
+### GET /api/citizen/reports/:id — CITIZEN
+
+Own report detail + evidence. **404 on a foreign report id — no enumeration.**
+
+### POST /api/citizen/sos — CITIZEN
+
+Body: `{ latitude, longitude, primaryThreat: MEDICAL|FIRE_RESCUE|FLOOD_BOAT|HAZARD_GAS, peopleAffected?, note?, tags? }`. Always creates a **CRITICAL** linked `Incident` and notifies every `GOVERNMENT_OPERATOR`/`DISPATCHER`/`ADMIN` account via `Notification` (best-effort; a notification failure never blocks the SOS). Every response includes a `disclaimer`: **this is an internal ClimateShield alert only — it does NOT dial 911/112 or contact any external emergency service.**
+
+### GET /api/citizen/sos — CITIZEN
+
+Own SOS history only.
+
+### POST /api/citizen/routes/score — CITIZEN
+
+Stage F (§7, no routing engine built here — the client supplies candidate route geometries, e.g. from a free public router such as OSRM). Body: `{ routes: [{ label?, distanceMeters?, durationSeconds?, points: [{latitude, longitude}] (2-300 pts) }] }` (1-5 routes). Each candidate is deterministically scored against **real** backend data: active hazard zones (point-in-polygon) and non-operational roads/bridges (≤300m proximity on up to 40 evenly-sampled points per route). Returns per-route `riskScore` (0-100), `riskLevel`, `hazardZonesHit`, `blockedRoadsHit`, a plain-language `explanation`, and the backend's own `recommendedIndex` (lowest risk, tie-break shortest duration). The backend never invents route geometry — only risk.
+
+Errors common to all Citizen endpoints: `401 UNAUTHENTICATED` · `403 FORBIDDEN` (non-CITIZEN role) · `400 VALIDATION_ERROR`.
+
+---
+
 ## Reference — enums & policies
 
-**Roles**: `ADMIN` `GOVERNMENT_OPERATOR` `DISPATCHER` `FIELD_OPERATOR` `ANALYST`
+**Roles**: `ADMIN` `GOVERNMENT_OPERATOR` `DISPATCHER` `FIELD_OPERATOR` `ANALYST` `CITIZEN`
 **DepartmentType**: `PUBLIC_WORKS` `FIRE_RESCUE` `EMS` `POLICE` `UTILITIES` `WATER` `TRANSPORT` `EMERGENCY_MANAGEMENT`
 **AssetType**: `HOSPITAL` `SUBSTATION` `PUMPING_STATION` `ROAD` `BRIDGE` `EVACUATION_SHELTER` `COOLING_CENTER` `DRAIN` `WATER_TREATMENT` `GENERATOR` `FIRE_STATION` `AMBULANCE_GATE` `OTHER`
 **Criticality / Severity / RiskLevel**: `LOW` `MODERATE` `HIGH` `CRITICAL`
@@ -875,6 +940,10 @@ Errors: `400 VALIDATION_ERROR` · `401` · `502 WEATHER_PROVIDER_*` (when live w
 **Priority**: `LOW` `MEDIUM` `HIGH` `CRITICAL`
 **ScenarioType**: `ATMOSPHERIC_RIVER` `FLASH_FLOOD` `EXTREME_HEAT` `STORM` `CUSTOM`
 **CascadeImpactType**: `INUNDATED` `OVERWHELMED` `PUMP_FAILURE` `POWER_LOSS` `POWER_AT_RISK` `ON_BACKUP_POWER` `BACKUP_ENGAGED` `ACCESS_BLOCKED` `AMBULANCE_DELAYED` `THERMAL_OVERLOAD` `THERMAL_STRESS` `OVERCAPACITY` `DEGRADED`
+**CitizenReportCategory**: `FLASH_FLOOD` `ROAD_BLOCKED` `DOWNED_LINE` `EXTREME_HEAT` `WATER_MAIN` `LANDSLIDE_MUD` `STORM_DAMAGE` `OTHER`
+**CitizenReportStatus**: `SUBMITTED` `UNDER_REVIEW` `VERIFIED` `DISMISSED` `RESOLVED`
+**SosThreat**: `MEDICAL` `FIRE_RESCUE` `FLOOD_BOAT` `HAZARD_GAS`
+**SosStatus**: `OPEN` `ACKNOWLEDGED` `DISPATCHED` `RESOLVED` `CANCELLED`
 
 **SLA policy** (hours to resolve): CRITICAL 2 · HIGH 4 · MODERATE 8 · LOW 24.
 **Risk buckets**: ≥80 CRITICAL · ≥60 HIGH · ≥40 MODERATE · else LOW.

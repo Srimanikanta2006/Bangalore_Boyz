@@ -1,73 +1,108 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Header } from '../../components/stitch/Header';
 import { BottomNav } from '../../components/stitch/BottomNav';
 import { SosFab } from '../../components/stitch/SosFab';
 import { Mock } from '../../components/stitch/Mock';
-import { login } from '../../services/api';
+import { useAuth } from '../../auth/AuthContext';
+import { homeForRole } from '../../auth/types';
+import { ApiError, getAuthToken } from '../../lib/api';
 
 type RoleType = 'citizen' | 'government' | 'gov-field' | 'rescue';
 
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { login } = useAuth();
   const [selectedRole, setSelectedRole] = useState<RoleType>('citizen');
-  const [email, setEmail] = useState('citizen.active@climateshield.org');
-  const [password, setPassword] = useState('••••••••••••');
+  const [email, setEmail] = useState('citizen@climateshield.demo');
+  const [password, setPassword] = useState('DemoGov@2024');
   const [showPassword, setShowPassword] = useState(false);
-  const [authenticating, setAuthenticating] = useState(false);
-  const [authError, setAuthError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Prefill the Person 1 demo credentials when the Government role is selected
-  // (the operator can still edit them before signing in).
-  useEffect(() => {
-    if (selectedRole === 'government') {
-      setEmail('government@climateshield.demo');
-      setPassword('DemoGov@2024');
-      setAuthError(null);
-    }
-  }, [selectedRole]);
+  const roleTargets: Record<RoleType, string> = {
+    citizen: '/citizen/map',
+    government: '/gov/overview',
+    'gov-field': '/gov/mobile/map',
+    rescue: '/rescue/tactical',
+  };
 
-  const roleConfigs: Record<RoleType, { label: string; icon: string; target: string }> = {
+  const roleConfigs: Record<RoleType, { label: string; icon: string; demoEmail: string | null }> = {
     citizen: {
       label: 'Launch Citizen Experience',
       icon: 'shield',
-      target: '/citizen/map',
+      demoEmail: 'citizen@climateshield.demo',
     },
     government: {
       label: 'Enter Government HQ Console',
       icon: 'dashboard',
-      target: '/gov/overview',
+      demoEmail: 'government@climateshield.demo',
     },
     'gov-field': {
       label: 'Enter Government Mobile Field',
       icon: 'near_me',
-      target: '/gov/mobile/map',
+      demoEmail: 'field@climateshield.demo',
     },
     rescue: {
       label: 'Engage Tactical Rescue Mesh',
       icon: 'emergency_share',
-      target: '/rescue/tactical',
+      demoEmail: null, // offline P2P mesh, launches directly
     },
   };
 
+  // Selecting a role card prefills the matching demo account email & password.
+  const handleSelectRole = (role: RoleType) => {
+    setSelectedRole(role);
+    setError(null);
+    const demoEmail = roleConfigs[role].demoEmail;
+    if (demoEmail) {
+      setEmail(demoEmail);
+      setPassword('DemoGov@2024');
+    }
+  };
+
   const handleLaunch = async () => {
-    const target = roleConfigs[selectedRole].target;
-    // (a) Government role authenticates against the live backend and stores the
-    // JWT as 'cs_token'; other roles keep the existing preview navigation.
-    if (selectedRole === 'government') {
-      setAuthenticating(true);
-      setAuthError(null);
-      try {
-        await login(email, password);
-        navigate(target);
-      } catch (err) {
-        setAuthError(err instanceof Error ? err.message : 'Login failed');
-      } finally {
-        setAuthenticating(false);
-      }
+    if (submitting) return;
+    setError(null);
+
+    // Tactical rescue operates on P2P mesh network directly
+    if (selectedRole === 'rescue') {
+      navigate('/rescue/tactical');
       return;
     }
-    navigate(target);
+
+    if (!email.trim() || !password) {
+      setError('Enter your email and password to sign in.');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const user = await login(email.trim(), password);
+      // Synchronize both token storage keys so both RequireGovernmentLogin and RequireAuth are satisfied
+      const token = getAuthToken();
+      if (token && typeof window !== 'undefined') {
+        localStorage.setItem('cs_token', token);
+      }
+      // Prefer the originally-requested location when it matches the user's role.
+      const from = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname;
+      const target = from && user.role === 'CITIZEN' && from.startsWith('/citizen') ? from : homeForRole(user.role);
+      navigate(target, { replace: true });
+    } catch (err) {
+      const message =
+        err instanceof ApiError
+          ? err.code === 'INVALID_CREDENTIALS'
+            ? 'Invalid email or password.'
+            : err.message
+          : 'Sign in failed. Please check your network or use Direct Launch.';
+      setError(message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleBypass = () => {
+    navigate(roleTargets[selectedRole]);
   };
 
   return (
@@ -155,7 +190,13 @@ export const LoginPage: React.FC = () => {
                   placeholder="Enter operational passcode"
                   type={showPassword ? 'text' : 'password'}
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (error) setError(null);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleLaunch();
+                  }}
                 />
                 <button
                   className="absolute right-3 text-on-surface-variant flex items-center justify-center p-1"
@@ -169,23 +210,51 @@ export const LoginPage: React.FC = () => {
               </div>
             </div>
 
+            {/* Inline error */}
+            {error && (
+              <div
+                role="alert"
+                className="flex flex-col gap-2 rounded-lg bg-red-100 text-red-900 border border-red-300 p-3 font-body-sm text-body-sm"
+              >
+                <div className="flex items-start gap-2">
+                  <span className="material-symbols-outlined text-[18px] text-red-700 mt-px shrink-0">error</span>
+                  <span className="flex-1 font-medium">{error}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleBypass}
+                  className="self-start text-xs font-bold text-red-800 underline hover:text-red-950 flex items-center gap-1"
+                >
+                  <span>Skip authentication & enter as {roleConfigs[selectedRole].label}</span>
+                  <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
+                </button>
+              </div>
+            )}
+
             {/* Secondary Outline Action */}
             <button
               className="w-full h-10 mt-1 rounded-lg bg-surface-container text-on-surface font-body-md text-body-md font-semibold flex items-center justify-center gap-1.5 active:bg-surface-container-high transition-colors disabled:opacity-60"
               type="button"
               onClick={handleLaunch}
-              disabled={authenticating}
+              disabled={submitting}
             >
               <span className="material-symbols-outlined text-[18px]">login</span>
-              <span>{authenticating ? 'Authenticating…' : 'Verify & Sign In'}</span>
+              <span>{submitting ? 'Signing In…' : 'Verify & Sign In'}</span>
             </button>
 
-            {authError && (
-              <p className="font-body-sm text-body-sm text-error font-semibold flex items-center gap-1 mt-1">
-                <span className="material-symbols-outlined text-[16px]">error</span>
-                {authError}
-              </p>
-            )}
+            {/* Demo Credential Shortcut Bar */}
+            <div className="flex items-center justify-between text-xs text-on-surface-variant px-1 mt-0.5">
+              <span>Passcode: <code className="bg-surface-container-highest px-1.5 py-0.5 rounded font-mono text-[11px] font-bold text-on-surface">DemoGov@2024</code></span>
+              <button
+                type="button"
+                onClick={handleBypass}
+                className="font-semibold text-secondary hover:underline flex items-center gap-0.5"
+                title="Bypass login and open role dashboard"
+              >
+                <span>Direct Launch</span>
+                <span className="material-symbols-outlined text-[14px]">bolt</span>
+              </button>
+            </div>
           </div>
 
           {/* Role Selector Switch Section */}
@@ -215,7 +284,7 @@ export const LoginPage: React.FC = () => {
                     : 'bg-surface-container opacity-90'
                 }`}
                 data-role="citizen"
-                onClick={() => setSelectedRole('citizen')}
+                onClick={() => handleSelectRole('citizen')}
               >
                 <div
                   className={`role-icon-box w-10 h-10 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${
@@ -259,7 +328,7 @@ export const LoginPage: React.FC = () => {
                     : 'bg-surface-container opacity-90'
                 }`}
                 data-role="government"
-                onClick={() => setSelectedRole('government')}
+                onClick={() => handleSelectRole('government')}
               >
                 <div
                   className={`role-icon-box w-10 h-10 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${
@@ -303,7 +372,7 @@ export const LoginPage: React.FC = () => {
                     : 'bg-surface-container opacity-90'
                 }`}
                 data-role="gov-field"
-                onClick={() => setSelectedRole('gov-field')}
+                onClick={() => handleSelectRole('gov-field')}
               >
                 <div
                   className={`role-icon-box w-10 h-10 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${
@@ -347,7 +416,7 @@ export const LoginPage: React.FC = () => {
                     : 'bg-surface-container opacity-90'
                 }`}
                 data-role="rescue"
-                onClick={() => setSelectedRole('rescue')}
+                onClick={() => handleSelectRole('rescue')}
               >
                 <div
                   className={`role-icon-box w-10 h-10 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${
@@ -410,7 +479,7 @@ export const LoginPage: React.FC = () => {
               id="primary-launch-btn"
               type="button"
               onClick={handleLaunch}
-              disabled={authenticating}
+              disabled={submitting}
             >
               <span
                 className="material-symbols-outlined text-[20px]"
@@ -418,7 +487,7 @@ export const LoginPage: React.FC = () => {
               >
                 {roleConfigs[selectedRole].icon}
               </span>
-              <span id="btn-label-text">{roleConfigs[selectedRole].label}</span>
+              <span id="btn-label-text">{submitting ? 'Authenticating…' : roleConfigs[selectedRole].label}</span>
               <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
             </button>
             <div className="flex justify-center items-center gap-4 mt-2">

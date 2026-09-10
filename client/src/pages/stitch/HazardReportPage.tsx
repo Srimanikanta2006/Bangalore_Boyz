@@ -1,7 +1,10 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Header } from '../../components/stitch/Header';
-import { Mock } from '../../components/stitch/Mock';
+import { resolveCoords, type GeoState } from '../../citizen/geo';
+import { reverseGeocode } from '../../citizen/reverseGeocode';
+import { submitCitizenReport, type CitizenReportCategory } from '../../citizen/api';
+import { ApiError } from '../../lib/api';
 
 type HazardKey =
   | 'flash-flood'
@@ -12,6 +15,17 @@ type HazardKey =
   | 'landslide'
   | 'storm-damage'
   | 'other';
+
+const HAZARD_TO_CATEGORY: Record<HazardKey, CitizenReportCategory> = {
+  'flash-flood': 'FLASH_FLOOD',
+  'road-blocked': 'ROAD_BLOCKED',
+  'power-line': 'DOWNED_LINE',
+  'extreme-heat': 'EXTREME_HEAT',
+  'water-main': 'WATER_MAIN',
+  landslide: 'LANDSLIDE_MUD',
+  'storm-damage': 'STORM_DAMAGE',
+  other: 'OTHER',
+};
 
 interface HazardOption {
   key: HazardKey;
@@ -84,22 +98,71 @@ export const HazardReportPage: React.FC = () => {
   const navigate = useNavigate();
 
   const [selectedHazard, setSelectedHazard] = useState<HazardKey>('flash-flood');
-  const [description, setDescription] = useState(
-    'Standing water ~14 inches deep across north lane. Drainage backed up with floating organic debris.'
-  );
+  const [description, setDescription] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
-  const [attachedImage, setAttachedImage] = useState(true);
+  const [submittedCode, setSubmittedCode] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [photo, setPhoto] = useState<File | null>(null);
+  const [photoPreviewUrl, setPhotoPreviewUrl] = useState<string | null>(null);
 
-  const handleSubmit = () => {
+  const [coords, setCoords] = useState<GeoState | null>(null);
+  const [address, setAddress] = useState<string | null>(null);
+  const [locating, setLocating] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    const controller = new AbortController();
+    (async () => {
+      const geo = await resolveCoords();
+      if (cancelled) return;
+      setCoords(geo);
+      setLocating(false);
+      const addr = await reverseGeocode(geo.latitude, geo.longitude, controller.signal);
+      if (!cancelled) setAddress(addr);
+    })();
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!photo) {
+      setPhotoPreviewUrl(null);
+      return;
+    }
+    const url = URL.createObjectURL(photo);
+    setPhotoPreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [photo]);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPhoto(e.target.files?.[0] ?? null);
+  };
+
+  const handleSubmit = async () => {
+    if (!coords || submitting) return;
     setSubmitting(true);
-    setTimeout(() => {
+    setSubmitError(null);
+    try {
+      const report = await submitCitizenReport({
+        category: HAZARD_TO_CATEGORY[selectedHazard],
+        description: description.trim() || undefined,
+        latitude: coords.latitude,
+        longitude: coords.longitude,
+        files: photo ? [photo] : [],
+      });
+      setSubmittedCode(report.reportCode);
+      setTimeout(() => navigate('/citizen/map'), 1800);
+    } catch (err) {
+      setSubmitError(
+        err instanceof ApiError && err.code === 'LOCATION_OUTSIDE_COVERAGE'
+          ? 'Your location is outside the monitored coverage area.'
+          : 'Failed to submit report. Please try again.',
+      );
+    } finally {
       setSubmitting(false);
-      setSubmitted(true);
-      setTimeout(() => {
-        navigate('/citizen/map');
-      }, 1500);
-    }, 1200);
+    }
   };
 
   return (
@@ -125,7 +188,7 @@ export const HazardReportPage: React.FC = () => {
             </div>
             <div className="flex items-center gap-1.5 px-space-xs py-0.5 rounded-full bg-surface-container-high text-on-surface-variant font-code-sm text-code-sm">
               <span className="material-symbols-outlined text-[14px]">satellite_alt</span>
-              <span>GPS High-Precision</span>
+              <span>{coords?.usingFallback ? 'GPS Unavailable (Demo Location)' : 'GPS Active'}</span>
             </div>
           </div>
 
@@ -139,24 +202,17 @@ export const HazardReportPage: React.FC = () => {
                 <div className="flex flex-col min-w-0">
                   <div className="flex items-center gap-1.5 flex-wrap">
                     <span className="font-title-lg text-title-lg text-on-surface font-bold truncate">
-                      <Mock label="Location">Bayshore Blvd &amp; 4th St</Mock>
+                      {locating ? 'Locating…' : address ?? (coords ? `${coords.latitude.toFixed(5)}, ${coords.longitude.toFixed(5)}` : 'Unknown')}
                     </span>
                     <span className="px-2 py-0.5 rounded-full bg-surface-container-high text-on-surface text-label-sm font-label-sm">
-                      GPS Pinned
+                      {coords?.usingFallback ? 'Demo Pin' : 'GPS Pinned'}
                     </span>
                   </div>
                   <p className="font-body-sm text-body-sm text-on-surface-variant mt-0.5">
-                    Tampa Bay Coastal Sector • Accuracy ±3m
+                    {coords ? `${coords.latitude.toFixed(5)}, ${coords.longitude.toFixed(5)}` : '—'}
                   </p>
                 </div>
               </div>
-              <button
-                aria-label="Recalibrate GPS"
-                className="p-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors shrink-0"
-                type="button"
-              >
-                <span className="material-symbols-outlined text-[18px]">my_location</span>
-              </button>
             </div>
           </div>
 
@@ -231,36 +287,29 @@ export const HazardReportPage: React.FC = () => {
           <div className="flex items-baseline justify-between mb-space-xs">
             <h2 className="font-headline-md text-headline-md text-on-surface font-bold">Visual Telemetry</h2>
             <span className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">
-              {attachedImage ? '1 file attached' : '0 files attached'}
+              {photo ? '1 file attached' : '0 files attached'}
             </span>
           </div>
 
           <div className="flex flex-col gap-space-xs mb-space-lg">
             <div className="grid grid-cols-2 gap-space-xs">
               {/* Attached Preview Thumbnail */}
-              {attachedImage && (
+              {photo && photoPreviewUrl && (
                 <div className="relative h-32 rounded-xl overflow-hidden shadow-sm bg-surface-container">
-                  <img
-                    className="w-full h-full object-cover"
-                    alt="A ground-level mobile photograph showing urban flash flooding"
-                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuBnGTttCC3z4E2rK7cVF3S2HzTqliUTLVfEdlmLWSOVh4fcblt9stWJH_etFG7eZ49tjdI-o696NTnpi3ntLtZBhq_XinyyQqZ80FiVOgNKKzFrSHhNb6H1fm3656-fbYbH7SyV98bwtZ467oK0ANJ4csVryFYAsoLMUIQlg_Ev6L-cZ1xQiBkJJTq_qvkWXce1YVlu-DV2Yt77pK_MauJnLb3NnqmHkS_vKE_8t6h9s52vc6lqpo9U"
-                  />
+                  <img className="w-full h-full object-cover" alt="Attached hazard evidence" src={photoPreviewUrl} />
                   <div className="absolute inset-0 bg-gradient-to-t from-primary/80 via-transparent to-transparent"></div>
                   <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between">
-                    <span className="font-label-sm text-label-sm text-on-primary font-bold drop-shadow">
-                      IMG_9402.JPG
+                    <span className="font-label-sm text-label-sm text-on-primary font-bold drop-shadow truncate">
+                      {photo.name}
                     </span>
                     <button
                       aria-label="Remove photo"
-                      className="w-6 h-6 rounded-full bg-inverse-surface/80 text-on-primary flex items-center justify-center hover:bg-error transition-colors"
+                      className="w-6 h-6 rounded-full bg-inverse-surface/80 text-on-primary flex items-center justify-center hover:bg-error transition-colors shrink-0"
                       type="button"
-                      onClick={() => setAttachedImage(false)}
+                      onClick={() => setPhoto(null)}
                     >
                       <span className="material-symbols-outlined text-[14px]">close</span>
                     </button>
-                  </div>
-                  <div className="absolute top-2 left-2 px-1.5 py-0.5 rounded bg-surface-container-lowest/90 backdrop-blur-sm text-on-surface font-code-sm text-code-sm font-semibold">
-                    14:28:02
                   </div>
                 </div>
               )}
@@ -268,18 +317,18 @@ export const HazardReportPage: React.FC = () => {
               {/* Add Media Slot */}
               <label className="h-32 flex flex-col items-center justify-center p-space-sm rounded-xl bg-surface-container-lowest shadow-sm cursor-pointer hover:bg-surface-container-low transition-colors text-center relative">
                 <input
-                  accept="image/*,video/*"
+                  accept="image/jpeg,image/png,image/webp"
                   capture="environment"
                   className="sr-only"
                   type="file"
-                  onChange={() => setAttachedImage(true)}
+                  onChange={handleFileChange}
                 />
                 <div className="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-secondary mb-1.5">
                   <span className="material-symbols-outlined text-[22px]">add_a_photo</span>
                 </div>
-                <span className="font-title-lg text-title-lg text-on-surface font-bold text-xs">Attach Media</span>
+                <span className="font-title-lg text-title-lg text-on-surface font-bold text-xs">Attach Photo</span>
                 <span className="font-body-sm text-body-sm text-on-surface-variant text-[11px] mt-0.5">
-                  Photo or 10s video
+                  jpg, png or webp · max 5MB
                 </span>
               </label>
             </div>
@@ -301,59 +350,35 @@ export const HazardReportPage: React.FC = () => {
               id="hazardDescription"
               placeholder="Add context (e.g. water height above sidewalk, electrical arcing, impassable for passenger vehicles)..."
               rows={3}
+              maxLength={2000}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
             />
-            <div className="flex items-center justify-between pt-space-xs mt-space-2xs">
-              <div className="flex items-center gap-1 text-on-surface-variant font-code-sm text-code-sm">
-                <span className="material-symbols-outlined text-[14px]">mic</span>
-                <span>Voice dictation ready</span>
-              </div>
+            <div className="flex items-center justify-end pt-space-xs mt-space-2xs">
               <span className="font-label-sm text-label-sm text-on-surface-variant">
-                {description.length} / 280
+                {description.length} / 2000
               </span>
             </div>
           </div>
 
-          {/* Live Sensor Baseline Card */}
-          <div className="w-full bg-surface-container-lowest rounded-xl p-space-md shadow-sm mb-space-xl">
-            <div className="flex items-center justify-between mb-space-xs">
-              <div className="flex items-center gap-space-2xs">
-                <span className="material-symbols-outlined text-secondary text-[18px]">waves</span>
-                <span className="font-label-md text-label-md text-on-surface font-bold">
-                  <Mock label="Sensor Name">Nearby Hydro-Gauge #44B</Mock>
-                </span>
-              </div>
-              <span className="px-2 py-0.5 rounded-full bg-error-container text-on-error-container font-label-sm text-label-sm font-bold">
-                Surge Spike
-              </span>
+          {/* Submission error */}
+          {submitError && (
+            <div role="alert" className="mb-space-md rounded-xl bg-error-container/60 text-on-error-container px-space-sm py-space-xs flex items-center gap-2">
+              <span className="material-symbols-outlined text-[18px]">error</span>
+              <span className="font-body-sm text-body-sm">{submitError}</span>
             </div>
-            <div className="grid grid-cols-2 gap-space-sm">
-              <div className="bg-surface-container-low p-space-xs rounded-lg">
-                <span className="font-label-sm text-label-sm text-on-surface-variant block">Water Crest Level</span>
-                <span className="font-data-metric-md text-data-metric-md text-on-surface font-bold">
-                  <Mock label="Sensor Crest">+2.4 ft</Mock>
-                </span>
-              </div>
-              <div className="bg-surface-container-low p-space-xs rounded-lg">
-                <span className="font-label-sm text-label-sm text-on-surface-variant block">Rate of Influx</span>
-                <span className="font-data-metric-md text-data-metric-md text-on-surface font-bold">
-                  <Mock label="Sensor Influx">+0.8 in/m</Mock>
-                </span>
-              </div>
-            </div>
-          </div>
+          )}
 
           {/* Sticky Bottom Operational CTA Container */}
           <div className="sticky bottom-0 w-full pt-space-xs pb-safe bg-surface/90 backdrop-blur-md mt-auto">
             <div className="p-space-xs bg-surface-container-lowest rounded-xl shadow-lg">
               <button
-                className={`w-full h-12 rounded-lg font-body-md text-body-md font-bold flex items-center justify-center gap-space-xs transition-colors shadow-sm active:scale-[0.99] ${
-                  submitted
+                className={`w-full h-12 rounded-lg font-body-md text-body-md font-bold flex items-center justify-center gap-space-xs transition-colors shadow-sm active:scale-[0.99] disabled:opacity-60 ${
+                  submittedCode
                     ? 'bg-secondary text-on-secondary'
                     : 'bg-primary hover:bg-[#1E293B] text-on-primary'
                 }`}
-                disabled={submitting}
+                disabled={submitting || locating || !!submittedCode}
                 id="submitReportBtn"
                 type="button"
                 onClick={handleSubmit}
@@ -361,12 +386,12 @@ export const HazardReportPage: React.FC = () => {
                 {submitting ? (
                   <>
                     <span className="material-symbols-outlined text-[20px] animate-spin">progress_activity</span>
-                    <span>Encrypting &amp; Routing...</span>
+                    <span>Submitting…</span>
                   </>
-                ) : submitted ? (
+                ) : submittedCode ? (
                   <>
                     <span className="material-symbols-outlined text-[20px]">check_circle</span>
-                    <span>Report Transmitted #8841</span>
+                    <span>Report Submitted {submittedCode}</span>
                   </>
                 ) : (
                   <>
@@ -376,7 +401,7 @@ export const HazardReportPage: React.FC = () => {
                 )}
               </button>
               <p className="text-center font-label-sm text-label-sm text-on-surface-variant mt-1.5 pb-0.5">
-                Dispatches real-time packet to Emergency Ops Center (EOC-9)
+                Creates a tracked incident for operator review (ClimateShield Ops Center)
               </p>
             </div>
           </div>

@@ -14,6 +14,8 @@ This document defines the interface specifications between system components (Fr
 
 ## Endpoint Specifications
 
+> **Note:** The canonical, up-to-date REST API contract for `cline_backend` (all government, rescue, and citizen endpoints, request/response shapes, error codes, and data-quality semantics) lives at [`cline_backend/docs/API.md`](../cline_backend/docs/API.md). That file is the source of truth for endpoint contracts; this file stays as the high-level index and agent-output schema reference.
+
 ### Status & Health Check
 * **STATUS**: [UNDECIDED - To be updated when backend endpoints are created]
 
