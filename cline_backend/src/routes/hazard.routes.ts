@@ -35,6 +35,7 @@ const createHazardSchema = z.object({
 
 router.get('/hazards', authenticate, validate(hazardQuerySchema, 'query'), hazardController.list);
 router.get('/hazards/:id', authenticate, hazardController.get);
+router.get('/hazards/:id/cap.xml', authenticate, requireRole(...GOVERNMENT_ROLES), hazardController.capXml);
 router.post('/hazards', authenticate, requireRole(...GOVERNMENT_ROLES), validate(createHazardSchema), hazardController.create);
 
 export default router;

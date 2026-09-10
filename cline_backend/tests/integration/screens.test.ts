@@ -250,6 +250,20 @@ describe.skipIf(!ready)('government screens (infrastructure, zones, map, analyti
     expect(res.body.data.items.length).toBe(4);
   });
 
+  it('hazards: CAP 1.2 XML export is well-formed and government-only', async () => {
+    const list = await request(app).get('/api/hazards?activeOnly=true').set(auth(govToken));
+    const hazardId = list.body.data.items[0].id;
+
+    const res = await request(app).get(`/api/hazards/${hazardId}/cap.xml`).set(auth(govToken));
+    expect(res.status).toBe(200);
+    expect(res.headers['content-type']).toContain('application/cap+xml');
+    expect(res.text).toContain('urn:oasis:names:tc:emergency:cap:1.2');
+    expect(res.text).toContain('<status>Exercise</status>');
+
+    const denied = await request(app).get(`/api/hazards/${hazardId}/cap.xml`).set(auth(fieldToken));
+    expect(denied.status).toBe(403);
+  });
+
   it('audit: FIELD_OPERATOR cannot read the audit trail (403)', async () => {
     const res = await request(app).get('/api/audit').set(auth(fieldToken));
     expect(res.status).toBe(403);

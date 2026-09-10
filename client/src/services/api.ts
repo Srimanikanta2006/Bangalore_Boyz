@@ -285,6 +285,30 @@ export async function fetchDisasterIntelligence(): Promise<{ hudhud2014: HudhudC
   return requestEnvelope<{ hudhud2014: HudhudCaseStudy }>('/analytics/disaster-intelligence');
 }
 
+export interface ActiveHazard {
+  id: string; type: string; severity: string; status: string; zone: { id: string; name: string; code: string } | null;
+}
+export async function fetchActiveHazards(): Promise<{ items: ActiveHazard[] }> {
+  return requestEnvelope<{ items: ActiveHazard[] }>('/hazards?activeOnly=true&limit=10');
+}
+
+/** Downloads a Hazard as a valid CAP 1.2 XML file (protocol-compatibility export, see
+ *  cline_backend/src/services/capExport.service.ts). Uses fetch (not a plain <a href>)
+ *  because auth is a Bearer header, not a cookie. */
+export async function downloadHazardCapXml(hazardId: string): Promise<void> {
+  const res = await apiFetch(`${API_BASE}/hazards/${hazardId}/cap.xml`);
+  if (!res.ok) throw new Error(`Failed to export CAP XML (${res.status})`);
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `climateshield-cap-alert-${hazardId}.xml`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
 export interface LiveWeather {
   provider: string;
   dataQuality: 'LIVE_OBSERVED' | 'FORECAST';

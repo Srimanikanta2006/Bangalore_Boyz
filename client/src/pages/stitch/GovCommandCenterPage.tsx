@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { GovHqLayout } from '../../components/stitch/GovHqLayout';
 import {
   fetchGovernmentOverview, fetchLiveWeather, fetchLocationOverview, fetchDisasterIntelligence,
-  type LiveWeather, type LocationOverview, type HudhudCaseStudy,
+  fetchActiveHazards, downloadHazardCapXml,
+  type LiveWeather, type LocationOverview, type HudhudCaseStudy, type ActiveHazard,
 } from '../../services/api';
 import { useOperatorLocation } from '../../hooks/useOperatorLocation';
 import { 
@@ -25,13 +26,22 @@ export const GovCommandCenterPage: React.FC = () => {
   const [liveError, setLiveError] = useState<string | null>(null);
   const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null);
   const [hudhud, setHudhud] = useState<HudhudCaseStudy | null>(null);
+  const [activeHazards, setActiveHazards] = useState<ActiveHazard[]>([]);
+  const [capExporting, setCapExporting] = useState<string | null>(null);
 
   // Static, fully-cited regional reference (not live, not polled) — fetched once.
   useEffect(() => {
     let active = true;
     fetchDisasterIntelligence().then((data) => { if (active) setHudhud(data.hudhud2014); }).catch(() => {});
+    fetchActiveHazards().then((data) => { if (active) setActiveHazards(data.items); }).catch(() => {});
     return () => { active = false; };
   }, []);
+
+  const handleCapExport = async (hazardId: string) => {
+    setCapExporting(hazardId);
+    try { await downloadHazardCapXml(hazardId); } catch { /* non-critical export, fail silently */ }
+    setCapExporting(null);
+  };
 
   // PostgreSQL operational state refreshes every 15s. Provider weather + the
   // location overview (live weather + nearby assets + weather-derived risk for
@@ -432,6 +442,36 @@ export const GovCommandCenterPage: React.FC = () => {
               <div className="mt-3 flex flex-wrap gap-3 text-[10px] text-[#76777d]">
                 {hudhud.citations.map((c) => (
                   <a key={c.url} href={c.url} target="_blank" rel="noreferrer" className="underline hover:text-[#0051d5]">{c.label}</a>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* CAP 1.2 XML export: real, protocol-compatible alert export for each active DB
+              hazard (demonstrates compatibility with India's national CAP dissemination
+              chain — status is always "Exercise", never claims to be an official alert). */}
+          {activeHazards.length > 0 && (
+            <div className="rounded-2xl bg-white p-5 shadow-sm border border-[#e5eeff]">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-[10px] uppercase font-bold text-[#76777d] tracking-wider">Active Hazards — CAP 1.2 Alert Export</span>
+                <span className="px-2 py-0.5 rounded-full bg-[#eff4ff] text-[#0051d5] text-[10px] font-bold">Protocol-compatibility demo</span>
+              </div>
+              <div className="flex flex-col gap-2">
+                {activeHazards.map((h) => (
+                  <div key={h.id} className="flex items-center justify-between p-2.5 rounded-lg bg-[#eff4ff] text-xs">
+                    <div>
+                      <span className="font-bold text-[#0b1c30]">{h.type.replace(/_/g, ' ')}</span>
+                      <span className="text-[#76777d] ml-2">{h.zone?.name ?? '—'} · {h.severity}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleCapExport(h.id)}
+                      disabled={capExporting === h.id}
+                      className="px-2.5 py-1 rounded-lg bg-white border border-[#d3e4fe] text-[#0051d5] font-semibold hover:bg-[#e5eeff] disabled:opacity-50"
+                    >
+                      {capExporting === h.id ? 'Exporting…' : 'Download CAP XML'}
+                    </button>
+                  </div>
                 ))}
               </div>
             </div>
