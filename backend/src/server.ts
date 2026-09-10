@@ -37,7 +37,7 @@ function snapshotPayload(snapshot: NonNullable<ReturnType<typeof getSnapshot>>) 
 }
 
 const server = createServer(async (req, res) => {
-  const url = new URL(req.url ?? "/", http://localhost:);
+  const url = new URL(req.url ?? "/", `http://localhost:${PORT}`);
 
   if (req.method === "OPTIONS") {
     json(res, 204, {});
@@ -46,7 +46,7 @@ const server = createServer(async (req, res) => {
 
   try {
     if (req.method === "GET" && url.pathname === "/health") {
-      json(res, 200, { ok: true, role: "person-2-engine" });
+      json(res, 200, { ok: true, role: "climateshield-engine" });
       return;
     }
 
@@ -61,7 +61,7 @@ const server = createServer(async (req, res) => {
 
     if (req.method === "POST" && url.pathname === "/api/hazard/simulate") {
       const raw = await readBody(req);
-      const body = raw ? JSON.parse(raw) as { rainfallMmPerHour?: number } : {};
+      const body = raw ? (JSON.parse(raw) as { rainfallMmPerHour?: number }) : {};
       const rainfall = body.rainfallMmPerHour;
       if (typeof rainfall !== "number") {
         json(res, 400, { error: "rainfallMmPerHour must be a number" });
@@ -91,7 +91,7 @@ const server = createServer(async (req, res) => {
     if (req.method === "GET" && cascadeMatch) {
       const event = getCascade(cascadeMatch[1]);
       if (!event) {
-        json(res, 404, { error: Unknown cascade  });
+        json(res, 404, { error: `Unknown cascade ${cascadeMatch[1]}` });
         return;
       }
       json(res, 200, event);
@@ -108,24 +108,29 @@ const server = createServer(async (req, res) => {
       return;
     }
 
-    // POST /api/explain — runs ExplainRequest through Gemini (with deterministic fallback)
-    // Requires a prior POST /api/hazard/simulate to have been called first.
-    // Optional body: { "rainfallMmPerHour": number } to trigger a fresh simulation first.
+    // POST /api/explain - runs ExplainRequest through Gemini (with deterministic fallback)
+    // Requires a prior POST /api/hazard/simulate to have been called first, or passes rainfall in body.
     if (req.method === "POST" && url.pathname === "/api/explain") {
       const raw = await readBody(req);
       let snapshot = getSnapshot();
 
-      // Allow triggering a fresh simulation in the same request
+      // Allow triggering a fresh simulation in the same request if rainfall provided
       if (raw) {
-        const body = JSON.parse(raw) as { rainfallMmPerHour?: number };
-        if (typeof body.rainfallMmPerHour === "number") {
-          snapshot = simulateHazard(body.rainfallMmPerHour);
-          saveSnapshot(snapshot);
+        try {
+          const body = JSON.parse(raw) as { rainfallMmPerHour?: number };
+          if (typeof body.rainfallMmPerHour === "number") {
+            snapshot = simulateHazard(body.rainfallMmPerHour);
+            saveSnapshot(snapshot);
+          }
+        } catch {
+          // ignore malformed body if not json
         }
       }
 
       if (!snapshot) {
-        json(res, 404, { error: "No simulation yet. POST /api/hazard/simulate first, or pass rainfallMmPerHour in this request body." });
+        json(res, 404, {
+          error: "No simulation yet. POST /api/hazard/simulate first, or pass rainfallMmPerHour in this request body.",
+        });
         return;
       }
 
@@ -150,7 +155,7 @@ const server = createServer(async (req, res) => {
       const risks = snapshot?.risks ?? [];
       const route = findSafeRoute(PILOT_GRAPH, risks, from, to);
       if (!route) {
-        json(res, 404, { error: No route from  to  });
+        json(res, 404, { error: `No route from ${from} to ${to}` });
         return;
       }
       saveRoute(route);
@@ -165,5 +170,5 @@ const server = createServer(async (req, res) => {
 });
 
 server.listen(PORT, () => {
-  console.log(ClimateShield Person 2 engine listening on http://localhost:);
+  console.log(`ClimateShield engine listening on http://localhost:${PORT}`);
 });

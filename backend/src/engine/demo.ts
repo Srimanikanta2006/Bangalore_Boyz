@@ -10,7 +10,7 @@ const explainRequest = toExplainRequest(snapshot, PILOT_GRAPH);
 const route = findSafeRoute(PILOT_GRAPH, snapshot.risks, "ST01", "H01");
 
 console.log("================================================================================");
-console.log("CLIMATESHIELD PERSON 2 — RISK / CASCADE / ROUTE ENGINE");
+console.log("CLIMATESHIELD PERSON 2 - RISK / CASCADE / ROUTE ENGINE");
 console.log("================================================================================");
 console.log(`Incident: ${snapshot.incidentId}`);
 console.log(`Hazard: ${snapshot.hazard.type} | ${snapshot.hazard.rainfallMmPerHour} mm/hr | source=${snapshot.hazard.source}`);
@@ -36,8 +36,8 @@ console.log("PERSON 4 EXPLAIN PAYLOAD:");
 console.log(JSON.stringify(explainRequest, null, 2));
 console.log("================================================================================");
 
-// ── AI EXPLANATION LAYER ──────────────────────────────────────────────────────
-console.log("\n⚡ PASSING TO GEMINI AI LAYER...\n");
+// AI EXPLANATION LAYER
+console.log("\nPASSING TO GEMINI AI LAYER...\n");
 
 const result = await explainWithGeminiOrFallback(explainRequest);
 const resp = result.response;
@@ -48,6 +48,7 @@ console.log("===================================================================
 console.log(`Provider: ${result.usedFallback ? "Deterministic Fallback" : "Gemini"}`);
 if (result.modelUsed) console.log(`Model: ${result.modelUsed}`);
 if (result.fallbackReason) console.log(`Fallback Reason: ${result.fallbackReason}`);
+if (result.errorDetails) console.log(`Details: ${result.errorDetails}`);
 console.log(`Incident ID: ${resp.incidentId} | Confidence: ${(resp.confidence * 100).toFixed(0)}%`);
 console.log("--------------------------------------------------------------------------------");
 console.log(`\nSITUATION SUMMARY:\n${resp.situationSummary}\n`);

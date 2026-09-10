@@ -1,4 +1,4 @@
-import type {
+﻿import type {
   ActionDependency,
   AffectedAsset,
   CausalChain,
@@ -216,8 +216,8 @@ export function buildFallbackExplanation(request: ExplainRequest): ExplainRespon
 
   // Backward compatibility strings
   const chainText = chains.length > 0
-    ? chains.map((c) => `${c.path.join(" → ")}${c.etaMinutes ? ` (${c.etaMinutes}m)` : ""}`).join("; ")
-    : assets.map((a) => a.name).join(" → ");
+    ? chains.map((c) => `${c.path.join(" -> ")}${c.etaMinutes ? ` (${c.etaMinutes}m)` : ""}`).join("; ")
+    : assets.map((a) => a.name).join(" -> ");
 
   const explanation = `${situationSummary} Competing cascade paths: ${chainText}. Verified evidence: ${request.evidence.join("; ")}.`;
   const impactSummary = keyImpacts.map((k) => `${k.assetName}: ${k.description}`).join(" | ");

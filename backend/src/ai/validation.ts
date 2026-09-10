@@ -1,4 +1,4 @@
-import { isAllowedActionPriority, isValidAction } from "./actionCatalog.ts";
+﻿import { isAllowedActionPriority, isValidAction } from "./actionCatalog.ts";
 import type {
   ActionDependency,
   AffectedAsset,
@@ -206,6 +206,35 @@ function validateUncertaintiesList(value: unknown, errors: string[]): Uncertaint
   return items;
 }
 
+function validateDataFreshnessList(value: unknown, errors: string[]): DataFreshnessItem[] {
+  if (!Array.isArray(value)) {
+    errors.push("dataFreshness must be an array.");
+    return [];
+  }
+  const items: DataFreshnessItem[] = [];
+  const allowedStatuses = ["fresh", "stale", "unconfirmed"];
+  value.forEach((item, index) => {
+    if (!isRecord(item)) {
+      errors.push(`dataFreshness[${index}] must be an object.`);
+      return;
+    }
+    if (!isNonEmptyString(item.source)) errors.push(`dataFreshness[${index}].source must be a non-empty string.`);
+    if (typeof item.status !== "string" || !allowedStatuses.includes(item.status)) {
+      errors.push(`dataFreshness[${index}].status must be one of: fresh, stale, unconfirmed.`);
+    }
+
+    if (isNonEmptyString(item.source) && typeof item.status === "string" && allowedStatuses.includes(item.status)) {
+      const freshness: DataFreshnessItem = {
+        source: item.source,
+        status: item.status as "fresh" | "stale" | "unconfirmed",
+      };
+      if (typeof item.timestamp === "string") freshness.timestamp = item.timestamp;
+      items.push(freshness);
+    }
+  });
+  return items;
+}
+
 function validateRoleSpecificBriefingsObj(value: unknown, errors: string[]): RoleSpecificBriefings | undefined {
   if (!isRecord(value)) {
     errors.push("roleSpecificBriefings must be an object.");
@@ -301,6 +330,11 @@ export function validateExplainRequest(input: unknown): ValidationResult<Explain
     uncertaintiesList = validateUncertaintiesList(input.uncertainties, errors);
   }
 
+  let dataFreshnessList = undefined;
+  if (input.dataFreshness !== undefined) {
+    dataFreshnessList = validateDataFreshnessList(input.dataFreshness, errors);
+  }
+
   if (errors.length > 0 || !hazard || !risk || !affectedAssets) {
     return { success: false, errors };
   }
@@ -315,12 +349,12 @@ export function validateExplainRequest(input: unknown): ValidationResult<Explain
   if (cascadeObj) req.cascade = cascadeObj;
   if (causalChainsList) req.causalChains = causalChainsList;
   if (uncertaintiesList) req.uncertainties = uncertaintiesList;
-  if (Array.isArray(input.dataFreshness)) req.dataFreshness = input.dataFreshness as DataFreshnessItem[];
+  if (dataFreshnessList) req.dataFreshness = dataFreshnessList;
 
   return { success: true, data: req };
 }
 
-/** Validates untrusted model output before it is displayed or handed to P1. */
+/** Validates untrusted model output before it is displayed or handed to operator/P1. */
 export function validateRecommendedActions(input: unknown): ValidationResult<RecommendedAction[]> {
   if (!Array.isArray(input)) return { success: false, errors: ["recommendedActions must be an array."] };
 
@@ -382,6 +416,7 @@ export function validateExplainResponse(input: unknown): ValidationResult<Explai
   const keyImpacts = validateKeyImpactsList(input.keyImpacts ?? [], errors);
   const actionDependencies = validateActionDependenciesList(input.actionDependencies ?? [], errors);
   const uncertainties = validateUncertaintiesList(input.uncertainties ?? [], errors);
+  const dataFreshness = validateDataFreshnessList(input.dataFreshness ?? [], errors);
   const roleSpecificBriefings = validateRoleSpecificBriefingsObj(input.roleSpecificBriefings, errors);
 
   if (errors.length || !actions.success || !situationSummary || !roleSpecificBriefings) {
@@ -403,7 +438,7 @@ export function validateExplainResponse(input: unknown): ValidationResult<Explai
       recommendedActions: actions.data,
       actionDependencies,
       uncertainties,
-      dataFreshness: Array.isArray(input.dataFreshness) ? (input.dataFreshness as DataFreshnessItem[]) : [],
+      dataFreshness,
       roleSpecificBriefings,
       confidence: input.confidence as number,
       explanation,
