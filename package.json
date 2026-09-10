@@ -5,6 +5,7 @@
   "description": "ClimateShield - Urban Climate Risk, Heat & Flood Resilience Platform",
   "scripts": {
     "dev": "npm --prefix client run dev",
+    "dev:backend": "npm --prefix cline_backend run dev",
     "dev:server": "npm --prefix server run dev",
     "dev:client": "npm --prefix client run dev",
     "build": "npm --prefix server run build && npm --prefix client run build",

@@ -36,6 +36,12 @@ import { GovResponseCenterPage } from './pages/stitch/GovResponseCenterPage';
 // Navigation & Screen Switcher
 import { ScreenSwitcher } from './components/stitch/ScreenSwitcher';
 
+// Auth
+import { RequireAuth } from './auth/RequireAuth';
+
+/** Wraps a citizen page in the CITIZEN-only route guard. */
+const Citizen = (element: React.ReactNode) => <RequireAuth roles={['CITIZEN']}>{element}</RequireAuth>;
+
 export const App: React.FC = () => {
   return (
     <BrowserRouter>
@@ -49,14 +55,14 @@ export const App: React.FC = () => {
         {/* 1. Shared Gateway */}
         <Route path="/login" element={<LoginPage />} />
 
-        {/* 2. Citizen Experience Routes */}
-        <Route path="/citizen/map" element={<CitizenMapPage />} />
-        <Route path="/citizen/alerts" element={<AlertsFeedPage />} />
-        <Route path="/citizen/hazard/:id" element={<CitizenFloodSheetPage />} />
-        <Route path="/citizen/routes" element={<CitizenRouteSelectPage />} />
-        <Route path="/citizen/navigate" element={<CitizenActiveNavPage />} />
-        <Route path="/citizen/sos" element={<SosEmergencyPage />} />
-        <Route path="/citizen/report" element={<HazardReportPage />} />
+        {/* 2. Citizen Experience Routes (CITIZEN-only, JWT-guarded) */}
+        <Route path="/citizen/map" element={Citizen(<CitizenMapPage />)} />
+        <Route path="/citizen/alerts" element={Citizen(<AlertsFeedPage />)} />
+        <Route path="/citizen/hazard/:id" element={Citizen(<CitizenFloodSheetPage />)} />
+        <Route path="/citizen/routes" element={Citizen(<CitizenRouteSelectPage />)} />
+        <Route path="/citizen/navigate" element={Citizen(<CitizenActiveNavPage />)} />
+        <Route path="/citizen/sos" element={Citizen(<SosEmergencyPage />)} />
+        <Route path="/citizen/report" element={Citizen(<HazardReportPage />)} />
 
         {/* 3. Rescue Tactical Routes */}
         <Route path="/rescue/tactical" element={<RescueTacticalMapPage />} />

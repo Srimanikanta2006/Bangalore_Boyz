@@ -1,18 +1,104 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Header } from '../../components/stitch/Header';
 import { StickyActionBar } from '../../components/stitch/StickyActionBar';
-import { Mock } from '../../components/stitch/Mock';
+import { resolveCoords, type GeoState } from '../../citizen/geo';
+import { reverseGeocode } from '../../citizen/reverseGeocode';
+import { fetchCitizenNearby } from '../../citizen/api';
+import { fetchOsrmAlternatives } from '../../citizen/osrm';
+import { scoreRoutes, type ScoredRoute } from '../../citizen/api';
 
-type RouteId = 'A' | 'B' | 'C';
+const ROUTE_LETTERS = ['A', 'B', 'C', 'D', 'E'];
+const MAX_SCORING_POINTS = 60; // stays under the backend's 300-point cap with margin
+
+/** Evenly-strided sample so long OSRM geometries stay small without biasing toward one end. */
+function samplePoints<T>(points: T[], max: number): T[] {
+  if (points.length <= max) return points;
+  const stride = points.length / max;
+  return Array.from({ length: max }, (_, i) => points[Math.floor(i * stride)]);
+}
+
+function riskStyle(level: ScoredRoute['riskLevel']) {
+  if (level === 'LOW') return { badgeBg: 'bg-[#DCFCE7]', badgeText: 'text-[#15803D]', dot: 'bg-[#16A34A]', metric: 'text-on-surface', label: 'LOW RISK' };
+  if (level === 'MODERATE') return { badgeBg: 'bg-[#FEF3C7]', badgeText: 'text-[#B45309]', dot: 'bg-[#D97706]', metric: 'text-on-surface', label: 'MODERATE RISK' };
+  if (level === 'HIGH') return { badgeBg: 'bg-[#FFEDD5]', badgeText: 'text-[#C2410C]', dot: 'bg-[#EA580C]', metric: 'text-[#C2410C]', label: 'HIGH RISK' };
+  return { badgeBg: 'bg-[#FEE2E2]', badgeText: 'text-[#B91C1C]', dot: 'bg-[#DC2626]', metric: 'text-[#B91C1C]', label: 'CRITICAL RISK' };
+}
+
+function fmtDuration(seconds: number | null): string {
+  if (seconds == null) return '—';
+  const min = Math.round(seconds / 60);
+  return `${min} min`;
+}
+
+function fmtDistance(meters: number | null): string {
+  if (meters == null) return '—';
+  return `${(meters / 1000).toFixed(1)} km`;
+}
 
 export const CitizenRouteSelectPage: React.FC = () => {
   const navigate = useNavigate();
-  const { incidentId } = useParams<{ incidentId: string }>();
+  useParams<{ incidentId: string }>();
 
-  const [selectedRoute, setSelectedRoute] = useState<RouteId>('A');
+  const [selectedIndex, setSelectedIndex] = useState(0);
   const [whyOpen, setWhyOpen] = useState(true);
-  const [isEndpointsSwapped, setIsEndpointsSwapped] = useState(false);
+
+  const [origin, setOrigin] = useState<GeoState | null>(null);
+  const [originAddress, setOriginAddress] = useState<string | null>(null);
+  const [destination, setDestination] = useState<{ name: string; latitude: number; longitude: number } | null>(null);
+  const [routes, setRoutes] = useState<ScoredRoute[] | null>(null);
+  const [recommendedIndex, setRecommendedIndex] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const controller = new AbortController();
+
+    (async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const geo = await resolveCoords();
+        if (cancelled) return;
+        setOrigin(geo);
+        reverseGeocode(geo.latitude, geo.longitude, controller.signal).then((a) => !cancelled && setOriginAddress(a));
+
+        // Real destination: nearest hospital/clinic from our own DB (Chunk 2's nearby endpoint).
+        const nearby = await fetchCitizenNearby({ latitude: geo.latitude, longitude: geo.longitude, radiusKm: 20, limit: 40, signal: controller.signal });
+        const nearestMedical = nearby.infrastructure.find((i) => i.type === 'HOSPITAL' || i.type === 'CLINIC');
+        if (!nearestMedical) throw new Error('No medical facility found nearby to route to.');
+        const dest = { name: nearestMedical.name, latitude: nearestMedical.latitude, longitude: nearestMedical.longitude };
+        if (cancelled) return;
+        setDestination(dest);
+
+        // Real alternative routes from OSRM (free, no key), then risk-scored by our own backend/DB.
+        const osrmRoutes = await fetchOsrmAlternatives(geo, dest, controller.signal);
+        if (cancelled) return;
+        const candidates = osrmRoutes.slice(0, 3).map((r, i) => ({
+          label: `Route ${ROUTE_LETTERS[i]} to ${dest.name}`,
+          distanceMeters: r.distanceMeters,
+          durationSeconds: r.durationSeconds,
+          points: samplePoints(r.points, MAX_SCORING_POINTS),
+        }));
+        const scored = await scoreRoutes(candidates);
+        if (cancelled) return;
+        setRoutes(scored.routes);
+        setRecommendedIndex(scored.recommendedIndex);
+        setSelectedIndex(scored.recommendedIndex);
+      } catch (err) {
+        if (cancelled || (err as Error)?.name === 'AbortError') return;
+        setError((err as Error)?.message ?? 'Failed to compute safe routes.');
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, []);
 
   const handleStartNav = () => {
     navigate('/citizen/navigate');
@@ -35,341 +121,168 @@ export const CitizenRouteSelectPage: React.FC = () => {
           <section className="px-edge-margin-mobile pt-space-xs pb-space-sm flex flex-col gap-space-xs">
             <div className="bg-surface-container-lowest rounded-xl p-space-xs shadow-[0_4px_20px_-2px_rgba(15,23,42,0.08)] flex items-center justify-between gap-space-xs">
               <div className="flex-1 flex flex-col gap-1.5 min-w-0">
-                {/* Endpoint 1 */}
+                {/* Origin */}
                 <div className="flex items-center gap-space-xs min-w-0">
-                  <span
-                    className={`w-2.5 h-2.5 rounded-full shrink-0 ${
-                      isEndpointsSwapped ? 'bg-error' : 'bg-secondary'
-                    }`}
-                  ></span>
+                  <span className="w-2.5 h-2.5 rounded-full shrink-0 bg-secondary"></span>
                   <div className="min-w-0">
                     <span className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant block leading-none">
-                      {isEndpointsSwapped ? 'Destination' : 'Origin'}
+                      Origin
                     </span>
                     <span className="font-title-lg text-title-lg text-on-surface truncate block font-bold">
-                      {isEndpointsSwapped ? 'North General Medical Center' : 'Current Location'}
+                      {loading && !origin ? 'Locating…' : originAddress ?? (origin ? `${origin.latitude.toFixed(4)}, ${origin.longitude.toFixed(4)}` : 'Unknown')}
                     </span>
                   </div>
                 </div>
 
                 <div className="ml-1 w-0.5 h-2 bg-surface-container-highest"></div>
 
-                {/* Endpoint 2 */}
+                {/* Destination */}
                 <div className="flex items-center gap-space-xs min-w-0">
-                  <span
-                    className={`w-2.5 h-2.5 rounded-full shrink-0 ${
-                      isEndpointsSwapped ? 'bg-secondary' : 'bg-error'
-                    }`}
-                  ></span>
+                  <span className="w-2.5 h-2.5 rounded-full shrink-0 bg-error"></span>
                   <div className="min-w-0">
                     <span className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant block leading-none">
-                      {isEndpointsSwapped ? 'Origin' : 'Destination'}
+                      Destination (nearest medical facility)
                     </span>
                     <span className="font-title-lg text-title-lg text-on-surface truncate block font-bold">
-                      {isEndpointsSwapped ? 'Current Location' : 'North General Medical Center'}
+                      {destination?.name ?? (loading ? 'Finding nearest facility…' : '—')}
                     </span>
                   </div>
                 </div>
               </div>
-
-              {/* Swap Button */}
-              <button
-                aria-label="Swap endpoints"
-                className="w-10 h-10 rounded-lg bg-surface-container-low flex items-center justify-center text-on-surface hover:bg-surface-container transition-all active:scale-95 shrink-0"
-                id="swap-route-btn"
-                type="button"
-                onClick={() => setIsEndpointsSwapped(!isEndpointsSwapped)}
-              >
-                <span
-                  className={`material-symbols-outlined text-[20px] transition-transform duration-300 ${
-                    isEndpointsSwapped ? 'rotate-180' : ''
-                  }`}
-                >
-                  swap_vert
-                </span>
-              </button>
             </div>
           </section>
 
-          {/* Map Simulation Graphic View */}
+          {/* Map Simulation Graphic View (decorative backdrop; route data below is real) */}
           <section className="relative w-full px-edge-margin-mobile mb-space-sm">
-            <div className="relative w-full h-72 rounded-xl overflow-hidden shadow-[0_4px_20px_-2px_rgba(15,23,42,0.08)] bg-surface-container-low">
-              <div
-                className="absolute inset-0 bg-cover bg-center"
-                data-location="North General Medical Center, Seattle, WA"
-                style={{
-                  backgroundImage: `url('https://lh3.googleusercontent.com/aida-public/AB6AXuBozV8_84xgwSOE9bpJeRkP6Kr1FrQxgmc_MzlokfkJ1fWorkEKrRApHzEnszZVr5bNUB7eWuOW23UCxnvjoW6XtD9LF6mSaFboqi7LruF4g5vb9Jxa4IK8fnVchAVEL8KKGjFvGqWmkQxze8Ta-8B_pD3nILBR2p2kRGOlI4YToNdE_387yRAQ3ionVhliT_qEuouwFUhyZ4DMPc634mHamVpWUUoD3ZeNkHuR8LPNZhBwaiP_Zzpv')`,
-                }}
-              ></div>
-              <div className="absolute inset-0 bg-gradient-to-b from-surface-container-lowest/40 via-transparent to-surface-container-lowest/80 pointer-events-none"></div>
+            <div className="relative w-full h-56 rounded-xl overflow-hidden shadow-[0_4px_20px_-2px_rgba(15,23,42,0.08)] bg-surface-container-low flex items-center justify-center">
+              <div className="absolute inset-0 bg-gradient-to-br from-surface-container-low to-surface-container"></div>
+              <span className="material-symbols-outlined text-[48px] text-on-surface-variant/40 relative">alt_route</span>
 
-              {/* SVG Corridors */}
-              <svg className="absolute inset-0 w-full h-full pointer-events-none" fill="none" viewBox="0 0 360 288">
-                {/* Route C Path */}
-                <path
-                  d="M 45 235 C 110 240, 160 210, 210 160 C 240 130, 275 110, 315 55"
-                  id="route-c-path"
-                  stroke="#ba1a1a"
-                  strokeDasharray="8 6"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeOpacity={selectedRoute === 'C' ? 1 : 0.65}
-                  strokeWidth={selectedRoute === 'C' ? 6 : 3}
-                />
-                {/* Route B Path */}
-                <path
-                  d="M 45 235 C 90 200, 120 180, 175 145 C 220 115, 260 85, 315 55"
-                  id="route-b-path"
-                  stroke="#d97706"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeOpacity={selectedRoute === 'B' ? 1 : 0.8}
-                  strokeWidth={selectedRoute === 'B' ? 6 : 3}
-                />
-                {/* Route A Path */}
-                <path
-                  className="route-glow"
-                  d="M 45 235 C 70 160, 110 100, 160 85 C 215 70, 265 65, 315 55"
-                  id="route-a-path"
-                  stroke="#16a34a"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={selectedRoute === 'A' ? 6 : 3}
-                />
-
-                {/* Origin Marker */}
-                <circle cx="45" cy="235" fill="#0051d5" r="7" />
-                <circle className="animate-ping" cx="45" cy="235" fill="#0051d5" fillOpacity="0.2" r="14" />
-
-                {/* Destination Cross Marker */}
-                <g transform="translate(305, 37)">
-                  <rect fill="#ba1a1a" height="26" rx="6" width="26" />
-                  <path d="M13 7 V19 M7 13 H19" stroke="#ffffff" strokeLinecap="round" strokeWidth="2.5" />
-                </g>
-
-                {/* Hazard Pin C */}
-                <g transform="translate(195, 140)">
-                  <circle cx="10" cy="10" fill="#fee2e2" r="10" />
-                  <path d="M10 5 L16 15 H4 Z" fill="#ba1a1a" />
-                </g>
-
-                {/* Hazard Pin B */}
-                <g transform="translate(145, 150)">
-                  <circle cx="9" cy="9" fill="#fef3c7" r="9" />
-                  <text fill="#b45309" fontSize="10" fontWeight="bold" textAnchor="middle" x="9" y="13">
-                    !
-                  </text>
-                </g>
-              </svg>
-
-              {/* Live Elevation Sync Badge */}
+              {/* Live Routing Badge */}
               <div className="absolute top-space-xs right-space-xs flex flex-col gap-1.5 pointer-events-auto">
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface-container-lowest/95 backdrop-blur shadow-sm text-on-surface font-label-sm text-label-sm font-bold">
-                  <span className="w-2 h-2 rounded-full bg-green-600 animate-pulse"></span>
-                  Live Elevation Sync
+                  <span className={`w-2 h-2 rounded-full ${loading ? 'bg-secondary animate-pulse' : 'bg-green-600'}`}></span>
+                  {loading ? 'Computing Routes…' : 'OSRM Live Routing'}
                 </span>
               </div>
 
-              {/* Gradient readout */}
+              {/* Summary readout */}
               <div className="absolute bottom-space-xs left-space-xs bg-surface-container-lowest/95 backdrop-blur px-2.5 py-1.5 rounded-lg shadow-sm flex items-center gap-space-xs">
                 <span className="font-label-sm text-label-sm text-on-surface-variant font-medium">
-                  Safe Corridor Gradient:
-                </span>
-                <span className="font-code-sm text-code-sm font-bold text-on-surface">
-                  <Mock label="Corridor MSL">+18.2m MSL</Mock>
+                  {routes ? `${routes.length} route${routes.length === 1 ? '' : 's'} compared` : '—'}
                 </span>
               </div>
             </div>
           </section>
 
+          {/* Error banner */}
+          {error && !loading && (
+            <div className="px-edge-margin-mobile mb-space-sm">
+              <div role="alert" className="rounded-xl bg-error-container/60 text-on-error-container px-space-sm py-space-xs flex items-center gap-2">
+                <span className="material-symbols-outlined text-[18px]">error</span>
+                <span className="font-body-sm text-body-sm">{error}</span>
+              </div>
+            </div>
+          )}
+
+          {/* Loading skeleton */}
+          {loading && (
+            <div className="px-edge-margin-mobile flex flex-col items-center justify-center py-10 text-center text-on-surface-variant gap-2">
+              <span className="material-symbols-outlined text-[24px] animate-spin">progress_activity</span>
+              <p className="font-body-sm text-body-sm">Finding your location, nearest facility, and safest route…</p>
+            </div>
+          )}
+
           {/* Computed Corridors Carousel */}
+          {!loading && routes && routes.length > 0 && (
           <section className="flex flex-col gap-space-xs">
             <div className="px-edge-margin-mobile flex items-center justify-between">
               <div className="flex items-center gap-space-2xs">
                 <span className="material-symbols-outlined text-[18px] text-secondary">alt_route</span>
                 <span className="font-label-md text-label-md uppercase tracking-wider text-on-surface-variant font-bold">
-                  Computed Corridors (3)
+                  Computed Corridors ({routes.length})
                 </span>
               </div>
-              <span className="font-code-sm text-code-sm text-on-surface-variant">Updated 12s ago</span>
             </div>
 
             <div
               className="flex gap-space-sm overflow-x-auto px-edge-margin-mobile no-scrollbar snap-x snap-mandatory pt-1 pb-2"
               id="route-carousel"
             >
-              {/* Route A Card */}
-              <div
-                className={`route-card snap-start shrink-0 w-[86vw] max-w-[340px] bg-surface-container-lowest rounded-xl p-space-md shadow-[0_4px_20px_-2px_rgba(15,23,42,0.08)] relative cursor-pointer transition-all duration-200 ${
-                  selectedRoute === 'A' ? 'ring-2 ring-primary' : 'opacity-90 hover:opacity-100'
-                }`}
-                data-route="A"
-                onClick={() => setSelectedRoute('A')}
-              >
-                <div className="flex items-center justify-between gap-space-xs mb-space-xs">
-                  <span className="inline-flex items-center gap-1.5 px-2.5 h-6 rounded-full bg-[#DCFCE7] text-[#15803D] font-label-sm text-label-sm font-bold">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#16A34A]"></span>
-                    RECOMMENDED • LOW RISK
-                  </span>
-                  <span className="font-label-sm text-label-sm font-bold text-[#15803D] bg-surface-container-low px-2 py-0.5 rounded">
-                    0 Hazards
-                  </span>
-                </div>
-                <h2 className="font-title-lg text-title-lg text-on-surface font-bold mb-1">
-                  <Mock label="Route A Title">Route A via Highline Ridge</Mock>
-                </h2>
-                <div className="flex items-baseline gap-space-xs mb-space-sm">
-                  <span className="font-data-metric-md text-data-metric-md text-on-surface font-bold">
-                    <Mock label="ETA">18 min</Mock>
-                  </span>
-                  <span className="font-body-md text-body-md text-on-surface-variant">8.4 km</span>
-                  <span className="font-label-sm text-label-sm text-secondary ml-auto bg-surface-container-high px-2 py-0.5 rounded font-bold">
-                    +14m Peak Elevation
-                  </span>
-                </div>
-
-                {/* Collapsible Accordion: Why this route is resilient */}
-                <div className="bg-surface-container-low rounded-lg p-space-xs mb-space-xs">
-                  <button
-                    className="w-full flex items-center justify-between text-left font-label-sm text-label-sm font-bold text-on-surface"
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setWhyOpen(!whyOpen);
-                    }}
+              {routes.map((route, i) => {
+                const style = riskStyle(route.riskLevel);
+                const isRecommended = i === recommendedIndex;
+                const warnings = [...route.hazardZonesHit.map((h) => `${h.zoneName} (${h.severity})`), ...route.blockedRoadsHit.map((r) => r.name)];
+                return (
+                  <div
+                    key={route.label + i}
+                    className={`route-card snap-start shrink-0 w-[86vw] max-w-[340px] bg-surface-container-lowest rounded-xl p-space-md shadow-[0_4px_20px_-2px_rgba(15,23,42,0.08)] relative cursor-pointer transition-all duration-200 ${
+                      selectedIndex === i ? 'ring-2 ring-primary' : 'opacity-90 hover:opacity-100'
+                    }`}
+                    data-route={ROUTE_LETTERS[i]}
+                    onClick={() => setSelectedIndex(i)}
                   >
-                    <span className="flex items-center gap-1.5">
-                      <span className="material-symbols-outlined text-[16px] text-[#16A34A]">verified_user</span>
-                      Why this route is resilient
-                    </span>
-                    <span
-                      className={`material-symbols-outlined text-[16px] text-on-surface-variant transition-transform ${
-                        whyOpen ? 'rotate-180' : ''
-                      }`}
-                      id="breakdown-chevron"
-                    >
-                      expand_more
-                    </span>
-                  </button>
-                  {whyOpen && (
-                    <div
-                      className="mt-2.5 flex flex-col gap-1.5 pt-2 border-t border-surface-container-highest"
-                      id="breakdown-content"
-                    >
-                      <div className="flex items-center gap-2">
-                        <span className="material-symbols-outlined text-[15px] text-[#16A34A] shrink-0">check_circle</span>
-                        <span className="font-body-sm text-body-sm text-on-surface">
-                          Elevated topography (+14m safety zone)
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="material-symbols-outlined text-[15px] text-[#16A34A] shrink-0">check_circle</span>
-                        <span className="font-body-sm text-body-sm text-on-surface">
-                          100% storm drain clear &amp; functional
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="material-symbols-outlined text-[15px] text-[#16A34A] shrink-0">check_circle</span>
-                        <span className="font-body-sm text-body-sm text-on-surface">
-                          Bypasses Waterfront inundation zone
-                        </span>
-                      </div>
+                    <div className="flex items-center justify-between gap-space-xs mb-space-xs">
+                      <span className={`inline-flex items-center gap-1.5 px-2.5 h-6 rounded-full ${style.badgeBg} ${style.badgeText} font-label-sm text-label-sm font-bold`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${style.dot}`}></span>
+                        {isRecommended ? `RECOMMENDED • ${style.label}` : style.label}
+                      </span>
+                      <span className="font-label-sm text-label-sm font-bold bg-surface-container-low px-2 py-0.5 rounded">
+                        {warnings.length} hazard{warnings.length === 1 ? '' : 's'}
+                      </span>
                     </div>
-                  )}
-                </div>
-              </div>
+                    <h2 className="font-title-lg text-title-lg text-on-surface font-bold mb-1">{route.label}</h2>
+                    <div className="flex items-baseline gap-space-xs mb-space-sm">
+                      <span className={`font-data-metric-md text-data-metric-md font-bold ${style.metric}`}>
+                        {fmtDuration(route.durationSeconds)}
+                      </span>
+                      <span className="font-body-md text-body-md text-on-surface-variant">{fmtDistance(route.distanceMeters)}</span>
+                      <span className="font-label-sm text-label-sm text-on-surface-variant ml-auto bg-surface-container-high px-2 py-0.5 rounded font-bold">
+                        Risk {route.riskScore}/100
+                      </span>
+                    </div>
 
-              {/* Route B Card */}
-              <div
-                className={`route-card snap-start shrink-0 w-[86vw] max-w-[340px] bg-surface-container-lowest rounded-xl p-space-md shadow-[0_4px_20px_-2px_rgba(15,23,42,0.08)] relative cursor-pointer transition-all duration-200 ${
-                  selectedRoute === 'B' ? 'ring-2 ring-primary' : 'opacity-90 hover:opacity-100'
-                }`}
-                data-route="B"
-                onClick={() => setSelectedRoute('B')}
-              >
-                <div className="flex items-center justify-between gap-space-xs mb-space-xs">
-                  <span className="inline-flex items-center gap-1.5 px-2.5 h-6 rounded-full bg-[#FEF3C7] text-[#B45309] font-label-sm text-label-sm font-bold">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#D97706]"></span>
-                    MODERATE RISK
-                  </span>
-                  <span className="font-label-sm text-label-sm text-error bg-error-container px-2 py-0.5 rounded font-bold">
-                    1 Hazard
-                  </span>
-                </div>
-                <h2 className="font-title-lg text-title-lg text-on-surface font-bold mb-1">
-                  <Mock label="Route B Title">Route B via Central Ave</Mock>
-                </h2>
-                <div className="flex items-baseline gap-space-xs mb-space-sm">
-                  <span className="font-data-metric-md text-data-metric-md text-on-surface font-bold">14 min</span>
-                  <span className="font-body-md text-body-md text-on-surface-variant">6.1 km</span>
-                  <span className="font-label-sm text-label-sm text-[#B45309] ml-auto font-bold">Faster (-4m)</span>
-                </div>
-                <div className="bg-surface-container-low rounded-lg p-space-xs flex items-start gap-2">
-                  <span className="material-symbols-outlined text-[16px] text-[#D97706] shrink-0 mt-0.5">warning</span>
-                  <div className="min-w-0">
-                    <span className="font-label-sm text-label-sm font-bold text-on-surface block">
-                      1 Minor Road Block
-                    </span>
-                    <span className="font-body-sm text-body-sm text-on-surface-variant block">
-                      Single lane diversion active near 4th St due to fallen utility pole.
-                    </span>
+                    {/* Explanation / why this route is (or isn't) resilient */}
+                    <div className="bg-surface-container-low rounded-lg p-space-xs">
+                      <button
+                        className="w-full flex items-center justify-between text-left font-label-sm text-label-sm font-bold text-on-surface"
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setWhyOpen(!whyOpen);
+                        }}
+                      >
+                        <span className="flex items-center gap-1.5">
+                          <span className={`material-symbols-outlined text-[16px] ${warnings.length === 0 ? 'text-[#16A34A]' : 'text-[#D97706]'}`}>
+                            {warnings.length === 0 ? 'verified_user' : 'warning'}
+                          </span>
+                          {warnings.length === 0 ? 'Why this route is clear' : 'Hazards along this route'}
+                        </span>
+                        <span
+                          className={`material-symbols-outlined text-[16px] text-on-surface-variant transition-transform ${whyOpen ? 'rotate-180' : ''}`}
+                        >
+                          expand_more
+                        </span>
+                      </button>
+                      {whyOpen && (
+                        <div className="mt-2.5 pt-2 border-t border-surface-container-highest">
+                          <p className="font-body-sm text-body-sm text-on-surface">{route.explanation}</p>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              </div>
-
-              {/* Route C Card */}
-              <div
-                className={`route-card snap-start shrink-0 w-[86vw] max-w-[340px] bg-surface-container-lowest rounded-xl p-space-md shadow-[0_4px_20px_-2px_rgba(15,23,42,0.08)] relative cursor-pointer transition-all duration-200 ${
-                  selectedRoute === 'C' ? 'ring-2 ring-primary' : 'opacity-90 hover:opacity-100'
-                }`}
-                data-route="C"
-                onClick={() => setSelectedRoute('C')}
-              >
-                <div className="flex items-center justify-between gap-space-xs mb-space-xs">
-                  <span className="inline-flex items-center gap-1.5 px-2.5 h-6 rounded-full bg-[#FEE2E2] text-[#B91C1C] font-label-sm text-label-sm font-bold">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#DC2626]"></span>
-                    HIGH RISK
-                  </span>
-                  <span className="font-label-sm text-label-sm text-error bg-error-container px-2 py-0.5 rounded font-bold">
-                    Critical Alert
-                  </span>
-                </div>
-                <h2 className="font-title-lg text-title-lg text-on-surface font-bold mb-1">
-                  <Mock label="Route C Title">Route C via River Parkway</Mock>
-                </h2>
-                <div className="flex items-baseline gap-space-xs mb-space-sm">
-                  <span className="font-data-metric-md text-data-metric-md text-[#B91C1C] font-bold">26 min</span>
-                  <span className="font-body-md text-body-md text-on-surface-variant">9.2 km</span>
-                  <span className="font-label-sm text-label-sm text-[#B91C1C] ml-auto font-bold">+8 min Delay</span>
-                </div>
-                <div className="bg-[#FEE2E2]/60 rounded-lg p-space-xs flex items-start gap-2">
-                  <span className="material-symbols-outlined text-[16px] text-[#DC2626] shrink-0 mt-0.5">flood</span>
-                  <div className="min-w-0">
-                    <span className="font-label-sm text-label-sm font-bold text-[#B91C1C] block">
-                      Severe Flash Flood
-                    </span>
-                    <span className="font-body-sm text-body-sm text-on-surface-variant block">
-                      River surge exceeding 35cm. Impassable for light vehicles.
-                    </span>
-                  </div>
-                </div>
-              </div>
+                );
+              })}
             </div>
           </section>
+          )}
 
           {/* Sticky Bottom Action Bar */}
           <StickyActionBar>
-            <button
-              className="font-label-md text-label-md text-secondary hover:text-on-secondary-fixed-variant font-bold py-1.5 flex items-center gap-1 transition-colors active:scale-95"
-              type="button"
-              onClick={() => alert('Displaying 4 municipal evacuation checkpoints and water shelters along Highline Ridge.')}
-            >
-              <span className="material-symbols-outlined text-[16px]">pin_drop</span>
-              <span>View Alternate Waypoints</span>
-            </button>
             <div className="w-full pb-3 pt-1">
               <button
-                className="w-full h-11 rounded-lg bg-[#0F172A] text-[#FFFFFF] font-body-md text-body-md font-semibold flex items-center justify-center gap-2 hover:bg-[#1E293B] active:scale-[0.99] transition-all shadow-md"
+                className="w-full h-11 rounded-lg bg-[#0F172A] text-[#FFFFFF] font-body-md text-body-md font-semibold flex items-center justify-center gap-2 hover:bg-[#1E293B] active:scale-[0.99] transition-all shadow-md disabled:opacity-60"
+                disabled={loading || !routes?.length}
                 id="start-nav-btn"
                 type="button"
                 onClick={handleStartNav}

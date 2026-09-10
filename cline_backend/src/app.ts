@@ -2,7 +2,9 @@ import express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
 import { env } from './config/env';
+import { EVIDENCE_DIR, EVIDENCE_URL_PREFIX } from './middleware/upload';
 import { requestLogger } from './middleware/requestLogger';
+import { blockCitizenFromInternal } from './middleware/auth';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 
 import healthRoutes from './routes/health.routes';
@@ -25,6 +27,7 @@ import auditRoutes from './routes/audit.routes';
 import weatherRoutes from './routes/weather.routes';
 import locationRoutes from './routes/location.routes';
 import explainRoutes from './routes/explain.routes';
+import citizenRoutes from './routes/citizen.routes';
 
 export function createApp() {
   const app = express();
@@ -43,6 +46,13 @@ export function createApp() {
   );
   app.use(express.json({ limit: '1mb' }));
   app.use(requestLogger);
+
+  // Read-only static serving of citizen-uploaded evidence (local disk storage, Stage D §6 Option B).
+  app.use(EVIDENCE_URL_PREFIX, express.static(EVIDENCE_DIR));
+
+  // Block CITIZEN accounts from internal/government read endpoints (defense in
+  // depth; government writes are already fail-closed via requireRole).
+  app.use(blockCitizenFromInternal);
 
   // --- API routes (all mounted under /api) ---
   app.use('/api', healthRoutes);
@@ -65,6 +75,7 @@ export function createApp() {
   app.use('/api', weatherRoutes);
   app.use('/api', locationRoutes);
   app.use('/api', explainRoutes);
+  app.use('/api', citizenRoutes);
 
   // --- 404 + central error handler (must be last) ---
   app.use(notFoundHandler);

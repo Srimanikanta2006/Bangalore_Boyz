@@ -1,30 +1,67 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Header } from '../../components/stitch/Header';
-import { Mock } from '../../components/stitch/Mock';
+import { fetchCitizenHazardDetail, type CitizenHazardDetail } from '../../citizen/api';
+import { ApiError } from '../../lib/api';
+
+const SEVERITY_META: Record<string, { label: string; bg: string; text: string; dot: string; bar: string }> = {
+  CRITICAL: { label: 'Critical Severity', bg: 'bg-[#FFDAD6]', text: 'text-[#93000A]', dot: 'bg-[#BA1A1A]', bar: 'bg-[#BA1A1A]' },
+  HIGH: { label: 'High Severity', bg: 'bg-[#FFEDD5]', text: 'text-[#C2410C]', dot: 'bg-[#EA580C]', bar: 'bg-[#EA580C]' },
+  MODERATE: { label: 'Moderate Severity', bg: 'bg-[#FEF3C7]', text: 'text-[#B45309]', dot: 'bg-[#D97706]', bar: 'bg-[#D97706]' },
+  LOW: { label: 'Low Severity', bg: 'bg-[#DCFCE7]', text: 'text-[#15803D]', dot: 'bg-[#16A34A]', bar: 'bg-[#16A34A]' },
+};
+
+function prettyType(type: string): string {
+  return type.toLowerCase().split('_').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+}
+
+function updatedLabel(minutes: number | null): string {
+  if (minutes == null) return 'just now';
+  if (minutes < 1) return 'UPDATED JUST NOW';
+  if (minutes < 60) return `UPDATED ${minutes}m AGO`;
+  return `UPDATED ${Math.floor(minutes / 60)}h AGO`;
+}
 
 export const CitizenFloodSheetPage: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
 
   const [isRestricted, setIsRestricted] = useState(false);
-  const [calculatingRoute, setCalculatingRoute] = useState(false);
-  const [routeSuccess, setRouteSuccess] = useState(false);
+  const [navigatingToRoute, setNavigatingToRoute] = useState(false);
+  const [data, setData] = useState<CitizenHazardDetail | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!id) return;
+    let cancelled = false;
+    const controller = new AbortController();
+    setLoading(true);
+    setError(null);
+    fetchCitizenHazardDetail(id, controller.signal)
+      .then((d) => !cancelled && setData(d))
+      .catch((err) => {
+        if (cancelled || (err as Error)?.name === 'AbortError') return;
+        setError(err instanceof ApiError && err.code === 'NOT_FOUND' ? 'This hazard record was not found.' : 'Failed to load hazard details.');
+      })
+      .finally(() => !cancelled && setLoading(false));
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, [id]);
 
   const handleSafeRoute = () => {
-    setCalculatingRoute(true);
-    setTimeout(() => {
-      setCalculatingRoute(false);
-      setRouteSuccess(true);
-      setTimeout(() => {
-        navigate('/citizen/routes');
-      }, 1000);
-    }, 900);
+    setNavigatingToRoute(true);
+    setTimeout(() => navigate('/citizen/routes'), 400);
   };
 
   const handleToggleAvoid = () => {
     setIsRestricted(!isRestricted);
   };
+
+  const sev = SEVERITY_META[data?.hazard.severity ?? 'MODERATE'];
+  const primaryRoad = data?.corridor.impactedRoads[0] ?? null;
 
   return (
     <div className="bg-surface text-on-surface font-body-md text-body-md min-h-screen flex flex-col relative w-full max-w-[440px] mx-auto shadow-2xl border-x border-outline-variant/20">
@@ -105,13 +142,13 @@ export const CitizenFloodSheetPage: React.FC = () => {
               <div className="flex items-center gap-space-2xs px-space-xs py-space-2xs rounded-full bg-surface-container-lowest/90 backdrop-blur-md shadow-sm">
                 <span className="w-2 h-2 rounded-full bg-[#EA580C] animate-ping"></span>
                 <span className="font-code-sm text-code-sm font-bold text-on-surface">
-                  <Mock label="Sector ID">SECTOR 04-B</Mock>
+                  {data ? `ZONE ${data.zone.code}` : loading ? 'LOADING…' : '—'}
                 </span>
               </div>
               <div className="flex items-center gap-space-2xs px-space-xs py-space-2xs rounded-full bg-surface-container-lowest/90 backdrop-blur-md shadow-sm">
                 <span className="material-symbols-outlined text-[16px] text-secondary">satellite_alt</span>
                 <span className="font-code-sm text-code-sm font-semibold text-on-surface">
-                  <Mock label="Sync Rate">RADAR SYNC: 14s AGO</Mock>
+                  {data?.hazard.dataQuality ?? '—'}
                 </span>
               </div>
             </div>
@@ -129,17 +166,33 @@ export const CitizenFloodSheetPage: React.FC = () => {
 
             {/* Header Block with Left Edge Color Accent Bar */}
             <div className="relative px-space-md pt-space-xs pb-space-sm flex flex-col">
-              {/* Left Edge Accent Bar for High Severity */}
-              <div className="absolute left-0 top-3 bottom-2 w-1.5 bg-[#EA580C] rounded-r"></div>
+              {/* Left Edge Accent Bar (severity color) */}
+              <div className={`absolute left-0 top-3 bottom-2 w-1.5 ${sev.bar} rounded-r`}></div>
 
+              {/* Loading / Error states */}
+              {loading && (
+                <div className="pl-space-xs py-space-sm flex items-center gap-2 text-on-surface-variant">
+                  <span className="material-symbols-outlined text-[18px] animate-spin">progress_activity</span>
+                  <span className="font-body-sm text-body-sm">Loading hazard details…</span>
+                </div>
+              )}
+              {error && !loading && (
+                <div role="alert" className="pl-space-xs py-space-sm flex items-center gap-2 text-error">
+                  <span className="material-symbols-outlined text-[18px]">error</span>
+                  <span className="font-body-sm text-body-sm">{error}</span>
+                </div>
+              )}
+
+              {data && (
+              <>
               {/* Pill Badges & Risk Score Row */}
               <div className="flex items-center justify-between gap-space-xs pl-space-xs">
                 <div className="flex items-center gap-space-xs flex-wrap">
                   {/* Severity Pill Badge */}
-                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#FFEDD5] text-[#C2410C]">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#EA580C]"></span>
+                  <div className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full ${sev.bg} ${sev.text}`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${sev.dot}`}></span>
                     <span className="font-label-sm text-label-sm uppercase tracking-wider font-bold">
-                      High Severity
+                      {sev.label}
                     </span>
                   </div>
 
@@ -151,7 +204,7 @@ export const CitizenFloodSheetPage: React.FC = () => {
                     >
                       water_drop
                     </span>
-                    <span className="font-label-sm text-label-sm font-semibold">Flash Inundation</span>
+                    <span className="font-label-sm text-label-sm font-semibold">{prettyType(data.hazard.type)}</span>
                   </div>
                 </div>
 
@@ -159,65 +212,69 @@ export const CitizenFloodSheetPage: React.FC = () => {
                 <div className="flex items-baseline gap-0.5 shrink-0 bg-surface-container-low px-space-xs py-1 rounded-lg">
                   <span className="font-label-sm text-label-sm text-on-surface-variant font-semibold">RISK</span>
                   <span className="font-data-metric-md text-data-metric-md text-[#EA580C] tracking-tight ml-1 font-bold">
-                    <Mock label="Risk Metric">82</Mock>
+                    {data.risk.score}
                   </span>
                   <span className="font-label-sm text-label-sm text-on-surface-variant">/100</span>
                 </div>
               </div>
 
-              {/* Sector Name & Rapid Timestamp */}
+              {/* Corridor Name & Timestamp */}
               <div className="mt-space-xs pl-space-xs flex items-center justify-between">
                 <h2 className="font-headline-lg-mobile text-headline-lg-mobile text-on-surface font-bold tracking-tight">
-                  <Mock label="Corridor Name">Bayou Crossing Corridor</Mock>
+                  {data.corridor.name}
                 </h2>
                 <span className="font-code-sm text-code-sm text-on-surface-variant tabular-nums">
-                  <Mock label="Elapsed Time">UPDATED 1m AGO</Mock>
+                  {updatedLabel(data.hazard.freshnessMinutes)}
                 </span>
               </div>
 
-              {/* Cause Summary Line */}
+              {/* Cause Summary Line (from the deterministic risk engine) */}
               <div className="mt-space-2xs pl-space-xs flex items-start gap-1.5 text-on-surface-variant">
                 <span className="material-symbols-outlined text-[18px] text-[#EA580C] shrink-0 mt-0.5">warning</span>
                 <p className="font-body-md text-body-md leading-snug">
-                  Heavy runoff exceeding storm drainage capacity.{' '}
-                  <span className="text-[#EA580C] font-semibold">Peak surge expected in 18 min.</span>
+                  {data.contributingFactors[0] ?? `${prettyType(data.hazard.type)} conditions reported in ${data.zone.name}.`}
                 </p>
               </div>
+              </>
+              )}
             </div>
 
+            {data && (
+            <>
             {/* Impact Metrics Cards Row */}
             <div className="px-space-md py-space-xs grid grid-cols-3 gap-space-xs">
-              {/* Metric 1: Road Inundation */}
+              {/* Metric 1: Nearest Road Status */}
               <div className="bg-surface-container-low rounded-xl p-space-xs flex flex-col justify-between">
                 <div className="flex items-center justify-between text-on-surface-variant">
-                  <span className="font-label-sm text-label-sm font-bold">ROAD CUT</span>
+                  <span className="font-label-sm text-label-sm font-bold">ROAD STATUS</span>
                   <span className="material-symbols-outlined text-[16px] text-secondary">alt_route</span>
                 </div>
                 <div className="mt-space-xs">
-                  <span className="font-data-metric-md text-data-metric-md text-on-surface font-bold">
-                    <Mock label="Road Distance">2.4</Mock>
+                  <span className="font-label-md text-label-md text-on-surface font-bold leading-tight line-clamp-2">
+                    {primaryRoad ? prettyType(primaryRoad.operationalStatus) : 'No closures'}
                   </span>
-                  <span className="font-body-sm text-body-sm text-on-surface-variant ml-0.5">km</span>
                 </div>
                 <span className="font-label-sm text-label-sm text-error mt-0.5 font-semibold truncate">
-                  Impacting Loop 610
+                  {primaryRoad?.name ?? 'No impacted roads nearby'}
                 </span>
               </div>
 
-              {/* Metric 2: Water Depth */}
+              {/* Metric 2: Water Depth (real measurement, may be null) */}
               <div className="bg-surface-container-low rounded-xl p-space-xs flex flex-col justify-between">
                 <div className="flex items-center justify-between text-on-surface-variant">
-                  <span className="font-label-sm text-label-sm font-bold">MAX DEPTH</span>
+                  <span className="font-label-sm text-label-sm font-bold">WATER DEPTH</span>
                   <span className="material-symbols-outlined text-[16px] text-[#06B6D4]">waves</span>
                 </div>
                 <div className="mt-space-xs">
                   <span className="font-data-metric-md text-data-metric-md text-on-surface font-bold">
-                    <Mock label="Water Depth">120</Mock>
+                    {data.hazard.waterDepth != null ? data.hazard.waterDepth : '—'}
                   </span>
-                  <span className="font-body-sm text-body-sm text-on-surface-variant ml-0.5">mm</span>
+                  {data.hazard.waterDepth != null && (
+                    <span className="font-body-sm text-body-sm text-on-surface-variant ml-0.5">m</span>
+                  )}
                 </div>
-                <span className="font-label-sm text-label-sm text-[#C2410C] mt-0.5 font-semibold truncate">
-                  +15mm / 10min
+                <span className="font-label-sm text-label-sm text-on-surface-variant mt-0.5 font-semibold truncate">
+                  {data.hazard.source}
                 </span>
               </div>
 
@@ -229,26 +286,27 @@ export const CitizenFloodSheetPage: React.FC = () => {
                 </div>
                 <div className="mt-space-xs">
                   <span className="font-label-md text-label-md text-error font-bold leading-tight line-clamp-2">
-                    Hospital Route
+                    {data.nearestCriticalFacility ? prettyType(data.nearestCriticalFacility.type) : 'None nearby'}
                   </span>
                 </div>
                 <span className="font-label-sm text-label-sm text-on-surface-variant mt-0.5 truncate">
-                  St. Jude Gate B
+                  {data.nearestCriticalFacility?.name ?? '—'}
                 </span>
               </div>
             </div>
 
             {/* Live Evacuation & Relief Post Status Strip */}
+            {data.nearestCriticalFacility && (
             <div className="px-space-md py-space-xs">
               <div className="bg-surface-container rounded-lg p-space-xs flex items-center justify-between">
                 <div className="flex items-center gap-space-xs min-w-0">
                   <span className="material-symbols-outlined text-[20px] text-secondary shrink-0">shield</span>
                   <div className="flex flex-col min-w-0">
                     <span className="font-label-sm text-label-sm font-bold text-on-surface truncate">
-                      <Mock label="Shelter Landmark">St. Jude Emergency Evacuation Gate</Mock>
+                      {data.nearestCriticalFacility.name}
                     </span>
                     <span className="font-body-sm text-body-sm text-on-surface-variant truncate">
-                      Direct ambulance diversion enabled via North Spur
+                      {prettyType(data.nearestCriticalFacility.operationalStatus)} · {prettyType(data.nearestCriticalFacility.impactType)}
                     </span>
                   </div>
                 </div>
@@ -262,6 +320,9 @@ export const CitizenFloodSheetPage: React.FC = () => {
                 </button>
               </div>
             </div>
+            )}
+            </>
+            )}
 
             {/* Operational Action Buttons Docked at Bottom */}
             <div className="px-space-md pt-space-xs pb-space-lg flex flex-col gap-space-xs bg-surface-container-lowest">
@@ -289,15 +350,10 @@ export const CitizenFloodSheetPage: React.FC = () => {
                 type="button"
                 onClick={handleSafeRoute}
               >
-                {calculatingRoute ? (
+                {navigatingToRoute ? (
                   <>
                     <span className="material-symbols-outlined text-[20px] animate-spin">progress_activity</span>
-                    <span>Calculating Safe Corridor...</span>
-                  </>
-                ) : routeSuccess ? (
-                  <>
-                    <span className="material-symbols-outlined text-[20px] text-tertiary-fixed">check_circle</span>
-                    <span>Rerouting Active (ETA +4m)</span>
+                    <span>Opening Safe Routes…</span>
                   </>
                 ) : (
                   <>

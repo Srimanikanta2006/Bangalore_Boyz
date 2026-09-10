@@ -6,3 +6,4 @@ coverage/
 .env.test
 *.log
 .DS_Store
+uploads/
