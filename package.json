@@ -1,0 +1,22 @@
+{
+  "name": "climateshield",
+  "version": "1.0.0",
+  "private": true,
+  "description": "ClimateShield - Urban Climate Risk, Heat & Flood Resilience Platform",
+  "scripts": {
+    "dev:server": "npm --prefix server run dev",
+    "dev:client": "npm --prefix client run dev",
+    "build": "npm --prefix server run build && npm --prefix client run build",
+    "start": "npm --prefix server run start"
+  },
+  "keywords": [
+    "climate-risk",
+    "resilience",
+    "smart-city",
+    "flood-risk",
+    "heat-island",
+    "disaster-management"
+  ],
+  "author": "Bangalore_Boyz",
+  "license": "ISC"
+}
