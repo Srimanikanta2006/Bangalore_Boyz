@@ -2,6 +2,8 @@ import type { Severity } from '@prisma/client';
 import { prisma } from '../db/prisma';
 import { getCurrentWeather, type NormalizedWeather, type WeatherFetcher } from './weather.service';
 import { getCurrentAirQuality, type AqiFetcher } from './airQuality.service';
+import { getZoneCascade } from './cascade.service';
+import { Errors } from '../utils/errors';
 import { haversineKm } from '../utils/geo';
 
 /**
@@ -360,6 +362,70 @@ export async function getCitizenAlerts(
     count: alerts.length,
     alerts,
     note: 'Computed from live hazards, modeled weather severity, and road status. No official IMD/CWC/DMA push feed is integrated; absent data is never invented.',
+  };
+}
+
+// ============================ CITIZEN HAZARD DETAIL ============================
+
+/**
+ * Composed hazard-detail view for a single hazard record. Reuses the existing,
+ * unmodified cascade engine (`getZoneCascade`) for risk score / impacted roads
+ * & facilities / recommended actions — the specific hazard's own raw
+ * measurements (rainfall/water depth/etc.) come directly from that hazard row.
+ *
+ * Caveat (kept honest, never hidden): the cascade/risk portion reflects the
+ * zone's current most-severe ACTIVE hazard context, which in the seeded demo
+ * dataset is 1:1 with each zone's hazard. If a zone ever has multiple
+ * concurrent active hazards, the cascade may reflect the most severe one
+ * rather than this exact record — surfaced via the `note` field, never hidden.
+ */
+export async function getCitizenHazardDetail(hazardId: string) {
+  const hazard = await prisma.hazard.findUnique({
+    where: { id: hazardId },
+    include: {
+      zone: { select: { id: true, name: true, code: true, riskLevel: true, population: true, latitude: true, longitude: true } },
+    },
+  });
+  if (!hazard) throw Errors.notFound('Hazard', hazardId);
+
+  const zoneCascade = await getZoneCascade(prisma, hazard.zoneId);
+
+  const impacted = zoneCascade.impactedInfrastructure;
+  const roads = impacted.filter((i) => i.type === 'ROAD' || i.type === 'BRIDGE');
+  const facilities = impacted.filter((i) => i.type !== 'ROAD' && i.type !== 'BRIDGE');
+  const primaryRoad = [...roads].sort((a, b) => b.impactScore - a.impactScore)[0] ?? null;
+  const primaryFacility = facilities.find((f) => f.type === 'HOSPITAL') ?? facilities[0] ?? null;
+
+  return {
+    hazard: {
+      id: hazard.id,
+      type: hazard.type,
+      severity: hazard.severity,
+      status: hazard.status,
+      rainfallRate: hazard.rainfallRate,
+      waterDepth: hazard.waterDepth,
+      flowVelocity: hazard.flowVelocity,
+      temperature: hazard.temperature,
+      windSpeed: hazard.windSpeed,
+      durationMinutes: hazard.durationMinutes,
+      startedAt: hazard.startedAt,
+      freshnessMinutes: freshnessMinutes(hazard.startedAt),
+      source: hazard.source,
+      dataQuality: hazard.dataQuality,
+    },
+    zone: hazard.zone,
+    risk: { score: zoneCascade.riskScore, level: zoneCascade.riskLevel, factors: zoneCascade.riskFactors },
+    corridor: {
+      name: primaryRoad?.name ?? `${hazard.zone.name} Corridor`,
+      impactedRoads: roads,
+      impactedFacilities: facilities,
+    },
+    nearestCriticalFacility: primaryFacility,
+    impact: zoneCascade.impact,
+    contributingFactors: zoneCascade.contributingFactors,
+    recommendedActions: zoneCascade.recommendedResponseActions,
+    note:
+      'Risk score, cascade, and recommended actions are computed by the deterministic risk/cascade engine for this hazard\'s zone (reflects the zone\'s current most-severe active hazard). Raw measurements above are this specific hazard record.',
   };
 }
 

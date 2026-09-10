@@ -34,4 +34,12 @@ router.get(
   citizenController.alerts,
 );
 
+/**
+ * GET /api/citizen/hazards/:id
+ * Composed hazard detail: raw measurements for this hazard + deterministic
+ * risk score, impacted roads/facilities and recommended actions from the
+ * (unmodified) cascade engine for its zone. CITIZEN-only.
+ */
+router.get('/citizen/hazards/:id', authenticate, requireRole(...CITIZEN_ROLES), citizenController.hazardDetail);
+
 export default router;

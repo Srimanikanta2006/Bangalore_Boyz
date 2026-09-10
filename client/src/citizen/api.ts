@@ -141,3 +141,58 @@ export function fetchCitizenAlerts(params: NearbyParams): Promise<CitizenAlerts>
   }).toString();
   return api.get<CitizenAlerts>(`/citizen/alerts?${q}`, { signal: params.signal });
 }
+
+export interface CitizenHazardRaw {
+  id: string;
+  type: string;
+  severity: Severity;
+  status: string;
+  rainfallRate: number | null;
+  waterDepth: number | null;
+  flowVelocity: number | null;
+  temperature: number | null;
+  windSpeed: number | null;
+  durationMinutes: number | null;
+  startedAt: string;
+  freshnessMinutes: number | null;
+  source: string;
+  dataQuality: DataQuality;
+}
+
+export interface CitizenHazardZone {
+  id: string;
+  name: string;
+  code: string;
+  riskLevel: Severity;
+  population: number;
+}
+
+export interface CitizenImpactedAsset {
+  assetId: string;
+  assetCode: string;
+  name: string;
+  type: string;
+  operationalStatus: string;
+  impactType: string;
+  impactScore: number;
+}
+
+export interface CitizenHazardDetail {
+  hazard: CitizenHazardRaw;
+  zone: CitizenHazardZone;
+  risk: { score: number; level: string; factors: { name: string; contribution: number }[] };
+  corridor: {
+    name: string;
+    impactedRoads: CitizenImpactedAsset[];
+    impactedFacilities: CitizenImpactedAsset[];
+  };
+  nearestCriticalFacility: CitizenImpactedAsset | null;
+  impact: { blockedRoads: number; affectedFacilities: number; residents: number };
+  contributingFactors: string[];
+  recommendedActions: string[];
+  note: string;
+}
+
+export function fetchCitizenHazardDetail(id: string, signal?: AbortSignal): Promise<CitizenHazardDetail> {
+  return api.get<CitizenHazardDetail>(`/citizen/hazards/${encodeURIComponent(id)}`, { signal });
+}
