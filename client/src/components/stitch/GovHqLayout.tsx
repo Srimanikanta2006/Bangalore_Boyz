@@ -76,7 +76,10 @@ export const GovHqLayout: React.FC<GovHqLayoutProps> = ({ children, activePath }
             </div>
 
             <button 
-              onClick={() => navigate('/login')} 
+              onClick={() => {
+                localStorage.removeItem('cs_token');
+                navigate('/login');
+              }}
               title="Switch role"
               className="p-1.5 rounded-lg text-[#45464d] hover:text-[#0b1c30] hover:bg-[#eff4ff] transition-colors"
             >

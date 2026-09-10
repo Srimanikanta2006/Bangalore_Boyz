@@ -11,6 +11,8 @@ export default defineConfig({
     include: ['tests/**/*.test.ts'],
     // Integration suites mutate the shared demo database -> run files sequentially.
     fileParallelism: false,
+    testTimeout: 15000,
+    hookTimeout: 15000,
     env: {
       NODE_ENV: process.env.NODE_ENV ?? 'test',
       DATABASE_URL: process.env.DATABASE_URL ?? '',

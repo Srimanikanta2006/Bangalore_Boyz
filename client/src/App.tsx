@@ -42,6 +42,12 @@ import { RequireAuth } from './auth/RequireAuth';
 /** Wraps a citizen page in the CITIZEN-only route guard. */
 const Citizen = (element: React.ReactNode) => <RequireAuth roles={['CITIZEN']}>{element}</RequireAuth>;
 
+/** Government API routes require the JWT issued by the local Express API. */
+const RequireGovernmentLogin: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const token = typeof window !== 'undefined' ? (localStorage.getItem('cs_token') || localStorage.getItem('cs_auth_token')) : null;
+  return token ? <>{children}</> : <Navigate to="/login" replace />;
+};
+
 export const App: React.FC = () => {
   return (
     <BrowserRouter>
@@ -50,7 +56,7 @@ export const App: React.FC = () => {
 
       <Routes>
         {/* Default Landing: Government HQ Command Center */}
-        <Route path="/" element={<GovCommandCenterPage />} />
+        <Route path="/" element={<RequireGovernmentLogin><GovCommandCenterPage /></RequireGovernmentLogin>} />
 
         {/* 1. Shared Gateway */}
         <Route path="/login" element={<LoginPage />} />
@@ -78,11 +84,11 @@ export const App: React.FC = () => {
         <Route path="/gov/mobile/tasks" element={<GovMobileTasksPage />} />
 
         {/* 5. Government HQ Desktop Routes */}
-        <Route path="/gov/overview" element={<GovCommandCenterPage />} />
-        <Route path="/gov/critical-assets" element={<GovCriticalAssetMonitorPage />} />
-        <Route path="/gov/zone-cascade/:id" element={<GovZoneCascadePage />} />
-        <Route path="/gov/simulator" element={<GovSimulatorPage />} />
-        <Route path="/gov/response-center" element={<GovResponseCenterPage />} />
+        <Route path="/gov/overview" element={<RequireGovernmentLogin><GovCommandCenterPage /></RequireGovernmentLogin>} />
+        <Route path="/gov/critical-assets" element={<RequireGovernmentLogin><GovCriticalAssetMonitorPage /></RequireGovernmentLogin>} />
+        <Route path="/gov/zone-cascade/:id" element={<RequireGovernmentLogin><GovZoneCascadePage /></RequireGovernmentLogin>} />
+        <Route path="/gov/simulator" element={<RequireGovernmentLogin><GovSimulatorPage /></RequireGovernmentLogin>} />
+        <Route path="/gov/response-center" element={<RequireGovernmentLogin><GovResponseCenterPage /></RequireGovernmentLogin>} />
 
         {/* Legacy / Console Redirects */}
         <Route path="/console" element={<Navigate to="/gov/overview" replace />} />

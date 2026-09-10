@@ -25,7 +25,7 @@ This file acts as the live status dashboard for the project. Every team member a
 - [x] Standard project documentation hierarchy created (`docs/`)
 - [x] Environment variable template created (`.env.example`)
 - [x] Security-hardened Git ignore rules configured (`.gitignore`)
-- [x] Supabase team multi-developer workflow documented
+- [x] Docker PostgreSQL local development workflow documented
 - [x] Completed Phase 1: Decoupled Citizen and Rescue roles, eliminated cross-role routing confusion, built `CitizenActiveNavPage.tsx` (Stitch Screen 23), and updated navigation topologies across all mobile views
 - [x] Completed Master Stitch Reconstruction: All 22 Stitch screens faithfully reconstructed in React + Tailwind across 4 isolated roles (Citizen: 8, Rescue: 6, Gov Mobile: 3, Gov HQ: 5)
 - [x] Deleted 17 obsolete / generic prototype admin pages (`DashboardPage`, `RiskMapPage`, `AssetsPage`, etc.)
@@ -38,8 +38,9 @@ This file acts as the live status dashboard for the project. Every team member a
 
 ## Currently Working On
 - Ready for backend team integration and shared live data feeds
-- P4 AI explanation layer merged pending review (PR #7); needs a live smoke test of `POST /api/incidents/:id/explain` once pointed at the shared Supabase DB (`GEMINI_API_KEY` optional — deterministic fallback works without it)
-- **Citizen workflow (`feature/citizen-workflow`) built and tested against a local dev Postgres; its 3 additive migrations (`add_citizen_role`, `add_citizen_reports_and_sos`) still need to be applied to the shared Supabase project once a working `DATABASE_URL`/`DIRECT_URL` is confirmed** (the connection string shared in chat had an unreplaced `[YOUR-PASSWORD]` placeholder / pointed to an unreachable host as of this writing) — see Database State below.
+- P4 AI explanation layer merged pending review (PR #7); needs a live smoke test of `POST /api/incidents/:id/explain` (`GEMINI_API_KEY` optional — deterministic fallback works without it)
+- Local runtime standardized on Docker PostgreSQL (`cline_backend/docker-compose.yml`) / Supabase. Government HQ now requires the API JWT and refreshes PostgreSQL operational state every 15 seconds plus live Open-Meteo observations every 60 seconds.
+- Citizen workflow (`feature/citizen-workflow`) built and integrated end-to-end.
 
 ---
 
@@ -50,16 +51,15 @@ This file acts as the live status dashboard for the project. Every team member a
 ---
 
 ## Next Tasks
-- [ ] Confirm a working shared Supabase `DATABASE_URL`/`DIRECT_URL` and run `prisma migrate deploy` (additive only) for the citizen workflow's 3 migrations, then upsert (not full-reseed) a citizen demo account there
-- [ ] Rotate the Supabase service-role key that was pasted into a team chat (not used by this backend, which is JWT-based, but should be rotated as good hygiene)
-- [ ] Merge `feature/citizen-workflow` after review
+- [x] Run PostgreSQL schema migrations and seed data
+- [ ] Confirm shared database environment variables
 - [ ] Government team: continue overview/response-center/simulator work in parallel; Rescue team: continue tactical/mission workflow in parallel (both unaffected by the citizen branch — no shared file conflicts, additive schema only)
 
 ---
 
 ## Current Architecture
-- Refer to `docs/ARCHITECTURE.md` (Shared Supabase backend, modular agent orchestration).
-- Auth: backend-issued JWT for **all** roles including `CITIZEN` (Supabase is the Postgres host only, not an auth provider — see ADR-003).
+- Refer to `docs/ARCHITECTURE.md` (Modular backend, local Docker PostgreSQL / Supabase, modular agent orchestration).
+- Auth: backend-issued JWT for all roles including `CITIZEN` and `GOVERNMENT_OPERATOR`.
 
 ---
 
@@ -69,7 +69,7 @@ This file acts as the live status dashboard for the project. Every team member a
 ---
 
 ## Database State
-- Supabase shared project connected in principle; a working connection string for migrations is still pending confirmation (see Next Tasks). Local development/testing for the citizen workflow used an isolated Docker Postgres instance; the same additive migrations apply cleanly to the shared project once its connection string works.
+- Docker PostgreSQL is the primary local source of application state (`cline_backend/docker-compose.yml`), with Prisma migrations and seed data applied from `cline_backend/`. The same additive schema applies to Supabase.
 
 ---
 

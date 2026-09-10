@@ -6,7 +6,7 @@ import { SosFab } from '../../components/stitch/SosFab';
 import { Mock } from '../../components/stitch/Mock';
 import { useAuth } from '../../auth/AuthContext';
 import { homeForRole } from '../../auth/types';
-import { ApiError } from '../../lib/api';
+import { ApiError, getAuthToken } from '../../lib/api';
 
 type RoleType = 'citizen' | 'government' | 'gov-field' | 'rescue';
 
@@ -79,6 +79,11 @@ export const LoginPage: React.FC = () => {
     setSubmitting(true);
     try {
       const user = await login(email.trim(), password);
+      // Synchronize both token storage keys so both RequireGovernmentLogin and RequireAuth are satisfied
+      const token = getAuthToken();
+      if (token && typeof window !== 'undefined') {
+        localStorage.setItem('cs_token', token);
+      }
       // Prefer the originally-requested location when it matches the user's role.
       const from = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname;
       const target = from && user.role === 'CITIZEN' && from.startsWith('/citizen') ? from : homeForRole(user.role);

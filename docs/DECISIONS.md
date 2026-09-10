@@ -7,7 +7,7 @@ This file logs key architectural decisions, rationale, alternatives considered, 
 ## ADR-001: Use Supabase as Shared Database & Backend Service
 
 * **Date**: 2026-09-10
-* **Status**: Accepted
+* **Status**: Superseded by ADR-003
 
 ### Context
 The team requires a unified, real-time, relational database and backend service accessible by multiple teammates working across different machines and AI tools during the hackathon.
@@ -104,3 +104,22 @@ No new backend dependency, no fabricated geometry, and risk stays computed from 
 
 ### Follow-up
 `router.project-osrm.org` is explicitly a demo/evaluation instance per its own usage policy — a production deployment should self-host OSRM or move to a licensed provider.
+
+---
+
+## ADR-006: Use Docker PostgreSQL for the local application runtime
+
+* **Date**: 2026-09-11
+* **Status**: Accepted
+
+### Context
+The current application runs as a local Express API and React client. The intended development database is the bundled `postgres:16-alpine` Docker service, and the frontend must receive state through the API rather than a direct database or hosted-backend connection.
+
+### Decision
+Use `cline_backend/docker-compose.yml` as the local PostgreSQL runtime. Prisma connects using the local `DATABASE_URL` and `DIRECT_URL`; React calls the authenticated Express API only.
+
+### Consequences
+- `docker compose up -d`, Prisma migrations, and the seed command establish a repeatable local environment.
+- A named Docker volume persists local data between restarts.
+- Live provider data is fetched server-side and persisted as weather snapshots; frontend polling receives it through the API.
+- Team members who need a shared production database will need a separately approved deployment plan; it is not silently substituted for local Docker.

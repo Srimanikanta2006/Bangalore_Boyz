@@ -231,8 +231,8 @@ export async function mostSevereActiveHazard(client: DbClient, zoneId: string): 
 
 /** Cascade for an incident: root = primary asset, else highest-risk asset in zone. */
 export async function getIncidentCascade(client: DbClient, incidentId: string) {
-  const incident = await client.incident.findUnique({
-    where: { id: incidentId },
+  const incident = await client.incident.findFirst({
+    where: { OR: [{ id: incidentId }, { incidentCode: incidentId }] },
     include: { primaryAsset: true, hazard: true, zone: true },
   });
   if (!incident) throw Errors.notFound('Incident', incidentId);

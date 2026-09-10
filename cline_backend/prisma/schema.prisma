@@ -1,4 +1,4 @@
-// ClimateShield - Prisma schema (PostgreSQL / Supabase)
+// ClimateShield - Prisma schema (PostgreSQL via local Docker docker-compose.yml)
 // All seeded geographic/numeric data is SYNTHETIC DEMO data (see prisma/seed-data.ts).
 
 generator client {
@@ -7,8 +7,8 @@ generator client {
 
 datasource db {
   provider  = "postgresql"
-  url       = env("DATABASE_URL") // pooled (Supabase pgBouncer / local)
-  directUrl = env("DIRECT_URL") // direct connection for migrations
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 // ============================ ENUMS ============================
