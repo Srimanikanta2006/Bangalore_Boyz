@@ -12,7 +12,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab }) => {
     activeTab ||
     (location.pathname.includes('/citizen/alerts')
       ? 'alerts'
-      : location.pathname.includes('/rescue/report')
+      : location.pathname.includes('/citizen/report') || location.pathname.includes('/rescue/report')
       ? 'reports'
       : location.pathname.includes('/login')
       ? 'profile'
@@ -63,7 +63,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab }) => {
         </Link>
 
         <Link
-          to="/rescue/report"
+          to="/citizen/report"
           aria-current={current === 'reports' ? 'page' : undefined}
           className={`flex flex-col items-center justify-center min-w-[56px] min-h-[44px] px-space-xs transition-colors duration-150 ${
             current === 'reports'

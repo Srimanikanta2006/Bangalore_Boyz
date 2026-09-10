@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Header } from '../../components/stitch/Header';
 import { Mock } from '../../components/stitch/Mock';
 
-export const ActiveNavPage: React.FC = () => {
+export const RescueActiveNavPage: React.FC = () => {
   const navigate = useNavigate();
   const { routeId } = useParams<{ routeId: string }>();
 

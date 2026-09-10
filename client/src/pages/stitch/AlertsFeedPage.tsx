@@ -37,7 +37,7 @@ const INITIAL_ALERTS: AlertItem[] = [
     description:
       'Water levels rising rapidly along 3rd and 5th avenues. Storm drains overloaded. Avoid low-elevation underpasses.',
     actionText: 'View safe detour route',
-    actionRoute: '/rescue/route/route-a',
+    actionRoute: '/citizen/routes',
     tags: ['high', 'weather', 'corridors'],
   },
   {
@@ -71,7 +71,7 @@ const INITIAL_ALERTS: AlertItem[] = [
     description:
       'Culvert 4 pumping units deployed. Northbound lanes fully navigable for passenger vehicles.',
     actionText: 'View corridor status',
-    actionRoute: '/rescue/route/route-a',
+    actionRoute: '/citizen/routes',
     tags: ['corridors'],
   },
 ];

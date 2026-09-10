@@ -1,48 +1,89 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 
-// 8 Stitch Screens (Lossless Consolidated Migration)
+// 1. Shared / Auth
 import { LoginPage } from './pages/stitch/LoginPage';
+
+// 2. Citizen Experience (8 Stitch Screens)
 import { CitizenMapPage } from './pages/stitch/CitizenMapPage';
 import { AlertsFeedPage } from './pages/stitch/AlertsFeedPage';
-import { FloodDetailPage } from './pages/stitch/FloodDetailPage';
-import { RouteSelectPage } from './pages/stitch/RouteSelectPage';
-import { ActiveNavPage } from './pages/stitch/ActiveNavPage';
+import { CitizenFloodSheetPage } from './pages/stitch/CitizenFloodSheetPage';
+import { CitizenRouteSelectPage } from './pages/stitch/CitizenRouteSelectPage';
+import { CitizenActiveNavPage } from './pages/stitch/CitizenActiveNavPage';
 import { SosEmergencyPage } from './pages/stitch/SosEmergencyPage';
 import { HazardReportPage } from './pages/stitch/HazardReportPage';
 
-// Operations Console (Desktop GIS Management Hub)
-import { OperationsConsole } from './pages/OperationsConsole';
+// 3. Rescue Tactical Operations (6 Stitch Screens)
+import { RescueTacticalMapPage } from './pages/stitch/RescueTacticalMapPage';
+import { RescueActiveNavPage } from './pages/stitch/RescueActiveNavPage';
+import { RescueMissionDossierPage } from './pages/stitch/RescueMissionDossierPage';
+import { RescueHazardDetailPage } from './pages/stitch/RescueHazardDetailPage';
+import { RescueStatusReportPage } from './pages/stitch/RescueStatusReportPage';
+import { RescueCommandConsolePage } from './pages/stitch/RescueCommandConsolePage';
 
-// Fast Preview HUD
+// 4. Government Mobile / Field Team (3 Stitch Screens)
+import { GovMobileMapPage } from './pages/stitch/GovMobileMapPage';
+import { GovMobileTriagePage } from './pages/stitch/GovMobileTriagePage';
+import { GovMobileTasksPage } from './pages/stitch/GovMobileTasksPage';
+
+// 5. Government HQ Desktop Command Center (5 Stitch Screens)
+import { GovCommandCenterPage } from './pages/stitch/GovCommandCenterPage';
+import { GovCriticalAssetMonitorPage } from './pages/stitch/GovCriticalAssetMonitorPage';
+import { GovZoneCascadePage } from './pages/stitch/GovZoneCascadePage';
+import { GovSimulatorPage } from './pages/stitch/GovSimulatorPage';
+import { GovResponseCenterPage } from './pages/stitch/GovResponseCenterPage';
+
+// Navigation & Screen Switcher
 import { ScreenSwitcher } from './components/stitch/ScreenSwitcher';
 
 export const App: React.FC = () => {
   return (
     <BrowserRouter>
-      {/* Floating Screen Switcher HUD for Instant Navigation Across All 8 Screens */}
+      {/* Universal Screen Switcher HUD */}
       <ScreenSwitcher />
 
       <Routes>
-        {/* Flagship Climate-Risk Resilience Console (Default Entry Point) */}
-        <Route path="/" element={<OperationsConsole />} />
-        <Route path="/console/*" element={<OperationsConsole />} />
-        <Route path="/gov/*" element={<OperationsConsole />} />
+        {/* Default Landing: Government HQ Command Center */}
+        <Route path="/" element={<GovCommandCenterPage />} />
 
-        {/* 8 Stitch Mobile Screens */}
+        {/* 1. Shared Gateway */}
         <Route path="/login" element={<LoginPage />} />
+
+        {/* 2. Citizen Experience Routes */}
         <Route path="/citizen/map" element={<CitizenMapPage />} />
         <Route path="/citizen/alerts" element={<AlertsFeedPage />} />
-        <Route path="/rescue/incident/:id" element={<FloodDetailPage />} />
-        <Route path="/rescue/route/:incidentId" element={<RouteSelectPage />} />
-        <Route path="/rescue/navigate/:routeId" element={<ActiveNavPage />} />
-        <Route path="/rescue/sos" element={<SosEmergencyPage />} />
+        <Route path="/citizen/hazard/:id" element={<CitizenFloodSheetPage />} />
+        <Route path="/citizen/routes" element={<CitizenRouteSelectPage />} />
+        <Route path="/citizen/navigate" element={<CitizenActiveNavPage />} />
         <Route path="/citizen/sos" element={<SosEmergencyPage />} />
-        <Route path="/rescue/report" element={<HazardReportPage />} />
         <Route path="/citizen/report" element={<HazardReportPage />} />
 
-        {/* Fallback to Operations Console */}
-        <Route path="*" element={<Navigate to="/" replace />} />
+        {/* 3. Rescue Tactical Routes */}
+        <Route path="/rescue/tactical" element={<RescueTacticalMapPage />} />
+        <Route path="/rescue/mission/:id" element={<RescueMissionDossierPage />} />
+        <Route path="/rescue/navigate/:id" element={<RescueActiveNavPage />} />
+        <Route path="/rescue/hazard/:id" element={<RescueHazardDetailPage />} />
+        <Route path="/rescue/report/:id" element={<RescueStatusReportPage />} />
+        <Route path="/rescue/console" element={<RescueCommandConsolePage />} />
+
+        {/* 4. Government Mobile Field Routes */}
+        <Route path="/gov/mobile/map" element={<GovMobileMapPage />} />
+        <Route path="/gov/mobile/triage" element={<GovMobileTriagePage />} />
+        <Route path="/gov/mobile/tasks" element={<GovMobileTasksPage />} />
+
+        {/* 5. Government HQ Desktop Routes */}
+        <Route path="/gov/overview" element={<GovCommandCenterPage />} />
+        <Route path="/gov/critical-assets" element={<GovCriticalAssetMonitorPage />} />
+        <Route path="/gov/zone-cascade/:id" element={<GovZoneCascadePage />} />
+        <Route path="/gov/simulator" element={<GovSimulatorPage />} />
+        <Route path="/gov/response-center" element={<GovResponseCenterPage />} />
+
+        {/* Legacy / Console Redirects */}
+        <Route path="/console" element={<Navigate to="/gov/overview" replace />} />
+        <Route path="/console/*" element={<Navigate to="/gov/overview" replace />} />
+
+        {/* Fallback to Overview */}
+        <Route path="*" element={<Navigate to="/gov/overview" replace />} />
       </Routes>
     </BrowserRouter>
   );

@@ -101,7 +101,7 @@ export const CitizenMapPage: React.FC = () => {
             <div
               className="absolute left-[38%] top-[62%] -translate-x-1/2 -translate-y-1/2 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface-container-lowest/95 backdrop-blur shadow-md pointer-events-auto cursor-pointer hover:bg-surface transition-colors"
               id="flood-marker"
-              onClick={() => navigate('/rescue/incident/flood-1')}
+              onClick={() => navigate('/citizen/hazard/sec-04b')}
             >
               <span className="w-2 h-2 rounded-full bg-tertiary-fixed-dim"></span>
               <span className="font-label-sm text-label-sm text-on-surface font-semibold">
@@ -159,6 +159,9 @@ export const CitizenMapPage: React.FC = () => {
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') navigate('/citizen/routes');
+                    }}
                   />
                   <button
                     className="w-8 h-8 rounded-full bg-surface-container-low flex items-center justify-center text-on-surface-variant hover:text-on-surface transition active:scale-95 shrink-0"
@@ -304,7 +307,7 @@ export const CitizenMapPage: React.FC = () => {
               <button
                 className="h-10 px-3 rounded-lg bg-surface-container-lowest shadow-sm flex items-center justify-center gap-2 text-on-surface font-label-md text-label-md font-bold hover:bg-surface-container transition active:scale-95"
                 type="button"
-                onClick={() => navigate('/rescue/route/route-a')}
+                onClick={() => navigate('/citizen/routes')}
               >
                 <span className="material-symbols-outlined text-[18px] text-on-surface-variant">alt_route</span>
                 <span>Plan Dry Route</span>
@@ -314,7 +317,7 @@ export const CitizenMapPage: React.FC = () => {
               <button
                 className="h-10 px-3 rounded-lg bg-primary text-on-primary font-label-md text-label-md font-bold shadow-md hover:bg-primary-container transition flex items-center justify-center gap-2 active:scale-95"
                 type="button"
-                onClick={() => navigate('/rescue/report')}
+                onClick={() => navigate('/citizen/report')}
               >
                 <span className="material-symbols-outlined text-[18px]">share_location</span>
                 <span>Broadcast Status</span>

@@ -115,9 +115,9 @@ export const SosEmergencyPage: React.FC = () => {
       {/* Header with Back Button */}
       <Header
         title="Emergency"
-        subtitle="ClimateShield Rescue"
+        subtitle="ClimateShield Citizen"
         hasBack={true}
-        onBack={() => navigate(-1)}
+        onBack={() => navigate('/citizen/map')}
       />
 
       {/* Main Content */}
