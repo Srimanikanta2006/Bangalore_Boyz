@@ -211,7 +211,7 @@ export async function runSimulation(input: CreateSimulationInput, user: AuthUser
       zone: zones.find((z) => z.id === r.zoneId) ?? null,
     }));
     return toDto({ ...completed, results: withZones }, user.name);
-  });
+  }, { maxWait: 10000, timeout: 30000 });
 }
 
 export async function listSimulations(query: SimulationQuery) {

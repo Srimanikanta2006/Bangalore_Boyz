@@ -421,11 +421,76 @@ Real **Greater Chennai Corporation** zones (`REAL_GEOGRAPHIC`, codes `GCC-Z01`�
 
 ### GET /api/zones — authenticated
 
-Query: `page` `limit` `riskLevel`. Zone summaries with asset/hotspot/historical-event counts, active hazards and active incident counts. Response items include `dataQuality`, `source`, `code`, `name`, centroid coordinates.
+- **Query Parameters**: `page`, `limit`, `riskLevel` (`LOW`, `MODERATE`, `HIGH`, `CRITICAL`)
+- **Data Quality**: Items carry `REAL_GEOGRAPHIC` (e.g. GCC-Z01 to GCC-Z14) or `SYNTHETIC_DEMO` (e.g. EB, PW).
+- **Response Shape**:
+```json
+{
+  "success": true,
+  "data": {
+    "items": [
+      {
+        "id": "cmtvrauz80003ijjbnqe7q563",
+        "name": "Zone 13 Adyar",
+        "code": "GCC-Z13",
+        "description": "Greater Chennai Corporation - Zone 13 Adyar",
+        "latitude": 12.998,
+        "longitude": 80.256,
+        "riskLevel": "LOW",
+        "population": 412000,
+        "source": "OpenStreetMap",
+        "sourceId": "relation/7910817",
+        "dataQuality": "REAL_GEOGRAPHIC",
+        "assetCount": 420,
+        "hotspotCount": 0,
+        "historicalEventCount": 0,
+        "activeHazards": [],
+        "activeIncidentCount": 0
+      }
+    ],
+    "pagination": { "page": 1, "limit": 20, "total": 18, "totalPages": 1, "hasMore": false }
+  }
+}
+```
 
 ### GET /api/zones/:id — authenticated
 
 Zone detail: zone + assets (ordered by criticality) + active hazards + active incidents + hotspots. Accepts zone id or code (`GCC-Z13`, `EB`).
+
+- **Response Shape**:
+```json
+{
+  "success": true,
+  "data": {
+    "zone": {
+      "id": "cmtvrauz80003ijjbnqe7q563",
+      "name": "Zone 13 Adyar",
+      "code": "GCC-Z13",
+      "dataQuality": "REAL_GEOGRAPHIC",
+      "source": "OpenStreetMap",
+      "population": 412000,
+      "latitude": 12.998,
+      "longitude": 80.256
+    },
+    "assets": [
+      {
+        "id": "asset_...",
+        "assetCode": "OSM-HOSP-...",
+        "name": "Fortis Malar Hospital",
+        "type": "HOSPITAL",
+        "criticality": "CRITICAL",
+        "vulnerability": 50,
+        "operationalStatus": "OPERATIONAL",
+        "latitude": 13.006,
+        "longitude": 80.257
+      }
+    ],
+    "activeHazards": [],
+    "activeIncidents": [],
+    "hotspots": []
+  }
+}
+```
 
 ### GET /api/zones/:zoneId/cascade — authenticated  (Zone Detail screen)
 
@@ -474,15 +539,120 @@ All map endpoints return GeoJSON `FeatureCollection`s ready for MapLibre. Each *
 
 Imported Chennai infrastructure (`REAL_GEOGRAPHIC`, `source: "OpenStreetMap"`) includes full `LineString` geometry on roads/bridges/drains when available; point assets use centroid `Point` geometry. Seeded demo assets remain `SYNTHETIC_DEMO`.
 
-| Endpoint | Query | Feature properties |
-|---|---|---|
-| `GET /api/map/assets` | `zoneId` `assetType` `status` `criticality` | id, assetCode, name, type, criticality, operationalStatus, vulnerability, zoneName, **source, dataQuality**; geometry = Point or LineString |
-| `GET /api/map/hazards` | `zoneId` `severity` `hazardType` `status` | id, type, severity, status, zoneName, rainfallRate, waterDepth, temperature, windSpeed, startedAt, source, **dataQuality** |
-| `GET /api/map/incidents` | `zoneId` `severity` `status` (default: active) | id, incidentCode, title, type, severity, status, zoneName, assetName, slaDeadline |
-| `GET /api/map/units` | `status` `type` `departmentId` (default: non-OFFLINE) | id, callsign, type, status, departmentName, etaMinutes |
-| `GET /api/map/overlays` | — | object of FeatureCollections (below) |
+### GET /api/map/assets — authenticated
 
-`/api/map/overlays` keys (GIS layer toggles): `floodZones` (zones with active flood hazards or HIGH/CRITICAL risk), `heatZones` (active EXTREME_HEAT), `roadClosures` (non-operational roads/bridges + active ROAD_BLOCKAGE/FLOODING incident assets, with `reason`), `criticalInfrastructure` (CRITICAL/HIGH assets), `drainageTelemetry` (DRAIN/PUMPING_STATION with latest `waterDepthM`, `pumpRuntimeHours`, `rainfallMmPerHour`), `evacuationCorridors` (shelters + cooling centers with capacity), `incidents`, `units`. Each sub-collection is labelled at collection level; features retain per-feature quality where applicable.
+Returns infrastructure assets as a GeoJSON FeatureCollection.
+
+- **Query Parameters**:
+  - `zoneId`: filter by zone id or code (e.g. `GCC-Z13`, `EB`)
+  - `assetType`: filter by `AssetType` (e.g. `ROAD`, `HOSPITAL`, `SUBSTATION`, `DRAIN`)
+  - `status`: filter by `OperationalStatus` (`OPERATIONAL`, `DEGRADED`, `AT_RISK`, `COMPROMISED`, `OFFLINE`)
+  - `criticality`: filter by `Criticality` (`LOW`, `MEDIUM`, `HIGH`, `CRITICAL`)
+- **Data Quality**: Features carry `REAL_GEOGRAPHIC` (OpenStreetMap imported) or `SYNTHETIC_DEMO` (fictional demo assets). Collection dataQuality is `REAL_GEOGRAPHIC`, `SYNTHETIC_DEMO`, or `MIXED`.
+- **Response Shape**: Standard `{ "success": true, "data": GeoFeatureCollection }`
+```json
+{
+  "success": true,
+  "data": {
+    "type": "FeatureCollection",
+    "dataQuality": "MIXED",
+    "features": [
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [[80.255, 13.006], [80.258, 13.007]]
+        },
+        "properties": {
+          "id": "asset_...",
+          "assetCode": "OSM-ROAD-123456",
+          "name": "Sardar Patel Road",
+          "type": "ROAD",
+          "criticality": "MEDIUM",
+          "operationalStatus": "OPERATIONAL",
+          "vulnerability": 50,
+          "zoneName": "Zone 13 Adyar",
+          "source": "OpenStreetMap",
+          "dataQuality": "REAL_GEOGRAPHIC"
+        }
+      }
+    ]
+  }
+}
+```
+
+### GET /api/map/hazards — authenticated
+
+Returns active and historical hazards as a GeoJSON FeatureCollection.
+
+- **Query Parameters**:
+  - `zoneId`: filter by zone id or code
+  - `severity`: filter by `Severity` (`LOW`, `MODERATE`, `HIGH`, `CRITICAL`)
+  - `hazardType`: filter by `HazardType` (`FLOOD`, `FLASH_FLOOD`, `EXTREME_HEAT`, etc.)
+  - `status`: filter by status (`ACTIVE`, `MONITORING`, `RESOLVED`)
+- **Data Quality**: `SYNTHETIC_DEMO` (seeded demo scenarios) or `MODELED`.
+- **Response Shape**:
+```json
+{
+  "type": "FeatureCollection",
+  "dataQuality": "SYNTHETIC_DEMO",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [80.275, 13.062] },
+      "properties": {
+        "id": "hazard_01",
+        "type": "FLASH_FLOOD",
+        "severity": "CRITICAL",
+        "status": "ACTIVE",
+        "zoneName": "East Basin",
+        "rainfallRate": 65,
+        "waterDepth": 0.45,
+        "temperature": 28.4,
+        "windSpeed": 18,
+        "startedAt": "2026-09-10T14:00:00.000Z",
+        "source": "SIMULATOR",
+        "dataQuality": "SYNTHETIC_DEMO"
+      }
+    }
+  ]
+}
+```
+
+### GET /api/map/incidents — authenticated
+
+Returns incidents as a GeoJSON FeatureCollection.
+
+- **Query Parameters**:
+  - `zoneId`: filter by zone
+  - `severity`: filter by severity
+  - `status`: filter by status (defaults to active statuses: `NEW`, `ACKNOWLEDGED`, `IN_PROGRESS`)
+- **Response Shape**: Feature collection where properties include `id`, `incidentCode`, `title`, `type`, `severity`, `status`, `zoneName`, `assetName`, `slaDeadline`.
+
+### GET /api/map/units — authenticated
+
+Returns response units with current coordinates as a GeoJSON FeatureCollection.
+
+- **Query Parameters**:
+  - `status`: filter by unit status (default: excludes `OFFLINE`)
+  - `type`: filter by `UnitType` (`FIRE_RESCUE`, `EMS`, `PUBLIC_WORKS`, etc.)
+  - `departmentId`: filter by department
+- **Response Shape**: Feature collection where properties include `id`, `callsign`, `type`, `status`, `departmentName`, `etaMinutes`.
+
+### GET /api/map/overlays — authenticated
+
+Returns a unified bundle of GIS layers for MapLibre map toggles:
+
+- `floodZones`: zones with active flood hazards or HIGH/CRITICAL risk
+- `heatZones`: zones with active EXTREME_HEAT
+- `roadClosures`: non-operational roads/bridges + active ROAD_BLOCKAGE/FLOODING incident assets, with `reason`
+- `criticalInfrastructure`: CRITICAL/HIGH assets
+- `drainageTelemetry`: DRAIN/PUMPING_STATION with latest `waterDepthM`, `pumpRuntimeHours`, `rainfallMmPerHour`
+- `evacuationCorridors`: shelters + cooling centers with capacity
+- `incidents`: active incident features
+- `units`: active response unit features
+
+Each sub-collection carries its own `dataQuality` (`REAL_GEOGRAPHIC`, `SYNTHETIC_DEMO`, `MIXED`, or `UNKNOWN`).
 
 **Frontend integration note:** the Live Map should call `GET /api/location/overview?latitude=&longitude=` when the user selects a map point — do **not** recompute risk, cascade, haversine distance, or severity client-side. Use this map endpoints suite for layer rendering only.
 

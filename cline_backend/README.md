@@ -105,8 +105,13 @@ npm run build && npm start
 | `WEATHER_API_KEY` | no | Reserved for future key-based providers (unused by Open-Meteo) |
 | `WEATHER_CACHE_SECONDS` | no | In-memory cache TTL for live weather (default `300`; `0` disables) |
 | `WEATHER_POLL_INTERVAL_MINUTES` | no | Background zone polling for snapshot history (default `10`; `0` disables) |
+| `SUPABASE_URL` | no | Supabase project URL (`https://<project-ref>.supabase.co`) |
+| `SUPABASE_PUBLISHABLE_KEY` | no | Supabase publishable / anon key |
+| `SUPABASE_SECRET_KEY` | no | Supabase secret / service-role key |
+| `SUPABASE_JWKS_URL` | no | Supabase JWT verification keyset URL |
+| `GEMINI_API_KEY` | no | Optional Google Gemini key for P4 explanation layer (falls back deterministically) |
 
-**No external API keys are needed.** The MVP is fully self-contained; the `WEATHER_API` hazard source enum is reserved for a future live-weather integration (seeded hazards are synthetic). The only credentials you must supply are your own Supabase database URLs + a generated `JWT_SECRET`.
+**No external API keys are needed.** The MVP is fully self-contained with Open-Meteo and OpenStreetMap. The only credentials needed to connect to Supabase PostgreSQL are your Supabase database connection strings + a generated `JWT_SECRET`.
 
 ## Demo credentials (SYNTHETIC DEMO accounts)
 
@@ -158,7 +163,7 @@ Full contracts with request/response examples: **[docs/API.md](docs/API.md)**.
 
 ```bash
 bash scripts/smoke.sh            # against a running server
-npm test                         # 105 unit + integration tests
+npm test                         # 114 unit + integration tests (11 suites)
 ```
 
 1. Government operator logs in → JWT.
