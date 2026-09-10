@@ -19,11 +19,51 @@ export interface ExplanationResult {
   response: ExplainResponse;
   usedFallback: boolean;
   fallbackReason?: "missing_api_key" | "provider_error" | "invalid_model_response";
+  modelUsed?: string;
   errorDetails?: string;
 }
 
-const DEFAULT_MODEL = "gemini-1.5-flash";
-const DEFAULT_TIMEOUT_MS = 12_000;
+const DEFAULT_TIMEOUT_MS = 45_000;
+
+const CANDIDATE_MODELS = [
+  "gemini-3.6-flash",
+  "gemini-3.6-pro",
+  "gemini-3.0-flash",
+  "gemini-2.5-flash",
+  "gemini-2.0-flash",
+  "gemini-1.5-flash-latest",
+  "gemini-1.5-flash",
+  "gemini-pro",
+];
+
+export async function listAvailableModels(
+  apiKey: string,
+  fetchFn: typeof fetch = fetch,
+): Promise<string[]> {
+  try {
+    const res = await fetchFn("https://generativelanguage.googleapis.com/v1beta/models", {
+      headers: { "x-goog-api-key": apiKey },
+    });
+    if (!res.ok) return [];
+    const data = (await res.json()) as {
+      models?: Array<{ name: string; supportedGenerationMethods?: string[] }>;
+    };
+    return (data.models ?? [])
+      .filter((m) => m.supportedGenerationMethods?.includes("generateContent"))
+      .map((m) => m.name.replace(/^models\//, ""));
+  } catch {
+    return [];
+  }
+}
+
+async function resolveModel(
+  apiKey: string,
+  preferredModel?: string,
+  fetchFn: typeof fetch = fetch,
+): Promise<string> {
+  if (preferredModel) return preferredModel;
+  return "gemini-3.6-flash";
+}
 
 function createPrompt(request: ExplainRequest): string {
   return `You are ClimateShield's compound cascade explanation and operator-assistance layer.
@@ -90,13 +130,19 @@ function extractText(payload: unknown): string | undefined {
 
 /**
  * Calls Gemini to synthesize compound cascade explanations, action dependencies,
- * and role-specific briefings. Returns deterministic fallback if API key is missing
- * or response fails validation.
+ * and role-specific briefings. Auto-detects supported models for the API key and
+ * safely falls back to deterministic synthesis if anything fails.
  */
 export async function explainWithGeminiOrFallback(
   request: ExplainRequest,
   options: GeminiProviderOptions = {},
 ): Promise<ExplanationResult> {
+  try {
+    (process as unknown as { loadEnvFile?: () => void }).loadEnvFile?.();
+  } catch {
+    // ignore if no .env file
+  }
+
   const apiKey = (options.apiKey ?? process.env.GEMINI_API_KEY ?? "").trim();
   if (!apiKey) {
     return {
@@ -106,11 +152,13 @@ export async function explainWithGeminiOrFallback(
     };
   }
 
-  const model = options.model ?? DEFAULT_MODEL;
+  const fetchFn = options.fetchFn ?? fetch;
+  const model = await resolveModel(apiKey, options.model, fetchFn);
+
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), options.timeoutMs ?? DEFAULT_TIMEOUT_MS);
   try {
-    const response = await (options.fetchFn ?? fetch)(
+    const response = await fetchFn(
       `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,
       {
         method: "POST",
@@ -127,7 +175,7 @@ export async function explainWithGeminiOrFallback(
     );
     if (!response.ok) {
       const errBody = await response.text().catch(() => "");
-      throw new Error(`HTTP ${response.status}: ${errBody}`);
+      throw new Error(`HTTP ${response.status} on model '${model}': ${errBody}`);
     }
 
     const text = extractText(await response.json());
@@ -136,6 +184,7 @@ export async function explainWithGeminiOrFallback(
         response: buildFallbackExplanation(request),
         usedFallback: true,
         fallbackReason: "invalid_model_response",
+        modelUsed: model,
         errorDetails: "Empty text candidate returned from Gemini.",
       };
     }
@@ -148,6 +197,7 @@ export async function explainWithGeminiOrFallback(
         response: buildFallbackExplanation(request),
         usedFallback: true,
         fallbackReason: "invalid_model_response",
+        modelUsed: model,
         errorDetails: `JSON parse failed on output: ${text.slice(0, 200)}`,
       };
     }
@@ -158,6 +208,7 @@ export async function explainWithGeminiOrFallback(
         response: buildFallbackExplanation(request),
         usedFallback: true,
         fallbackReason: "invalid_model_response",
+        modelUsed: model,
         errorDetails: `Schema validation failed: ${validation.errors.join("; ")}`,
       };
     }
@@ -167,6 +218,7 @@ export async function explainWithGeminiOrFallback(
         response: buildFallbackExplanation(request),
         usedFallback: true,
         fallbackReason: "invalid_model_response",
+        modelUsed: model,
         errorDetails: `Incident ID mismatch: expected ${request.incidentId}, got ${validation.data.incidentId}`,
       };
     }
@@ -176,17 +228,23 @@ export async function explainWithGeminiOrFallback(
         response: buildFallbackExplanation(request),
         usedFallback: true,
         fallbackReason: "invalid_model_response",
+        modelUsed: model,
         errorDetails: `Confidence ${validation.data.confidence} exceeds risk confidence ${request.risk.confidence}`,
       };
     }
 
-    return { response: validation.data, usedFallback: false };
+    return { response: validation.data, usedFallback: false, modelUsed: model };
   } catch (err: unknown) {
-    const errorDetails = err instanceof Error ? err.message : String(err);
+    const errorDetails = controller.signal.aborted
+      ? `Request timed out after ${(options.timeoutMs ?? DEFAULT_TIMEOUT_MS) / 1000}s.`
+      : err instanceof Error
+      ? err.message
+      : String(err);
     return {
       response: buildFallbackExplanation(request),
       usedFallback: true,
       fallbackReason: "provider_error",
+      modelUsed: model,
       errorDetails,
     };
   } finally {
