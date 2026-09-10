@@ -56,7 +56,7 @@ export const TopNav: React.FC<TopNavProps> = ({
   const isStale = dataQuality?.status === 'STALE';
 
   return (
-    <header className="bg-white border-b border-slate-200 sticky top-0 z-40 px-4 py-2.5 shadow-sm">
+    <header className="bg-white border-b border-slate-200 sticky top-0 z-50 px-4 py-2.5 shadow-sm">
       <div className="flex items-center justify-between gap-4">
         {/* Brand & Organization Selector */}
         <div className="flex items-center gap-3">
@@ -96,23 +96,29 @@ export const TopNav: React.FC<TopNavProps> = ({
             </button>
 
             {isOrgDropdownOpen && (
-              <div className="absolute left-0 mt-1 w-64 bg-white border border-slate-200 rounded-lg shadow-lg py-1 z-50 text-xs">
-                {orgs.map((org) => (
-                  <button
-                    key={org}
-                    onClick={() => {
-                      setSelectedOrg(org);
-                      setIsOrgDropdownOpen(false);
-                    }}
-                    className={`w-full text-left px-3 py-2 hover:bg-slate-50 flex items-center justify-between ${
-                      selectedOrg === org ? 'font-semibold text-sky-700 bg-sky-50/50' : 'text-slate-700'
-                    }`}
-                  >
-                    <span>{org}</span>
-                    {selectedOrg === org && <span className="text-sky-600">✓</span>}
-                  </button>
-                ))}
-              </div>
+              <>
+                <div
+                  className="fixed inset-0 z-40"
+                  onClick={() => setIsOrgDropdownOpen(false)}
+                />
+                <div className="absolute left-0 mt-1 w-64 bg-white border border-slate-200 rounded-lg shadow-xl py-1 z-50 text-xs">
+                  {orgs.map((org) => (
+                    <button
+                      key={org}
+                      onClick={() => {
+                        setSelectedOrg(org);
+                        setIsOrgDropdownOpen(false);
+                      }}
+                      className={`w-full text-left px-3 py-2 hover:bg-slate-50 flex items-center justify-between ${
+                        selectedOrg === org ? 'font-semibold text-sky-700 bg-sky-50/50' : 'text-slate-700'
+                      }`}
+                    >
+                      <span>{org}</span>
+                      {selectedOrg === org && <span className="text-sky-600">✓</span>}
+                    </button>
+                  ))}
+                </div>
+              </>
             )}
           </div>
         </div>
@@ -175,28 +181,34 @@ export const TopNav: React.FC<TopNavProps> = ({
             </button>
 
             {isScenarioDropdownOpen && (
-              <div className="absolute right-0 mt-1 w-64 bg-white border border-slate-200 rounded-lg shadow-lg py-1 z-50 text-xs">
-                <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100">
-                  Hazard Stress-Test Scenarios
+              <>
+                <div
+                  className="fixed inset-0 z-40"
+                  onClick={() => setIsScenarioDropdownOpen(false)}
+                />
+                <div className="absolute right-0 mt-1 w-64 bg-white border border-slate-200 rounded-lg shadow-xl py-1 z-50 text-xs">
+                  <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100">
+                    Hazard Stress-Test Scenarios
+                  </div>
+                  {scenarios.map((s) => (
+                    <button
+                      key={s.id}
+                      onClick={() => {
+                        onApplyScenario(s.id);
+                        setIsScenarioDropdownOpen(false);
+                      }}
+                      className={`w-full text-left px-3 py-2 hover:bg-slate-50 flex items-center justify-between ${
+                        activeScenarioId === s.id ? 'font-semibold text-sky-700 bg-sky-50/50' : 'text-slate-700'
+                      }`}
+                    >
+                      <div>
+                        <div className="font-medium text-slate-900">{s.name}</div>
+                        <div className="text-[10px] text-slate-500 line-clamp-1">{s.description}</div>
+                      </div>
+                    </button>
+                  ))}
                 </div>
-                {scenarios.map((s) => (
-                  <button
-                    key={s.id}
-                    onClick={() => {
-                      onApplyScenario(s.id);
-                      setIsScenarioDropdownOpen(false);
-                    }}
-                    className={`w-full text-left px-3 py-2 hover:bg-slate-50 flex items-center justify-between ${
-                      activeScenarioId === s.id ? 'font-semibold text-sky-700 bg-sky-50/50' : 'text-slate-700'
-                    }`}
-                  >
-                    <div>
-                      <div className="font-medium text-slate-900">{s.name}</div>
-                      <div className="text-[10px] text-slate-500 line-clamp-1">{s.description}</div>
-                    </div>
-                  </button>
-                ))}
-              </div>
+              </>
             )}
           </div>
 

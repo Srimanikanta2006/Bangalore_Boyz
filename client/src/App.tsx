@@ -361,7 +361,11 @@ export const App: React.FC = () => {
         />
 
         {/* Dynamic Route Content */}
-        <main className="flex-1 overflow-y-auto bg-slate-50">
+        <main
+          className={`flex-1 ${
+            currentRoute === 'risk-map' ? 'overflow-hidden flex flex-col' : 'overflow-y-auto'
+          } bg-slate-50`}
+        >
           {currentRoute === 'risk-map' && (
             <RiskMapPage
               wards={wards}

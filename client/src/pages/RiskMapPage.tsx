@@ -6,6 +6,7 @@ import {
   Popup,
   Polygon,
   Tooltip,
+  useMap,
 } from 'react-leaflet';
 import L from 'leaflet';
 import {
@@ -98,6 +99,28 @@ function createMapMarker(asset: Asset, risk?: AssetRiskAssessment, hasActiveInci
     iconAnchor: [14, 14],
     popupAnchor: [0, -16],
   });
+}
+
+// Helper to force Leaflet to recalculate container bounds and tile grids on mount/resize
+function MapResizeHandler() {
+  const map = useMap();
+  React.useEffect(() => {
+    map.invalidateSize();
+    const timer1 = setTimeout(() => {
+      map.invalidateSize();
+    }, 150);
+    const timer2 = setTimeout(() => {
+      map.invalidateSize();
+    }, 450);
+    const handleResize = () => map.invalidateSize();
+    window.addEventListener('resize', handleResize);
+    return () => {
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [map]);
+  return null;
 }
 
 export const RiskMapPage: React.FC<RiskMapPageProps> = ({
@@ -194,9 +217,9 @@ export const RiskMapPage: React.FC<RiskMapPageProps> = ({
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-53px)] overflow-hidden bg-slate-50">
+    <div className="flex-1 flex flex-col min-h-0 overflow-hidden bg-slate-50">
       {/* Top Map Action Bar */}
-      <div className="bg-white border-b border-slate-200 px-4 py-2 flex items-center justify-between gap-3 text-xs">
+      <div className="bg-white border-b border-slate-200 px-4 py-2 flex items-center justify-between gap-3 text-xs relative z-30 shadow-xs">
         <div className="flex items-center gap-3 flex-1 max-w-md">
           <div className="relative w-full">
             <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2" />
@@ -263,92 +286,72 @@ export const RiskMapPage: React.FC<RiskMapPageProps> = ({
             </button>
 
             {isLayerControlOpen && (
-              <div className="absolute right-0 mt-1 w-60 bg-white border border-slate-200 rounded-lg shadow-xl p-3 z-[1000] text-xs space-y-3">
-                <div>
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
-                    Climate Layers
+              <>
+                <div
+                  className="fixed inset-0 z-30"
+                  onClick={() => setIsLayerControlOpen(false)}
+                />
+                <div className="absolute right-0 mt-1 w-64 bg-white border border-slate-200 rounded-lg shadow-xl p-3 z-40 text-xs space-y-3">
+                  <div>
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
+                      Climate Risk Layers
+                    </div>
+                    <div className="space-y-1">
+                      <label className="flex items-center gap-2 cursor-pointer text-slate-700">
+                        <input
+                          type="checkbox"
+                          checked={layers.floodRisk}
+                          onChange={(e) => setLayers({ ...layers, floodRisk: e.target.checked })}
+                          className="rounded border-slate-300 text-sky-600 focus:ring-0"
+                        />
+                        <span>Flood Inundation Contours</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer text-slate-700">
+                        <input
+                          type="checkbox"
+                          checked={layers.heatRisk}
+                          onChange={(e) => setLayers({ ...layers, heatRisk: e.target.checked })}
+                          className="rounded border-slate-300 text-sky-600 focus:ring-0"
+                        />
+                        <span>Heat Stress Island Zones</span>
+                      </label>
+                    </div>
                   </div>
-                  <div className="space-y-1">
-                    <label className="flex items-center gap-2 cursor-pointer text-slate-700">
-                      <input
-                        type="checkbox"
-                        checked={layers.floodRisk}
-                        onChange={(e) => setLayers({ ...layers, floodRisk: e.target.checked })}
-                        className="rounded border-slate-300 text-sky-600 focus:ring-0"
-                      />
-                      <span>Flood Inundation Risk</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer text-slate-700">
-                      <input
-                        type="checkbox"
-                        checked={layers.heatRisk}
-                        onChange={(e) => setLayers({ ...layers, heatRisk: e.target.checked })}
-                        className="rounded border-slate-300 text-sky-600 focus:ring-0"
-                      />
-                      <span>Heat Stress Index</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer text-slate-700">
-                      <input
-                        type="checkbox"
-                        checked={layers.rainfall}
-                        onChange={(e) => setLayers({ ...layers, rainfall: e.target.checked })}
-                        className="rounded border-slate-300 text-sky-600 focus:ring-0"
-                      />
-                      <span>Precipitation Contour</span>
-                    </label>
-                  </div>
-                </div>
 
-                <div className="pt-2 border-t border-slate-100">
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
-                    Infrastructure
-                  </div>
-                  <div className="space-y-1">
-                    <label className="flex items-center gap-2 cursor-pointer text-slate-700">
-                      <input
-                        type="checkbox"
-                        checked={layers.buildings}
-                        onChange={(e) => setLayers({ ...layers, buildings: e.target.checked })}
-                        className="rounded border-slate-300 text-sky-600 focus:ring-0"
-                      />
-                      <span>Critical Facilities</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer text-slate-700">
-                      <input
-                        type="checkbox"
-                        checked={layers.drainage}
-                        onChange={(e) => setLayers({ ...layers, drainage: e.target.checked })}
-                        className="rounded border-slate-300 text-sky-600 focus:ring-0"
-                      />
-                      <span>Stormwater Drain Corridors</span>
-                    </label>
-                  </div>
-                </div>
-
-                <div className="pt-2 border-t border-slate-100">
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
-                    Incidents
-                  </div>
-                  <div className="space-y-1">
-                    <label className="flex items-center gap-2 cursor-pointer text-slate-700">
-                      <input
-                        type="checkbox"
-                        checked={layers.activeIncidents}
-                        onChange={(e) => setLayers({ ...layers, activeIncidents: e.target.checked })}
-                        className="rounded border-slate-300 text-sky-600 focus:ring-0"
-                      />
-                      <span>Active Incidents</span>
-                    </label>
+                  <div className="pt-2 border-t border-slate-100">
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
+                      Infrastructure Pins
+                    </div>
+                    <div className="space-y-1">
+                      <label className="flex items-center gap-2 cursor-pointer text-slate-700">
+                        <input
+                          type="checkbox"
+                          checked={layers.buildings}
+                          onChange={(e) => setLayers({ ...layers, buildings: e.target.checked })}
+                          className="rounded border-slate-300 text-sky-600 focus:ring-0"
+                        />
+                        <span>Critical Facilities & Assets</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer text-slate-700">
+                        <input
+                          type="checkbox"
+                          checked={layers.activeIncidents}
+                          onChange={(e) => setLayers({ ...layers, activeIncidents: e.target.checked })}
+                          className="rounded border-slate-300 text-sky-600 focus:ring-0"
+                        />
+                        <span>Active Incident Indicators</span>
+                      </label>
+                    </div>
                   </div>
                 </div>
-              </div>
+              </>
             )}
           </div>
         </div>
       </div>
 
       {/* Main 3-Column Work Area */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex overflow-hidden relative z-10">
         {/* Left: Map Filter Panel */}
         <div className="w-56 bg-white border-r border-slate-200 p-3.5 flex flex-col justify-between overflow-y-auto text-xs select-none">
           <div className="space-y-4">
@@ -438,69 +441,74 @@ export const RiskMapPage: React.FC<RiskMapPageProps> = ({
         </div>
 
         {/* Center: Large Interactive Geospatial Map */}
-        <div className="flex-1 relative h-full">
+        <div className="flex-1 relative h-full z-0 isolate min-h-[350px]">
           <MapContainer
             center={defaultCenter}
             zoom={12}
             scrollWheelZoom={true}
             className="w-full h-full"
           >
+            <MapResizeHandler />
             {/* Clean Professional CartoDB Voyager / Light Tile Layer */}
             <TileLayer
-              attribution='&copy; <a href="https://carto.com/">CARTO</a>'
+              attribution='&copy; <a href="https://carto.com/">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
               url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+              subdomains={['a', 'b', 'c', 'd']}
+              maxZoom={19}
             />
 
             {/* Ward Geographic Polygons (Transparent Risk Zones) */}
-            {wards.map((ward) => {
-              // Determine average ward risk level for polygon shading
-              const wardAssets = assets.filter((a) => a.wardId === ward.id);
-              const wardScores = wardAssets.map((a) => riskMap.get(a.id)?.compositeRiskScore ?? 20);
-              const avgScore = wardScores.length > 0 ? wardScores.reduce((a, b) => a + b, 0) / wardScores.length : 20;
+            {(layers.floodRisk || layers.heatRisk) &&
+              wards.map((ward) => {
+                // Determine average ward risk level for polygon shading
+                const wardAssets = assets.filter((a) => a.wardId === ward.id);
+                const wardScores = wardAssets.map((a) => riskMap.get(a.id)?.compositeRiskScore ?? 20);
+                const avgScore = wardScores.length > 0 ? wardScores.reduce((a, b) => a + b, 0) / wardScores.length : 20;
 
-              let fillColor = '#10B981'; // Green
-              let strokeColor = '#059669';
-              if (avgScore >= 80) {
-                fillColor = '#E11D48'; // Red
-                strokeColor = '#BE123C';
-              } else if (avgScore >= 60) {
-                fillColor = '#F97316'; // Orange
-                strokeColor = '#C2410C';
-              } else if (avgScore >= 35) {
-                fillColor = '#F59E0B'; // Yellow
-                strokeColor = '#D97706';
-              }
+                let fillColor = '#10B981'; // Green
+                let strokeColor = '#059669';
+                if (avgScore >= 80) {
+                  fillColor = '#E11D48'; // Red
+                  strokeColor = '#BE123C';
+                } else if (avgScore >= 60) {
+                  fillColor = '#F97316'; // Orange
+                  strokeColor = '#C2410C';
+                } else if (avgScore >= 35) {
+                  fillColor = '#F59E0B'; // Yellow
+                  strokeColor = '#D97706';
+                }
 
-              return (
-                <Polygon
-                  key={ward.id}
-                  positions={ward.boundaries}
-                  pathOptions={{
-                    color: strokeColor,
-                    weight: 1.5,
-                    fillColor: fillColor,
-                    fillOpacity: 0.12, // Translucent so roads & terrain are clearly visible!
-                  }}
-                >
-                  <Tooltip sticky>
-                    <div className="text-xs p-1 text-slate-900">
-                      <div className="font-bold text-slate-900">{ward.name}</div>
-                      <div>Avg Zone Risk: <span className="font-bold">{Math.round(avgScore)}/100</span></div>
-                      <div>Drain Capacity: {ward.drainageCapacityMmHr} mm/hr</div>
-                      <div>Impervious: {ward.imperviousSurfacePct}%</div>
-                      <div>Canopy Cover: {ward.treeCanopyPct}%</div>
-                    </div>
-                  </Tooltip>
-                </Polygon>
-              );
-            })}
+                return (
+                  <Polygon
+                    key={ward.id}
+                    positions={ward.boundaries}
+                    pathOptions={{
+                      color: strokeColor,
+                      weight: 1.5,
+                      fillColor: fillColor,
+                      fillOpacity: 0.14,
+                    }}
+                  >
+                    <Tooltip sticky>
+                      <div className="text-xs p-1 text-slate-900">
+                        <div className="font-bold text-slate-900">{ward.name}</div>
+                        <div>Avg Zone Risk: <span className="font-bold">{Math.round(avgScore)}/100</span></div>
+                        <div>Drain Capacity: {ward.drainageCapacityMmHr} mm/hr</div>
+                        <div>Impervious: {ward.imperviousSurfacePct}%</div>
+                        <div>Canopy Cover: {ward.treeCanopyPct}%</div>
+                      </div>
+                    </Tooltip>
+                  </Polygon>
+                );
+              })}
 
             {/* Asset Markers */}
-            {filteredAssets.map((asset) => {
-              const risk = riskMap.get(asset.id);
-              const hasIncident = activeIncidentAssetIds.has(asset.id);
-              const icon = createMapMarker(asset, risk, hasIncident);
-              const score = risk?.compositeRiskScore ?? 20;
+            {layers.buildings &&
+              filteredAssets.map((asset) => {
+                const risk = riskMap.get(asset.id);
+                const hasIncident = activeIncidentAssetIds.has(asset.id);
+                const icon = createMapMarker(asset, risk, layers.activeIncidents && hasIncident);
+                const score = risk?.compositeRiskScore ?? 20;
 
               return (
                 <Marker

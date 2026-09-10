@@ -1,3 +1,5 @@
+@import 'leaflet/dist/leaflet.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -8,12 +10,53 @@
   }
 }
 
-/* Professional Leaflet Map styling */
+/* Professional Leaflet Map styling & Stacking Context Isolation */
 .leaflet-container {
   width: 100%;
   height: 100%;
-  background: #F1F5F9 !important;
+  background: #E2E8F0 !important;
   font-family: inherit;
+  z-index: 0 !important;
+  isolation: isolate;
+  position: relative;
+}
+
+/* Tame Leaflet controls and panes so they never bleed above app dropdowns or modals */
+.leaflet-top,
+.leaflet-bottom {
+  z-index: 10 !important;
+}
+
+.leaflet-control {
+  z-index: 10 !important;
+}
+
+.leaflet-pane {
+  z-index: 1 !important;
+}
+
+.leaflet-tile-pane {
+  z-index: 1 !important;
+}
+
+.leaflet-overlay-pane {
+  z-index: 2 !important;
+}
+
+.leaflet-shadow-pane {
+  z-index: 3 !important;
+}
+
+.leaflet-marker-pane {
+  z-index: 4 !important;
+}
+
+.leaflet-tooltip-pane {
+  z-index: 5 !important;
+}
+
+.leaflet-popup-pane {
+  z-index: 6 !important;
 }
 
 .leaflet-popup-content-wrapper {
