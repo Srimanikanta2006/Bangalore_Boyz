@@ -31,8 +31,9 @@ function toSummary(incident: IncidentWithRelations) {
     type: incident.type,
     severity: incident.severity,
     status: incident.status,
+    dataQuality: incident.dataQuality, // SYNTHETIC_DEMO (seed) | ESTIMATED (operator-reported)
     zone: incident.zone
-      ? { id: incident.zone.id, name: incident.zone.name, code: incident.zone.code, riskLevel: incident.zone.riskLevel }
+      ? { id: incident.zone.id, name: incident.zone.name, code: incident.zone.code, riskLevel: incident.zone.riskLevel, dataQuality: incident.zone.dataQuality }
       : null,
     hazard: incident.hazard
       ? { id: incident.hazard.id, type: incident.hazard.type, severity: incident.hazard.severity, status: incident.hazard.status }
@@ -165,6 +166,7 @@ export async function createIncident(input: CreateIncidentInput, user: AuthUser)
       type: input.type,
       severity: input.severity,
       status: 'NEW',
+      dataQuality: 'ESTIMATED', // operator-reported from an observed event - not a sensor/external feed
       zoneId: zone.id,
       hazardId: hazard?.id,
       primaryAssetId: asset?.id,

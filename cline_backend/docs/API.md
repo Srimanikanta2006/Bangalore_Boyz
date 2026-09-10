@@ -17,6 +17,17 @@ Base URL: `http://<host>:<PORT>/api` • JSON only • All timestamps ISO-8601 U
 - **HTTP codes**: 400 validation · 401 unauthenticated · 403 forbidden · 404 not found · 409 conflict · 422 business-rule violation · 429 rate-limited · 500 internal (no stack traces in production).
 - **Id resolution**: documented `:id` params accept either the database id or the human code (`INC-204`, `TASK-005`, `DRAIN-07`, `EB`, `PW-DRAIN-A1`, `PW`).
 - **Demo data**: payloads containing synthetic demo values are tagged `dataQuality: "SYNTHETIC_DEMO"`.
+- **Data quality semantics** (every block labels its own quality — never mix provenance):
+
+| Value | Meaning |
+|---|---|
+| `LIVE_OBSERVED` | Current measurement fetched live from an external provider at request time (e.g. Open-Meteo temperature, rainfall, wind). |
+| `FORECAST` | Provider forecast hour(s), not a current observation. |
+| `REAL_GEOGRAPHIC` | Imported real-world geography from OpenStreetMap/Overpass (GCC zone boundaries, OSM infrastructure geometry). Existence is real; operational metadata (criticality, status) may still be application defaults. |
+| `MODELED` | Deterministic output of ClimateShield engines (risk scores, cascade, severity classification from live inputs). Never presented as a sensor reading. |
+| `SYNTHETIC_DEMO` | Seeded fictional demo data (Bayview Metro operational scenario). |
+| `MIXED` | GeoJSON collection containing more than one quality (e.g. real Chennai roads + synthetic demo assets). Inspect per-feature `properties.dataQuality`. |
+| `UNKNOWN` | No legitimate public feed integrated (e.g. official IMD/CWC/state-DMA alerts). Empty arrays — never fabricated. |
 
 ### Common error codes
 
@@ -406,13 +417,15 @@ Body: `{ "reason? }`}`. Issues a deterministic, audited (`TRAFFIC_REROUTED`) adv
 
 ## Zones
 
+Real **Greater Chennai Corporation** zones (`REAL_GEOGRAPHIC`, codes `GCC-Z01`…`GCC-Z14`) coexist with the seeded **Bayview Metro** demo zones (`SYNTHETIC_DEMO`, codes `EB`, `PW`, …). Each zone DTO includes `source`, `sourceId`, and `dataQuality`. Point-in-polygon resolution for live coordinates prefers `REAL_GEOGRAPHIC` boundaries; unmatched coordinates return `zone: null`.
+
 ### GET /api/zones — authenticated
 
-Query: `page` `limit` `riskLevel`. Zone summaries with asset/hotspot/historical-event counts, active hazards and active incident counts.
+Query: `page` `limit` `riskLevel`. Zone summaries with asset/hotspot/historical-event counts, active hazards and active incident counts. Response items include `dataQuality`, `source`, `code`, `name`, centroid coordinates.
 
 ### GET /api/zones/:id — authenticated
 
-Zone detail: zone + assets (ordered by criticality) + active hazards + active incidents + hotspots.
+Zone detail: zone + assets (ordered by criticality) + active hazards + active incidents + hotspots. Accepts zone id or code (`GCC-Z13`, `EB`).
 
 ### GET /api/zones/:zoneId/cascade — authenticated  (Zone Detail screen)
 
@@ -457,17 +470,21 @@ Body: `{ "type", "severity", "zoneId", "rainfallRate?", "waterDepth?", "flowVelo
 
 ## Live Map (GeoJSON for MapLibre)
 
-All map endpoints return `{ "type": "FeatureCollection", "dataQuality": "SYNTHETIC_DEMO", "features": [ { "type": "Feature", "geometry": { "type": "Point", "coordinates": [lon, lat] }, "properties": {...} } ] }`.
+All map endpoints return GeoJSON `FeatureCollection`s ready for MapLibre. Each **feature** carries its own `properties.dataQuality` and `properties.source`. The **collection-level** `dataQuality` is derived: single-quality collections pass through (`REAL_GEOGRAPHIC`, `SYNTHETIC_DEMO`, …); mixed datasets are labelled `MIXED` — the frontend must not assume one quality for the whole layer.
+
+Imported Chennai infrastructure (`REAL_GEOGRAPHIC`, `source: "OpenStreetMap"`) includes full `LineString` geometry on roads/bridges/drains when available; point assets use centroid `Point` geometry. Seeded demo assets remain `SYNTHETIC_DEMO`.
 
 | Endpoint | Query | Feature properties |
 |---|---|---|
-| `GET /api/map/assets` | `zoneId` `assetType` `status` `criticality` | id, assetCode, name, type, criticality, operationalStatus, vulnerability, zoneName |
-| `GET /api/map/hazards` | `zoneId` `severity` `hazardType` `status` | id, type, severity, status, zoneName, rainfallRate, waterDepth, temperature, windSpeed, startedAt, source |
+| `GET /api/map/assets` | `zoneId` `assetType` `status` `criticality` | id, assetCode, name, type, criticality, operationalStatus, vulnerability, zoneName, **source, dataQuality**; geometry = Point or LineString |
+| `GET /api/map/hazards` | `zoneId` `severity` `hazardType` `status` | id, type, severity, status, zoneName, rainfallRate, waterDepth, temperature, windSpeed, startedAt, source, **dataQuality** |
 | `GET /api/map/incidents` | `zoneId` `severity` `status` (default: active) | id, incidentCode, title, type, severity, status, zoneName, assetName, slaDeadline |
 | `GET /api/map/units` | `status` `type` `departmentId` (default: non-OFFLINE) | id, callsign, type, status, departmentName, etaMinutes |
 | `GET /api/map/overlays` | — | object of FeatureCollections (below) |
 
-`/api/map/overlays` keys (GIS layer toggles): `floodZones` (zones with active flood hazards or HIGH/CRITICAL risk), `heatZones` (active EXTREME_HEAT), `roadClosures` (non-operational roads/bridges + active ROAD_BLOCKAGE/FLOODING incident assets, with `reason`), `criticalInfrastructure` (CRITICAL/HIGH assets), `drainageTelemetry` (DRAIN/PUMPING_STATION with latest `waterDepthM`, `pumpRuntimeHours`, `rainfallMmPerHour`), `evacuationCorridors` (shelters + cooling centers with capacity), `incidents`, `units`.
+`/api/map/overlays` keys (GIS layer toggles): `floodZones` (zones with active flood hazards or HIGH/CRITICAL risk), `heatZones` (active EXTREME_HEAT), `roadClosures` (non-operational roads/bridges + active ROAD_BLOCKAGE/FLOODING incident assets, with `reason`), `criticalInfrastructure` (CRITICAL/HIGH assets), `drainageTelemetry` (DRAIN/PUMPING_STATION with latest `waterDepthM`, `pumpRuntimeHours`, `rainfallMmPerHour`), `evacuationCorridors` (shelters + cooling centers with capacity), `incidents`, `units`. Each sub-collection is labelled at collection level; features retain per-feature quality where applicable.
+
+**Frontend integration note:** the Live Map should call `GET /api/location/overview?latitude=&longitude=` when the user selects a map point — do **not** recompute risk, cascade, haversine distance, or severity client-side. Use this map endpoints suite for layer rendering only.
 
 ---
 
@@ -593,13 +610,82 @@ Calls the Open-Meteo live provider (no API key). **No seed/DB dependency** — t
 }
 ```
 
-Rules: missing provider fields are `null` (never invented); `weatherCondition` uses the provider's documented WMO-code table (unknown codes → `null`); `derivedAssessment` uses deterministic thresholds (rain mm/hr ≥70/50/30, temp °C ≥45/40/35, wind km/h ≥90/70/60) and is explicitly `MODELED`, never an observation; zone resolution only uses stored (synthetic) boundary polygons and returns `null` when unmatched.
+Rules: missing provider fields are `null` (never invented); `weatherCondition` uses the provider's documented WMO-code table (unknown codes → `null`); `derivedAssessment` uses deterministic thresholds (rain mm/hr ≥70/50/30, temp °C ≥45/40/35, wind km/h ≥90/70/60) and is explicitly `MODELED`, never an observation; `waterDepthM` is always `null` (no live hydrology feed integrated); zone resolution uses stored boundary polygons — **real GCC zones (`REAL_GEOGRAPHIC`) take precedence** over synthetic demo boundaries; unmatched coordinates return `zone: null`.
 
 Errors: `400 VALIDATION_ERROR` · `401` · `502 WEATHER_PROVIDER_ERROR / WEATHER_PROVIDER_UNAVAILABLE`.
 
 ### GET /api/weather/history?zoneId=&page=&limit= — authenticated
 
-Persisted `WeatherSnapshot` rows written by the background zone poller (`WEATHER_POLL_INTERVAL_MINUTES`; disabled in test env, `0` disables). Items include provider, `dataQuality: LIVE_OBSERVED`, measurements, `observedAt`, zone info.
+Query: `zoneId` (id or code), `page`, `limit`. Persisted `WeatherSnapshot` rows written by the background zone poller (`WEATHER_POLL_INTERVAL_MINUTES`; disabled in test env, `0` disables). Items include provider, `dataQuality: LIVE_OBSERVED`, measurements, `observedAt`, zone info.
+
+---
+
+## Location Overview (Live Map point query)
+
+### GET /api/location/overview?latitude=&longitude=&radiusKm=&assetLimit= — authenticated
+
+**Primary endpoint for the Live Map location picker.** Composes everything for a selected coordinate in one call — the frontend must not duplicate this logic.
+
+Query parameters:
+
+| Param | Required | Default | Range |
+|---|---|---|---|
+| `latitude` | yes | — | −90…90 |
+| `longitude` | yes | — | −180…180 |
+| `radiusKm` | no | `5` | 0.5…25 (nearby asset search radius) |
+| `assetLimit` | no | `12` | 1…50 (max nearby assets returned) |
+
+Flow: coordinates → live Open-Meteo weather → containing zone (real GCC polygon when matched) → nearby infrastructure (haversine within `radiusKm`, distance-ordered) → active zone hazards → deterministic risk on nearest assets using **live weather as input** (`MODELED`) → zone cascade (`MODELED`) → alerts (`UNKNOWN`, empty unless a legitimate feed is integrated).
+
+```json
+{
+  "success": true,
+  "data": {
+    "location": { "latitude": 13.0067, "longitude": 80.2562 },
+    "radiusKm": 2,
+    "weather": {
+      "provider": "Open-Meteo",
+      "dataQuality": "LIVE_OBSERVED",
+      "temperatureC": 29,
+      "rainfallMmPerHour": 0,
+      "weatherCondition": "Overcast",
+      "derivedAssessment": { "dataQuality": "MODELED", "overallSeverity": null },
+      "waterDepthM": null,
+      "zone": { "code": "GCC-Z13", "name": "Zone 13 Adyar", "boundaryDataQuality": "REAL_GEOGRAPHIC" }
+    },
+    "zone": { "id": "...", "code": "GCC-Z13", "name": "Zone 13 Adyar", "boundaryDataQuality": "REAL_GEOGRAPHIC" },
+    "nearbyAssets": [
+      {
+        "assetCode": "OSM-ROAD-...",
+        "name": "Sardar Patel Road",
+        "type": "ROAD",
+        "distanceKm": 0.42,
+        "source": "OpenStreetMap",
+        "dataQuality": "REAL_GEOGRAPHIC"
+      }
+    ],
+    "hazards": [],
+    "alerts": {
+      "items": [],
+      "dataQuality": "UNKNOWN",
+      "note": "No official public alert feed (IMD/CWC/state DMA) is integrated..."
+    },
+    "risk": {
+      "dataQuality": "MODELED",
+      "model": "deterministic-risk-engine",
+      "inputs": { "weather": { "dataQuality": "LIVE_OBSERVED", "provider": "Open-Meteo", "observedAt": "..." } },
+      "assets": [
+        { "assetCode": "...", "distanceKm": 0.42, "dataQuality": "MODELED", "risk": { "score": 12, "level": "LOW", "confidence": 0.85, "factors": [] } }
+      ]
+    },
+    "cascade": { "dataQuality": "MODELED", "zone": { "code": "GCC-Z13" }, "riskScore": 0, "cascade": [] }
+  }
+}
+```
+
+Rules: coordinates outside every stored boundary → `zone: null`, `cascade: null`, `nearbyAssets: []` (weather still fetched live); nearby assets are never invented; risk/cascade are always `MODELED`; alerts are always `UNKNOWN` until a verified public feed is integrated.
+
+Errors: `400 VALIDATION_ERROR` · `401` · `502 WEATHER_PROVIDER_*` (when live weather fetch fails).
 
 ---
 

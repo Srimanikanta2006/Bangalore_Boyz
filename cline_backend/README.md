@@ -139,6 +139,8 @@ Full contracts with request/response examples: **[docs/API.md](docs/API.md)**.
 | Health | `GET /api/health` |
 | Overview | `GET /api/government/overview` |
 | Live Map | `GET /api/map/assets\|hazards\|incidents\|units\|overlays` |
+| Location (Live Map point) | `GET /api/location/overview?latitude=&longitude=&radiusKm=&assetLimit=` |
+| Live Weather | `GET /api/weather/current`, `GET /api/weather/history` |
 | Incidents | `GET/POST /api/incidents`, `GET/PATCH /api/incidents/:id`, `PATCH /api/incidents/:id/status`, `GET /api/incidents/:id/cascade`, `POST /api/incidents/:incidentId/dispatch` |
 | Response Center | `GET /api/response-center`, `POST /api/zones/:zoneId/response-plan` |
 | Tasks | `GET/POST /api/tasks`, `GET /api/tasks/:id`, `PATCH /api/tasks/:id/status`, `POST /api/tasks/:id/assign\|verify`, `GET /api/tasks/:id/history` |
@@ -156,7 +158,7 @@ Full contracts with request/response examples: **[docs/API.md](docs/API.md)**.
 
 ```bash
 bash scripts/smoke.sh            # against a running server
-npm test                         # 68 unit + integration tests
+npm test                         # 105 unit + integration tests
 ```
 
 1. Government operator logs in → JWT.
@@ -182,10 +184,36 @@ Data provenance (every payload labels its own quality):
 | Risk engine | calculated risk | `MODELED` |
 | Cascade engine | dependency impact | `MODELED` |
 | Flood/hydrology provider | water level / flood depth | **NOT INTEGRATED** — `waterDepth` is always `null` ("Live flood-depth source unavailable") |
-| OSM/Overpass | geographic infrastructure | not integrated (seeded assets remain `SYNTHETIC_DEMO`) |
+| OpenStreetMap (Overpass) | GCC zone boundaries (14) + hospitals/clinics/schools/fire stations/substations/generators/water works/pumping stations/shelters/roads/bridges/drains (5,191 assets) | `REAL_GEOGRAPHIC` |
 | Seeded hazards/incidents/history | demo operational data | `SYNTHETIC_DEMO` (hazard `dataQuality` column; never auto-seeded in production) |
 
-Notes: coordinates resolve to a seeded zone only via its (explicitly synthetic) boundary polygon — otherwise `zone: null`; nothing is invented. Background polling (`WEATHER_POLL_INTERVAL_MINUTES`) persists `WeatherSnapshot` history rows for dashboard readiness — visible via `GET /api/weather/history`.
+Notes: coordinates resolve to a containing zone via real GCC boundary polygons (REAL_GEOGRAPHIC zones take precedence over synthetic demo boundaries); unmatched coordinates return `zone: null` — nothing is invented. Background polling (`WEATHER_POLL_INTERVAL_MINUTES`) persists `WeatherSnapshot` history rows for dashboard readiness — visible via `GET /api/weather/history`.
+
+## Real Chennai geography (pilot area)
+
+Pilot area: **Chennai, Tamil Nadu** (OSM relation 7910817 — Greater Chennai Corporation). `npm run import:chennai` imports real geography as additive, idempotent rows (new `source`/`sourceId`/`dataQuality`/`geometryJson` columns) without touching the synthetic demo dataset:
+
+- **14 real GCC zones** (OSM admin_level=9, e.g. “Zone 13 Adyar”) with stitched boundary polygons + centroids — used for point-in-polygon coordinate→zone resolution; real zones take precedence over synthetic ones, unmatched coordinates honestly return `zone: null`.
+- **5,191 real infrastructure assets** (`REAL_GEOGRAPHIC`): 564 hospitals, 317 clinics, 487 schools, 13 fire stations, 33 substations, 76 generators, 3 water works, 4 pumping stations, 71 shelters, 2,660 roads, 806 bridges, 157 drains — each keeps its OSM source ID/URL in `metadata`; roads/bridges/drains keep full `LineString` geometry (`geometryJson`), surfaced by `/api/map/assets` as real GeoJSON geometry.
+- Criticality/vulnerability/operationalStatus remain **schema defaults** (MEDIUM / 50 / OPERATIONAL): geographic existence is real; operational metadata is application state and is never presented as a live observation.
+- Assets resolve to a containing real GCC zone via point-in-polygon at a representative point; assets outside mapped boundaries are skipped (337 during import) — never assigned to a made-up zone.
+- `GET /api/location/overview?latitude=&longitude=&radiusKm=` composes for any selected map point: live weather + containing zone + nearby real assets (haversine distance) + zone hazards + deterministic risk on LIVE inputs (MODELED) + cascade from the modeled dependency graph (MODELED) + alerts (honestly `UNKNOWN` — no public IMD/CWC/state-DMA feed is accessible without credentials; IMD `/api/warning` returns 404, India-WRIS/CWC endpoints unreachable).
+
+Optional env: `OVERPASS_URL` overrides the Overpass endpoint (public mirrors by default; **no API key**).
+
+## Frontend data mapping
+
+| Frontend data | Backend endpoint | Source | Status |
+|---|---|---|---|
+| Current weather at map point | `GET /api/weather/current?latitude=&longitude=` | Open-Meteo | LIVE_OBSERVED |
+| Everything at a selected location | `GET /api/location/overview?latitude=&longitude=&radiusKm=` | Open-Meteo + OSM geography + risk/cascade engines | LIVE + REAL_GEOGRAPHIC + MODELED |
+| Map assets | `GET /api/map/assets` | OpenStreetMap (Chennai) + synthetic demo | per-feature `dataQuality`; collection `MIXED` |
+| Map overlays | `GET /api/map/overlays` | zones / assets / incidents / units | labelled per feature + per collection |
+| Zones list | `GET /api/zones` | OSM GCC zones + synthetic demo | `REAL_GEOGRAPHIC` + `SYNTHETIC_DEMO` (source fields included) |
+| Risk score | asset risk fields / location overview | deterministic engine on live + geographic inputs | MODELED |
+| Cascade | `/api/cascade/...`, incident detail | modeled dependency graph | MODELED |
+| Incidents | `/api/incidents` | operator reports (or demo seed) | ESTIMATED (operator) / SYNTHETIC_DEMO (seed) |
+| Tasks / dispatch | `/api/tasks...` | ClimateShield operational state | application state |
 
 ## Deterministic engines (no AI)
 

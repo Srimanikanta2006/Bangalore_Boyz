@@ -19,7 +19,8 @@
     "prisma:seed": "prisma db seed",
     "db:reset": "prisma migrate reset --force",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "import:chennai": "tsx scripts/import-chennai.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

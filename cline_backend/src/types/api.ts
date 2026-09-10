@@ -27,14 +27,23 @@ export interface PaginatedData<T> {
 }
 
 /** MapLibre/GeoJSON compatible shapes. */
-export interface GeoPointFeature<P> {
+export type GeoGeometry =
+  | { type: 'Point'; coordinates: [number, number] }
+  | { type: 'LineString'; coordinates: [number, number][] }
+  | { type: 'Polygon'; coordinates: number[][][] }
+  | { type: 'MultiPolygon'; coordinates: number[][][][] };
+
+export interface GeoFeature<P> {
   type: 'Feature';
-  geometry: { type: 'Point'; coordinates: [number, number] };
+  geometry: GeoGeometry;
   properties: P;
 }
 
 export interface GeoFeatureCollection<P> {
   type: 'FeatureCollection';
-  dataQuality: 'SYNTHETIC_DEMO';
-  features: GeoPointFeature<P>[];
+  dataQuality: 'SYNTHETIC_DEMO' | 'REAL_GEOGRAPHIC' | 'MIXED' | 'MODELED' | 'UNKNOWN';
+  features: GeoFeature<P>[];
 }
+
+/** Alias retained for compatibility with earlier code. */
+export type GeoPointFeature<P> = GeoFeature<P>;

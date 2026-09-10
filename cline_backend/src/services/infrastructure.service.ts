@@ -239,6 +239,8 @@ export async function getDependencies(idOrCode: string) {
 
 const RAPID_TEAM_UNIT_TYPES: Record<AssetType, UnitType[]> = {
   HOSPITAL: ['EMS', 'PUBLIC_WORKS'],
+  CLINIC: ['EMS'],
+  SCHOOL: ['EMS', 'PUBLIC_WORKS'],
   AMBULANCE_GATE: ['EMS', 'BARRIER_CREW'],
   SUBSTATION: ['UTILITY'],
   GENERATOR: ['UTILITY'],

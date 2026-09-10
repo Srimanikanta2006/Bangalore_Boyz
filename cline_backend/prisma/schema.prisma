@@ -48,6 +48,8 @@ enum RiskLevel {
 
 enum AssetType {
   HOSPITAL
+  CLINIC
+  SCHOOL
   SUBSTATION
   PUMPING_STATION
   ROAD
@@ -258,6 +260,9 @@ model Zone {
   latitude        Float
   longitude       Float
   boundaryGeoJson Json?
+  source          String    @default("SYNTHETIC_DEMO") // e.g. OpenStreetMap
+  sourceId        String? // provider-native id (e.g. relation/7910xxx)
+  dataQuality     String    @default("SYNTHETIC_DEMO") // REAL_GEOGRAPHIC | SYNTHETIC_DEMO | ...
   riskLevel       RiskLevel @default(MODERATE)
   population      Int       @default(0)
   createdAt       DateTime  @default(now())
@@ -288,6 +293,10 @@ model InfrastructureAsset {
   operationalStatus OperationalStatus @default(OPERATIONAL)
   description       String?
   metadata          Json?
+  source            String            @default("SYNTHETIC_DEMO") // e.g. OpenStreetMap
+  sourceId          String? // provider-native id (e.g. node/123456)
+  dataQuality       String            @default("SYNTHETIC_DEMO") // REAL_GEOGRAPHIC | SYNTHETIC_DEMO | ...
+  geometryJson      Json? // real GeoJSON geometry (LineString/Polygon) when the asset is linear/areal
   createdAt         DateTime          @default(now())
   updatedAt         DateTime          @updatedAt
 
@@ -355,6 +364,7 @@ model Incident {
   resolvedAt      DateTime?
   slaDeadline     DateTime?
   createdById     String?
+  dataQuality     String        @default("SYNTHETIC_DEMO") // operator-created => ESTIMATED
   createdBy       User?         @relation("IncidentCreator", fields: [createdById], references: [id])
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
@@ -524,6 +534,7 @@ model HistoricalEvent {
   resolvedAt  DateTime?
   outcome     String?
   source      String             @default("SYNTHETIC_DEMO")
+  dataQuality String             @default("SYNTHETIC_DEMO")
 
   @@index([zoneId])
   @@index([hazardType])

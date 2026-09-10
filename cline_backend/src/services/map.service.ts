@@ -1,15 +1,43 @@
 import { prisma } from '../db/prisma';
 import { ACTIVE_INCIDENT_STATUSES } from '../utils/risk';
-import type { GeoFeatureCollection, GeoPointFeature } from '../types/api';
+import type { GeoFeature, GeoFeatureCollection, GeoGeometry } from '../types/api';
 
-/** MAP service - GeoJSON FeatureCollections for MapLibre (SYNTHETIC_DEMO coordinates). */
+/**
+ * MAP service - GeoJSON FeatureCollections for MapLibre.
+ * Every feature carries its own dataQuality/source; collections are labelled honestly:
+ * REAL_GEOGRAPHIC (imported Chennai data), SYNTHETIC_DEMO (seed), MIXED, or UNKNOWN.
+ */
 
-function feature<P>(lon: number, lat: number, properties: P): GeoPointFeature<P> {
-  return { type: 'Feature', geometry: { type: 'Point', coordinates: [lon, lat] }, properties };
+type Quality = NonNullable<GeoFeatureCollection<unknown>['dataQuality']>;
+
+function feature<P>(lon: number, lat: number, properties: P, geometry?: unknown): GeoFeature<P> {
+  const geom = geometry as GeoGeometry | null | undefined;
+  const validGeometry =
+    geom && typeof geom === 'object' && Array.isArray((geom as { coordinates?: unknown }).coordinates)
+      ? geom
+      : null;
+  return {
+    type: 'Feature',
+    geometry: validGeometry ?? { type: 'Point', coordinates: [lon, lat] },
+    properties,
+  };
 }
 
-function collection<P>(features: GeoPointFeature<P>[]): GeoFeatureCollection<P> {
-  return { type: 'FeatureCollection', dataQuality: 'SYNTHETIC_DEMO', features };
+function collection<P>(features: GeoFeature<P>[]): GeoFeatureCollection<P> {
+  const unique = [...new Set(
+    features
+      .map((f) => (f.properties as { dataQuality?: string } | null)?.dataQuality)
+      .filter((q): q is string => !!q),
+  )];
+  const dataQuality: Quality = !unique.length ? 'UNKNOWN' : unique.length === 1 ? (unique[0] as Quality) : 'MIXED';
+  return { type: 'FeatureCollection', dataQuality, features };
+}
+
+function aggregateQuality(qualities: Quality[]): Quality {
+  if (!qualities.length) return 'UNKNOWN';
+  const unique = [...new Set(qualities)];
+  if (unique.length === 1) return unique[0];
+  return 'MIXED';
 }
 
 export async function mapAssets(filters: { zoneId?: string; assetType?: string; status?: string; criticality?: string }) {
@@ -29,7 +57,8 @@ export async function mapAssets(filters: { zoneId?: string; assetType?: string; 
         id: a.id, assetCode: a.assetCode, name: a.name, type: a.type,
         criticality: a.criticality, operationalStatus: a.operationalStatus,
         vulnerability: a.vulnerability, zoneName: a.zone.name,
-      }),
+        source: a.source, dataQuality: a.dataQuality,
+      }, a.geometryJson),
     ),
   );
 }
@@ -51,7 +80,7 @@ export async function mapHazards(filters: { zoneId?: string; severity?: string; 
         id: h.id, type: h.type, severity: h.severity, status: h.status,
         zoneId: h.zoneId, zoneName: h.zone.name, rainfallRate: h.rainfallRate,
         waterDepth: h.waterDepth, temperature: h.temperature, windSpeed: h.windSpeed,
-        startedAt: h.startedAt, source: h.source,
+        startedAt: h.startedAt, source: h.source, dataQuality: h.dataQuality,
       }),
     ),
   );
@@ -76,7 +105,7 @@ export async function mapIncidents(filters: { zoneId?: string; severity?: string
           id: i.id, incidentCode: i.incidentCode, title: i.title, type: i.type,
           severity: i.severity, status: i.status, zoneName: i.zone.name,
           assetName: i.primaryAsset?.name ?? null, reportedAt: i.reportedAt,
-          slaDeadline: i.slaDeadline,
+          slaDeadline: i.slaDeadline, dataQuality: i.dataQuality,
         },
       ),
     ),
@@ -100,6 +129,7 @@ export async function mapUnits(filters: { status?: string; type?: string; depart
         feature(u.longitude!, u.latitude!, {
           id: u.id, callsign: u.callsign, name: u.name, type: u.type, status: u.status,
           departmentName: u.department?.name ?? null, etaMinutes: u.etaMinutes,
+          dataQuality: 'SYNTHETIC_DEMO', // demo-seeded units; real unit rosters are configured by departments
         }),
       ),
   );
@@ -142,74 +172,82 @@ export async function mapOverlays() {
     incidents.filter((i) => i.primaryAssetId && ['ROAD_BLOCKAGE', 'FLOODING'].includes(i.type)).map((i) => i.primaryAssetId),
   );
 
-  return {
-    dataQuality: 'SYNTHETIC_DEMO',
-    floodZones: collection(
-      floodZones.map((z) =>
-        feature(z.longitude, z.latitude, {
-          zoneId: z.id, name: z.name, riskLevel: z.riskLevel,
-          hazard: floodHazards.find((h) => h.zoneId === z.id) ?? null, population: z.population,
-        }),
-      ),
-    ),
-    heatZones: collection(
-      heatZones.map((z) =>
-        feature(z.longitude, z.latitude, {
-          zoneId: z.id, name: z.name, riskLevel: z.riskLevel,
-          hazard: heatHazards.find((h) => h.zoneId === z.id) ?? null, population: z.population,
-        }),
-      ),
-    ),
-    roadClosures: collection(
-      roadAssets
-        .filter((a) => a.operationalStatus !== 'OPERATIONAL' || closureIncidentAssets.has(a.id))
-        .map((a) =>
-          feature(a.longitude, a.latitude, {
-            assetId: a.id, assetCode: a.assetCode, name: a.name, type: a.type,
-            operationalStatus: a.operationalStatus,
-            reason: closureIncidentAssets.has(a.id) ? 'ACTIVE_INCIDENT' : a.operationalStatus,
-          }),
-        ),
-    ),
-    criticalInfrastructure: collection(
-      criticalAssets.map((a) =>
+  const zoneFeature = (z: (typeof zones)[number]) =>
+    feature(z.longitude, z.latitude, {
+      zoneId: z.id, name: z.name, riskLevel: z.riskLevel, dataQuality: z.dataQuality, source: z.source,
+      hazard: z.hazards.find((h) => floodHazardTypes.includes(h.type)) ?? z.hazards.find((h) => h.type === 'EXTREME_HEAT') ?? null,
+      population: z.population,
+    });
+
+  const floodZoneCollection = collection(floodZones.map(zoneFeature));
+  const heatZoneCollection = collection(heatZones.map(zoneFeature));
+  const roadClosureCollection = collection(
+    roadAssets
+      .filter((a) => a.operationalStatus !== 'OPERATIONAL' || closureIncidentAssets.has(a.id))
+      .map((a) =>
         feature(a.longitude, a.latitude, {
           assetId: a.id, assetCode: a.assetCode, name: a.name, type: a.type,
-          criticality: a.criticality, operationalStatus: a.operationalStatus,
-        }),
+          operationalStatus: a.operationalStatus, source: a.source, dataQuality: a.dataQuality,
+          reason: closureIncidentAssets.has(a.id) ? 'ACTIVE_INCIDENT' : a.operationalStatus,
+        }, a.geometryJson),
       ),
+  );
+  const criticalInfrastructureCollection = collection(
+    criticalAssets.map((a) =>
+      feature(a.longitude, a.latitude, {
+        assetId: a.id, assetCode: a.assetCode, name: a.name, type: a.type,
+        criticality: a.criticality, operationalStatus: a.operationalStatus,
+        source: a.source, dataQuality: a.dataQuality,
+      }, a.geometryJson),
     ),
-    drainageTelemetry: collection(
-      drains.map((d) =>
-        feature(d.longitude, d.latitude, {
-          assetId: d.id, assetCode: d.assetCode, name: d.name, type: d.type,
-          operationalStatus: d.operationalStatus,
-          waterDepthM: latestByAssetMetric.get(`${d.id}:water_depth`) ?? null,
-          pumpRuntimeHours: latestByAssetMetric.get(`${d.id}:pump_runtime`) ?? null,
-          rainfallMmPerHour: latestByAssetMetric.get(`${d.id}:rainfall`) ?? null,
-        }),
-      ),
+  );
+  const drainageTelemetryCollection = collection(
+    drains.map((d) =>
+      feature(d.longitude, d.latitude, {
+        assetId: d.id, assetCode: d.assetCode, name: d.name, type: d.type,
+        operationalStatus: d.operationalStatus, source: d.source, dataQuality: d.dataQuality,
+        waterDepthM: latestByAssetMetric.get(`${d.id}:water_depth`) ?? null,
+        pumpRuntimeHours: latestByAssetMetric.get(`${d.id}:pump_runtime`) ?? null,
+        rainfallMmPerHour: latestByAssetMetric.get(`${d.id}:rainfall`) ?? null,
+      }, d.geometryJson),
     ),
-    evacuationCorridors: collection(
-      shelters.map((s) =>
-        feature(s.longitude, s.latitude, {
-          assetId: s.id, assetCode: s.assetCode, name: s.name, type: s.type,
-          operationalStatus: s.operationalStatus,
-          capacity: (s.metadata as unknown as { capacity?: number } | null)?.capacity ?? null,
-        }),
-      ),
+  );
+  const evacuationCorridorsCollection = collection(
+    shelters.map((s) =>
+      feature(s.longitude, s.latitude, {
+        assetId: s.id, assetCode: s.assetCode, name: s.name, type: s.type,
+        operationalStatus: s.operationalStatus, source: s.source, dataQuality: s.dataQuality,
+        capacity: (s.metadata as unknown as { capacity?: number } | null)?.capacity ?? null,
+      }),
     ),
-    incidents: collection(
-      incidents.map((i) =>
-        feature((i.primaryAsset ?? i.zone).longitude, (i.primaryAsset ?? i.zone).latitude, {
-          id: i.id, incidentCode: i.incidentCode, title: i.title, severity: i.severity, status: i.status, type: i.type,
-        }),
-      ),
+  );
+  const incidentCollection = collection(
+    incidents.map((i) =>
+      feature((i.primaryAsset ?? i.zone).longitude, (i.primaryAsset ?? i.zone).latitude, {
+        id: i.id, incidentCode: i.incidentCode, title: i.title, severity: i.severity, status: i.status, type: i.type,
+        dataQuality: i.dataQuality,
+      }),
     ),
-    units: collection(
-      units
-        .filter((u) => u.latitude != null && u.longitude != null)
-        .map((u) => feature(u.longitude!, u.latitude!, { id: u.id, callsign: u.callsign, type: u.type, status: u.status, departmentName: u.department?.name ?? null })),
-    ),
+  );
+  const unitCollection = collection(
+    units
+      .filter((u) => u.latitude != null && u.longitude != null)
+      .map((u) => feature(u.longitude!, u.latitude!, { id: u.id, callsign: u.callsign, type: u.type, status: u.status, departmentName: u.department?.name ?? null, dataQuality: 'SYNTHETIC_DEMO' })),
+  );
+
+  return {
+    dataQuality: aggregateQuality([
+      floodZoneCollection.dataQuality, heatZoneCollection.dataQuality, roadClosureCollection.dataQuality,
+      criticalInfrastructureCollection.dataQuality, drainageTelemetryCollection.dataQuality,
+      evacuationCorridorsCollection.dataQuality, incidentCollection.dataQuality, unitCollection.dataQuality,
+    ]),
+    floodZones: floodZoneCollection,
+    heatZones: heatZoneCollection,
+    roadClosures: roadClosureCollection,
+    criticalInfrastructure: criticalInfrastructureCollection,
+    drainageTelemetry: drainageTelemetryCollection,
+    evacuationCorridors: evacuationCorridorsCollection,
+    incidents: incidentCollection,
+    units: unitCollection,
   };
 }

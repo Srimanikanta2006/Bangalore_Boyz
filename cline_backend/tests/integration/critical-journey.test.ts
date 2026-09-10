@@ -51,7 +51,7 @@ describe.skipIf(!ready)('critical government journey (end-to-end)', () => {
     expect(d.resilienceIndex).toBeLessThanOrEqual(100);
     expect(['STRONG', 'GUARDED', 'MODERATE_CAUTION', 'CRITICAL_ALERT']).toContain(d.resilienceLevel);
     expect(d.activeThreats).toBe(4);
-    expect(d.monitoredZones).toBe(4);
+    expect(d.monitoredZones).toBeGreaterThanOrEqual(4);
     expect(d.activeIncidents).toBeGreaterThanOrEqual(8);
     expect(d.criticalIncidents).toBeGreaterThanOrEqual(2);
     expect(d.criticalInfrastructure.total).toBeGreaterThanOrEqual(3);
