@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GovHqLayout } from '../../components/stitch/GovHqLayout';
 import {
-  fetchGovernmentOverview, fetchLiveWeather, fetchLocationOverview,
-  type LiveWeather, type LocationOverview,
+  fetchGovernmentOverview, fetchLiveWeather, fetchLocationOverview, fetchDisasterIntelligence,
+  type LiveWeather, type LocationOverview, type HudhudCaseStudy,
 } from '../../services/api';
 import { useOperatorLocation } from '../../hooks/useOperatorLocation';
 import { 
@@ -24,6 +24,14 @@ export const GovCommandCenterPage: React.FC = () => {
   const [locationData, setLocationData] = useState<LocationOverview | null>(null);
   const [liveError, setLiveError] = useState<string | null>(null);
   const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null);
+  const [hudhud, setHudhud] = useState<HudhudCaseStudy | null>(null);
+
+  // Static, fully-cited regional reference (not live, not polled) — fetched once.
+  useEffect(() => {
+    let active = true;
+    fetchDisasterIntelligence().then((data) => { if (active) setHudhud(data.hudhud2014); }).catch(() => {});
+    return () => { active = false; };
+  }, []);
 
   // PostgreSQL operational state refreshes every 15s. Provider weather + the
   // location overview (live weather + nearby assets + weather-derived risk for
@@ -397,6 +405,37 @@ export const GovCommandCenterPage: React.FC = () => {
               </div>
             </div>
           </div>
+
+          {/* Disaster Intelligence: static, fully-cited Andhra Pradesh regional reference.
+              We only have real OSM geometry for Chennai, so rather than fabricate
+              Visakhapatnam data, this panel grounds the platform's coastal-cyclone context
+              in a verified historical case study (never presented as live telemetry). */}
+          {hudhud && (
+            <div className="rounded-2xl bg-white p-5 shadow-sm border border-[#e5eeff]">
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-[#76777d] tracking-wider">Disaster Intelligence — Regional Reference</span>
+                  <h3 className="text-lg font-bold text-[#0b1c30]">{hudhud.event.name} ({hudhud.event.landfallDate.slice(0, 4)}) · {hudhud.event.landfallLocation}</h3>
+                </div>
+                <span className="px-2 py-0.5 rounded-full bg-[#eff4ff] text-[#0051d5] text-[10px] font-bold shrink-0">{hudhud.dataQuality.replace(/_/g, ' ')}</span>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                <div className="p-2.5 rounded-lg bg-[#eff4ff]"><span className="block text-[#76777d]">Peak Winds</span><span className="font-mono font-bold text-[#0b1c30]">{hudhud.event.peakWindSpeedKmh[0]}–{hudhud.event.peakWindSpeedKmh[1]} km/h</span></div>
+                <div className="p-2.5 rounded-lg bg-[#eff4ff]"><span className="block text-[#76777d]">Storm Surge</span><span className="font-mono font-bold text-[#0b1c30]">{hudhud.event.stormSurgeMeters} m</span></div>
+                <div className="p-2.5 rounded-lg bg-[#eff4ff]"><span className="block text-[#76777d]">Peak Rainfall (24h)</span><span className="font-mono font-bold text-[#0b1c30]">{hudhud.event.peakRainfall24hMm} mm</span><span className="block text-[10px] text-[#76777d]">{hudhud.event.peakRainfallStation}</span></div>
+                <div className="p-2.5 rounded-lg bg-[#fee2e2]"><span className="block text-[#76777d]">AP Deaths</span><span className="font-mono font-bold text-[#b91c1c]">{hudhud.impact.andhraPradeshDeaths}</span><span className="block text-[10px] text-[#76777d]">{hudhud.impact.totalDeaths} total</span></div>
+                <div className="p-2.5 rounded-lg bg-[#eff4ff]"><span className="block text-[#76777d]">Houses Damaged</span><span className="font-mono font-bold text-[#0b1c30]">{hudhud.impact.housesDamaged.toLocaleString()}</span></div>
+                <div className="p-2.5 rounded-lg bg-[#eff4ff]"><span className="block text-[#76777d]">Roads Affected</span><span className="font-mono font-bold text-[#0b1c30]">{hudhud.impact.roadsAffectedKm.toLocaleString()} km</span></div>
+                <div className="p-2.5 rounded-lg bg-[#eff4ff]"><span className="block text-[#76777d]">Relief Camp Evacuees</span><span className="font-mono font-bold text-[#0b1c30]">{hudhud.impact.reliefCampEvacuees.toLocaleString()}</span></div>
+                <div className="p-2.5 rounded-lg bg-[#eff4ff]"><span className="block text-[#76777d]">{hudhud.response.operationName}</span><span className="font-mono font-bold text-[#0b1c30]">{hudhud.response.ndrfTeams} NDRF · {hudhud.response.coastGuardShips} CG ships</span></div>
+              </div>
+              <div className="mt-3 flex flex-wrap gap-3 text-[10px] text-[#76777d]">
+                {hudhud.citations.map((c) => (
+                  <a key={c.url} href={c.url} target="_blank" rel="noreferrer" className="underline hover:text-[#0051d5]">{c.label}</a>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </GovHqLayout>

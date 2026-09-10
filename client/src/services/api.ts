@@ -273,6 +273,18 @@ export async function fetchGovernmentOverview(): Promise<any> {
   return requestEnvelope<any>('/government/overview');
 }
 
+/** Static, fully-cited historical reference (Cyclone Hudhud, 2014) — never live/computed. */
+export interface HudhudCaseStudy {
+  dataQuality: 'REAL_HISTORICAL_REFERENCE';
+  event: { name: string; landfallDate: string; landfallLocation: string; peakWindSpeedKmh: [number, number]; stormSurgeMeters: number; peakRainfall24hMm: number; peakRainfallStation: string };
+  impact: { totalDeaths: number; andhraPradeshDeaths: number; housesDamaged: number; croplandDamagedHectares: number; livestockLost: number; powerPolesDown: number; roadsAffectedKm: number; reliefCampEvacuees: number; airportClosureDays: number };
+  response: { operationName: string; navyTeams: number; armyTeams: number; coastGuardShips: number; iafAircraft: number; ndrfTeams: number };
+  citations: { label: string; url: string }[];
+}
+export async function fetchDisasterIntelligence(): Promise<{ hudhud2014: HudhudCaseStudy }> {
+  return requestEnvelope<{ hudhud2014: HudhudCaseStudy }>('/analytics/disaster-intelligence');
+}
+
 export interface LiveWeather {
   provider: string;
   dataQuality: 'LIVE_OBSERVED' | 'FORECAST';
