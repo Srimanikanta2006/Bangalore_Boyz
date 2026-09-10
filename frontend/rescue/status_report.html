@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{width:100vw;margin:0;padding:0;}body{overscroll-behavior:none;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "on-tertiary-container": "#0090a9", "outline-variant": "#c6c6cd", "secondary": "#0051d5", "surface-dim": "#cbdbf5", "secondary-fixed": "#dbe1ff", "on-secondary-fixed": "#00174b", "on-primary-container": "#7c839b", "tertiary-fixed-dim": "#4cd7f6", "on-tertiary-fixed": "#001f26", "surface-tint": "#565e74", "primary": "#000000", "on-primary": "#ffffff", "surface-container-highest": "#d3e4fe", "error": "#ba1a1a", "surface": "#f8f9ff", "primary-container": "#131b2e", "inverse-on-surface": "#eaf1ff", "on-tertiary": "#ffffff", "on-error": "#ffffff", "on-tertiary-fixed-variant": "#004e5c", "on-secondary": "#ffffff", "error-container": "#ffdad6", "surface-container": "#e5eeff", "surface-container-high": "#dce9ff", "surface-container-lowest": "#ffffff", "primary-fixed-dim": "#bec6e0", "tertiary": "#000000", "on-secondary-fixed-variant": "#003ea8", "tertiary-fixed": "#acedff", "surface-container-low": "#eff4ff", "surface-variant": "#d3e4fe", "on-error-container": "#93000a", "tertiary-container": "#001f26", "background": "#f8f9ff", "inverse-surface": "#213145", "outline": "#76777d", "on-background": "#0b1c30", "on-secondary-container": "#fefcff", "on-primary-fixed": "#131b2e", "on-surface-variant": "#45464d", "on-surface": "#0b1c30", "on-primary-fixed-variant": "#3f465c", "secondary-container": "#316bf3", "surface-bright": "#f8f9ff", "primary-fixed": "#dae2fd", "inverse-primary": "#bec6e0", "secondary-fixed-dim": "#b4c5ff" }, "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, "spacing": { "edge-margin-mobile": "1rem", "panel-width-sm": "20rem", "space-sm": "0.75rem", "panel-width-md": "26rem", "panel-width-lg": "32rem", "space-2xl": "3rem", "space-xl": "2rem", "edge-margin-desktop": "1.5rem", "space-xs": "0.5rem", "space-2xs": "0.25rem", "space-lg": "1.5rem", "space-md": "1rem" }, "fontFamily": { "body-md": ["Manrope"], "title-lg": ["Plus Jakarta Sans"], "label-md": ["Manrope"], "data-metric-md": ["Manrope"], "headline-lg-mobile": ["Plus Jakarta Sans"], "body-lg": ["Manrope"], "headline-xl-mobile": ["Plus Jakarta Sans"], "headline-lg": ["Plus Jakarta Sans"], "code-sm": ["Manrope"], "data-metric-lg": ["Manrope"], "label-sm": ["Manrope"], "body-sm": ["Manrope"], "headline-xl": ["Plus Jakarta Sans"], "headline-md": ["Plus Jakarta Sans"] }, "fontSize": { "body-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0em", "fontWeight": "400" }], "title-lg": ["16px", { "lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600" }], "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600" }], "data-metric-md": ["20px", { "lineHeight": "24px", "letterSpacing": "-0.02em", "fontWeight": "700" }], "headline-lg-mobile": ["22px", { "lineHeight": "30px", "letterSpacing": "-0.015em", "fontWeight": "700" }], "body-lg": ["15px", { "lineHeight": "24px", "letterSpacing": "-0.005em", "fontWeight": "400" }], "headline-xl-mobile": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "700" }], "headline-lg": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "700" }], "code-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.01em", "fontWeight": "500" }], "data-metric-lg": ["32px", { "lineHeight": "36px", "letterSpacing": "-0.03em", "fontWeight": "700" }], "label-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.04em", "fontWeight": "600" }], "body-sm": ["13px", { "lineHeight": "18px", "letterSpacing": "0em", "fontWeight": "400" }], "headline-xl": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.025em", "fontWeight": "700" }], "headline-md": ["20px", { "lineHeight": "28px", "letterSpacing": "-0.015em", "fontWeight": "600" }] } } } }</script><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  
+<script src="../shared/config.js"></script>
+<link rel="stylesheet" href="../shared/app.css" />
+<script src="../shared/app.js" defer></script>
+</head><body class="bg-surface font-body-md text-body-md text-on-surface flex flex-col min-h-screen"><header class="fixed top-0 inset-x-0 z-50 bg-surface/80 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] pt-safe"><div class="h-20 px-edge-margin-mobile flex flex-col justify-center gap-space-2xs"><div class="flex items-center justify-between gap-space-xs"><div class="flex items-center gap-space-xs"><img alt="Brand logo. - Primary color: #0f172a
+- Font: plusJakartaSans
+- Mode: light
+- Roundness: rounded-md
+" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1WZa1gNvntWWeiT4QhM-l_fIhJeTNPgwhOocSm5zkFiyeUn3CdWKg2P6QBAp2739f4ineyLsZACoh0wcEewdNPLn7dJp1NR4H3lnvVimUYZHBtoiKTEcHeUelauAMp_CGDEiOGu2-Yqz4_Vqk5IejETJ6u1R9tsOCq5DwbAv411fFrUovtU623EzW2rGPgJX0iZQ2U-lv-rR-wRns1wPkTfcV5BBGcpGIRxWJQowEeXYjkRRS5BZt3IWUg"/><div class="flex flex-col"><span class="font-title-lg text-title-lg text-on-surface tracking-tight leading-none">ClimateShield</span><span class="font-label-sm text-label-sm text-on-surface-variant leading-none">Sitrep Reports</span></div></div><div class="flex items-center gap-space-xs"><span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-surface-container-high text-on-surface font-label-sm text-label-sm"><span class="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse"></span>Taskforce Alpha-02</span><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div><div class="flex items-center justify-between text-on-surface-variant font-code-sm text-code-sm px-0.5"><div class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px] text-secondary">hub</span><span>Mesh P2P Active • 12 Nodes</span></div><div class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-600"></span><span class="font-label-sm text-label-sm uppercase text-on-surface">OP-READY</span></div></div></div></header><main class="flex flex-col relative w-full pt-20 pb-28 bg-surface flex-grow"><div class="flex flex-col w-full px-edge-margin-mobile space-y-space-md pb-12">
+<!-- Mission Telemetry Overview Card -->
+<section class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm space-y-space-xs">
+<div class="flex items-center justify-between">
+<div class="flex items-center space-x-space-2xs">
+<span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-secondary text-on-secondary">
+<span class="material-symbols-outlined text-[16px]">emergency</span>
+</span>
+<span class="font-label-sm text-label-sm text-secondary uppercase tracking-wider">Mission In Progress</span>
+</div>
+<span class="font-code-sm text-code-sm text-on-surface-variant bg-surface-container-low px-2 py-0.5 rounded-full">
+        SYNC: T-00:42
+      </span>
+</div>
+<div class="space-y-1">
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface tracking-tight">
+        Field Sitrep #MIS-104
+      </h1>
+<div class="flex flex-wrap items-center gap-space-xs text-on-surface-variant font-body-sm text-body-sm">
+<span class="flex items-center gap-1 font-label-md text-label-md text-on-surface">
+<span class="material-symbols-outlined text-[16px] text-secondary">shield_person</span>
+          Taskforce Alpha-02
+        </span>
+<span>•</span>
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">location_on</span>
+          Sector 4B (Culvert Delta)
+        </span>
+</div>
+</div>
+</section>
+<!-- 1. Operational Status Radio Stepper -->
+<section class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm space-y-space-sm">
+<div class="flex items-center justify-between">
+<label class="font-title-lg text-title-lg text-on-surface flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[20px] text-secondary">alt_route</span>
+        Operational Phase
+      </label>
+<span class="font-label-sm text-label-sm text-secondary bg-secondary-fixed px-2 py-0.5 rounded-full">Active Stage</span>
+</div>
+<div class="grid grid-cols-2 gap-2" id="phase-stepper">
+<button class="phase-btn h-12 flex items-center justify-center gap-2 rounded-lg bg-primary text-on-primary font-label-md text-label-md shadow-sm transition-all text-center px-2" data-status="On Scene" type="button">
+<span class="material-symbols-outlined text-[18px]">radio_button_checked</span>
+<span>On Scene</span>
+</button>
+<button class="phase-btn h-12 flex items-center justify-center gap-2 rounded-lg bg-surface-container text-on-surface-variant font-label-md text-label-md transition-all text-center px-2" data-status="Extracting" type="button">
+<span class="material-symbols-outlined text-[18px]">radio_button_unchecked</span>
+<span>Extracting</span>
+</button>
+<button class="phase-btn h-12 flex items-center justify-center gap-2 rounded-lg bg-surface-container text-on-surface-variant font-label-md text-label-md transition-all text-center px-2" data-status="Evac En Route" type="button">
+<span class="material-symbols-outlined text-[18px]">radio_button_unchecked</span>
+<span>Evac En Route</span>
+</button>
+<button class="phase-btn h-12 flex items-center justify-center gap-2 rounded-lg bg-surface-container text-on-surface-variant font-label-md text-label-md transition-all text-center px-2" data-status="Resolved" type="button">
+<span class="material-symbols-outlined text-[18px]">radio_button_unchecked</span>
+<span>Resolved</span>
+</button>
+</div>
+</section>
+<!-- 2. Live Environmental Gauge Input -->
+<section class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm space-y-space-sm">
+<div class="flex items-center justify-between">
+<label class="font-title-lg text-title-lg text-on-surface flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[20px] text-secondary">tsunami</span>
+        Hydro Telemetry
+      </label>
+<span class="font-label-sm text-label-sm text-error bg-error-container text-on-error-container px-2 py-0.5 rounded-full flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-error animate-ping"></span>
+        High Hazard
+      </span>
+</div>
+<!-- Depth segmented controls -->
+<div class="space-y-space-2xs">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Water Level Incursion</span>
+<div class="grid grid-cols-4 gap-1.5" id="depth-selector">
+<button class="depth-btn py-2.5 rounded-lg bg-surface-container text-on-surface font-code-sm text-code-sm text-center" type="button">
+          &lt;0.5m
+        </button>
+<button class="depth-btn py-2.5 rounded-lg bg-surface-container text-on-surface font-code-sm text-code-sm text-center" type="button">
+          0.5–1.0m
+        </button>
+<button class="depth-btn py-2.5 rounded-lg bg-primary text-on-primary font-code-sm text-code-sm font-semibold text-center shadow-sm" type="button">
+          1.0–1.5m
+        </button>
+<button class="depth-btn py-2.5 rounded-lg bg-error-container text-on-error-container font-code-sm text-code-sm text-center" type="button">
+          &gt;1.5m Crit
+        </button>
+</div>
+</div>
+<!-- Hydro condition pill -->
+<div class="flex items-center justify-between bg-surface-container-low rounded-lg p-space-sm">
+<div class="flex items-center space-x-space-xs min-w-0">
+<div class="w-8 h-8 rounded-full bg-secondary-fixed flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-secondary text-[18px]">air</span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Hydro Surface State</span>
+<span class="font-body-sm text-body-sm font-semibold text-on-surface truncate">Fast Runoff / Strong Current</span>
+</div>
+</div>
+<span class="font-code-sm text-code-sm font-semibold text-error bg-error-container/60 px-2 py-1 rounded">
+        4.2 kt
+      </span>
+</div>
+</section>
+<!-- 3. Civilians & Triage Count Stepper -->
+<section class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm space-y-space-sm">
+<div class="flex items-center justify-between">
+<label class="font-title-lg text-title-lg text-on-surface flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[20px] text-secondary">groups</span>
+        Civilians Secured
+      </label>
+<span class="font-label-sm text-label-sm text-on-tertiary-container bg-tertiary-fixed px-2 py-0.5 rounded-full">Primary Triage</span>
+</div>
+<!-- Large tactile stepper counter -->
+<div class="flex items-center justify-between bg-surface-container-low rounded-xl p-space-xs">
+<button class="w-14 h-14 rounded-lg bg-surface-container-lowest text-on-surface active:scale-95 shadow-sm flex items-center justify-center text-xl font-bold transition-all select-none" id="btn-dec" type="button">
+<span class="material-symbols-outlined text-[24px]">remove</span>
+</button>
+<div class="flex flex-col items-center">
+<div class="flex items-baseline gap-1">
+<span class="font-data-metric-lg text-data-metric-lg text-on-surface leading-none" id="counter-val">4</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">SOULS</span>
+</div>
+<span class="font-label-sm text-label-sm text-secondary font-medium">Secured On Zodiac-02</span>
+</div>
+<button class="w-14 h-14 rounded-lg bg-primary text-on-primary active:scale-95 shadow-sm flex items-center justify-center text-xl font-bold transition-all select-none" id="btn-inc" type="button">
+<span class="material-symbols-outlined text-[24px]">add</span>
+</button>
+</div>
+<!-- Demographic Breakdown Chips -->
+<div class="grid grid-cols-3 gap-2 text-center">
+<div class="bg-surface-container rounded-lg py-1.5 px-2">
+<span class="font-label-sm text-label-sm text-on-surface-variant block">Adults</span>
+<span class="font-data-metric-md text-data-metric-md text-on-surface">2</span>
+</div>
+<div class="bg-surface-container rounded-lg py-1.5 px-2">
+<span class="font-label-sm text-label-sm text-on-surface-variant block">Elderly</span>
+<span class="font-data-metric-md text-data-metric-md text-on-surface">1</span>
+</div>
+<div class="bg-surface-container rounded-lg py-1.5 px-2">
+<span class="font-label-sm text-label-sm text-on-surface-variant block">Infant</span>
+<span class="font-data-metric-md text-data-metric-md text-on-surface">1</span>
+</div>
+</div>
+<!-- Medical Priority Banner -->
+<div class="flex items-start gap-space-xs bg-error-container/40 p-space-sm rounded-lg">
+<span class="material-symbols-outlined text-error text-[20px] flex-shrink-0 mt-0.5">vital_signs</span>
+<div class="flex flex-col min-w-0">
+<span class="font-label-sm text-label-sm font-semibold text-error uppercase">Medical Urgency Tag</span>
+<span class="font-body-sm text-body-sm text-on-surface">1 Non-ambulatory / Moderate Hypothermia Triage</span>
+</div>
+</div>
+</section>
+<!-- 4. Critical Infrastructure & Obstacle Toggles -->
+<section class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm space-y-space-sm">
+<div class="flex items-center justify-between">
+<label class="font-title-lg text-title-lg text-on-surface flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[20px] text-secondary">warning</span>
+        Hazard Vectors &amp; Obstacles
+      </label>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Live Mesh Flags</span>
+</div>
+<div class="space-y-2">
+<!-- Toggle 1: ON -->
+<div class="flex items-center justify-between p-space-sm rounded-lg bg-surface-container-low">
+<div class="flex items-center gap-space-xs min-w-0">
+<div class="w-8 h-8 rounded-md bg-error-container text-on-error-container flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-[18px]">bolt</span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-body-md text-body-md font-semibold text-on-surface truncate">Power Grid / Arcing Wires</span>
+<span class="font-label-sm text-label-sm text-error">Active Electrical Threat</span>
+</div>
+</div>
+<button class="toggle-switch w-12 h-7 bg-primary rounded-full p-1 transition-colors relative flex items-center justify-end" data-checked="true" type="button">
+<span class="w-5 h-5 bg-on-primary rounded-full shadow-md transform transition-transform"></span>
+</button>
+</div>
+<!-- Toggle 2: OFF -->
+<div class="flex items-center justify-between p-space-sm rounded-lg bg-surface-container-low">
+<div class="flex items-center gap-space-xs min-w-0">
+<div class="w-8 h-8 rounded-md bg-surface-container text-on-surface-variant flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-[18px]">home_work</span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-body-md text-body-md font-semibold text-on-surface truncate">Structural Collapse Risk</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Perimeter Evaluated Clear</span>
+</div>
+</div>
+<button class="toggle-switch w-12 h-7 bg-surface-container-highest rounded-full p-1 transition-colors relative flex items-center justify-start" data-checked="false" type="button">
+<span class="w-5 h-5 bg-on-surface-variant rounded-full shadow-md transform transition-transform"></span>
+</button>
+</div>
+<!-- Toggle 3: ON -->
+<div class="flex items-center justify-between p-space-sm rounded-lg bg-surface-container-low">
+<div class="flex items-center gap-space-xs min-w-0">
+<div class="w-8 h-8 rounded-md bg-error-container text-on-error-container flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-[18px]">block</span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-body-md text-body-md font-semibold text-on-surface truncate">Road Blockage Complete</span>
+<span class="font-label-sm text-label-sm text-error">Ambulance Inaccessible</span>
+</div>
+</div>
+<button class="toggle-switch w-12 h-7 bg-primary rounded-full p-1 transition-colors relative flex items-center justify-end" data-checked="true" type="button">
+<span class="w-5 h-5 bg-on-primary rounded-full shadow-md transform transition-transform"></span>
+</button>
+</div>
+</div>
+</section>
+<!-- 5. Photo & Visual Telemetry Upload Card -->
+<section class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm space-y-space-sm">
+<div class="flex items-center justify-between">
+<label class="font-title-lg text-title-lg text-on-surface flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[20px] text-secondary">photo_camera</span>
+        Tactical Visual Stamp
+      </label>
+<span class="font-label-sm text-label-sm text-on-surface-variant bg-surface-container px-2 py-0.5 rounded">GPS Tagged</span>
+</div>
+<!-- Active Snapshot Card -->
+<div class="relative rounded-xl overflow-hidden shadow-sm bg-surface-container">
+<img class="w-full h-48 object-cover" data-alt="High angle shot of a tactical rescue inflatable boat operating in deep urban flood waters. Rescuers in high-visibility technical gear assist an elderly resident from a residential window ledge. Cold ambient light with emergency blue beacon reflections on agitated gray-blue water surfaces, hyper-realistic photojournalistic documentary style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBRIMYOwp78K9OaQQGeOGz6hh_K3hBw3fypEuWhPKGIwOkjhmdarNvnrno9eyY9QxoH_aEYuO-_PpenxNpMiXK1ckTxmiZhqXPTeUcJkQ9rqUB1FtmCwLiz9BiLE4oHb4Rrn0dimTGfGDg_qQDUFRM91xDpxIKeOIFAuU5UbceAUekfwQYEVOOhBy5a09s9i-f4mNUu_ln_4b6AsEKxZOQ6bJrw2SQWa8cNHKHIYA9ZpR4dzqwnWvuP"/>
+<!-- Telemetry Watermark Overlay -->
+<div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-primary/90 via-primary/50 to-transparent p-space-sm text-on-primary space-y-1">
+<div class="flex items-center justify-between font-code-sm text-code-sm">
+<span class="flex items-center gap-1">
+<span class="w-2 h-2 rounded-full bg-error"></span>
+            LAT 30.2741° N, LON 97.7404° W
+          </span>
+<span>ELEV +14.2m</span>
+</div>
+<div class="flex items-center justify-between font-label-sm text-label-sm text-outline-variant">
+<span>STAMP: 2024-10-24 14:38:09 UTC</span>
+<span>DEVICE: Alpha-BodyCam-02</span>
+</div>
+</div>
+</div>
+<!-- Action button to add drone/thermal photo -->
+<button class="w-full h-11 rounded-lg bg-surface-container hover:bg-surface-container-high active:scale-[0.99] text-on-surface font-label-md text-label-md flex items-center justify-center gap-2 transition-all" type="button">
+<span class="material-symbols-outlined text-[18px] text-secondary">add_a_photo</span>
+      + Add Thermal / Drone Photo
+    </button>
+</section>
+<!-- 6. Field Commander Notes -->
+<section class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm space-y-space-xs">
+<div class="flex items-center justify-between">
+<label class="font-title-lg text-title-lg text-on-surface flex items-center gap-1.5" for="commander-notes">
+<span class="material-symbols-outlined text-[20px] text-secondary">edit_note</span>
+        Field Commander Notes
+      </label>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Auto-saved</span>
+</div>
+<textarea class="w-full bg-surface-container-low rounded-lg p-space-sm font-body-sm text-body-sm text-on-surface focus:outline-none focus:bg-surface-container transition-colors resize-none leading-relaxed" id="commander-notes" rows="4">4 civilians extracted from attic window via Zodiac-02. Transferred to Medic Unit 9 for rapid transport to St. Jude Gate B. Sector 4B culvert needs immediate mechanical pump deployment.</textarea>
+</section>
+<!-- Sticky Operational Bottom CTA -->
+<div class="pt-space-xs space-y-space-xs">
+<button class="w-full h-12 rounded-lg bg-primary text-on-primary font-title-lg text-title-lg flex items-center justify-center gap-2 shadow-lg active:scale-[0.98] transition-all hover:bg-primary-container" id="btn-transmit" type="button">
+<span class="material-symbols-outlined text-[20px]">cell_tower</span>
+<span>TRANSMIT FIELD SITREP TO EOC</span>
+</button>
+<div class="flex justify-center">
+<button class="font-label-md text-label-md text-secondary hover:underline flex items-center gap-1.5 py-1 px-3" type="button">
+<span class="material-symbols-outlined text-[16px]">sync_saved_locally</span>
+        Save Offline Draft (P2P Mesh Buffer)
+      </button>
+</div>
+</div>
+</div>
+<script>
+  // Simple Tactile UI Micro-interactions
+  (function() {
+    // Stepper functionality
+    const countEl = document.getElementById('counter-val');
+    const btnInc = document.getElementById('btn-inc');
+    const btnDec = document.getElementById('btn-dec');
+    let count = 4;
+
+    btnInc?.addEventListener('click', () => {
+      count++;
+      countEl.textContent = count;
+    });
+
+    btnDec?.addEventListener('click', () => {
+      if (count > 0) {
+        count--;
+        countEl.textContent = count;
+      }
+    });
+
+    // Phase Radio Buttons
+    const phaseButtons = document.querySelectorAll('.phase-btn');
+    phaseButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        phaseButtons.forEach(b => {
+          b.className = 'phase-btn h-12 flex items-center justify-center gap-2 rounded-lg bg-surface-container text-on-surface-variant font-label-md text-label-md transition-all text-center px-2';
+          const icon = b.querySelector('.material-symbols-outlined');
+          if (icon) icon.textContent = 'radio_button_unchecked';
+        });
+        btn.className = 'phase-btn h-12 flex items-center justify-center gap-2 rounded-lg bg-primary text-on-primary font-label-md text-label-md shadow-sm transition-all text-center px-2';
+        const activeIcon = btn.querySelector('.material-symbols-outlined');
+        if (activeIcon) activeIcon.textContent = 'radio_button_checked';
+      });
+    });
+
+    // Depth Selector
+    const depthBtns = document.querySelectorAll('.depth-btn');
+    depthBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        depthBtns.forEach(b => {
+          b.className = 'depth-btn py-2.5 rounded-lg bg-surface-container text-on-surface font-code-sm text-code-sm text-center';
+        });
+        btn.className = 'depth-btn py-2.5 rounded-lg bg-primary text-on-primary font-code-sm text-code-sm font-semibold text-center shadow-sm';
+      });
+    });
+
+    // Toggle Switches
+    const toggles = document.querySelectorAll('.toggle-switch');
+    toggles.forEach(toggle => {
+      toggle.addEventListener('click', () => {
+        const isChecked = toggle.getAttribute('data-checked') === 'true';
+        if (isChecked) {
+          toggle.setAttribute('data-checked', 'false');
+          toggle.className = 'toggle-switch w-12 h-7 bg-surface-container-highest rounded-full p-1 transition-colors relative flex items-center justify-start';
+          toggle.firstElementChild.className = 'w-5 h-5 bg-on-surface-variant rounded-full shadow-md transform transition-transform';
+        } else {
+          toggle.setAttribute('data-checked', 'true');
+          toggle.className = 'toggle-switch w-12 h-7 bg-primary rounded-full p-1 transition-colors relative flex items-center justify-end';
+          toggle.firstElementChild.className = 'w-5 h-5 bg-on-primary rounded-full shadow-md transform transition-transform';
+        }
+      });
+    });
+
+    // Transmit micro feedback
+    const transmitBtn = document.getElementById('btn-transmit');
+    transmitBtn?.addEventListener('click', () => {
+      const originalHtml = transmitBtn.innerHTML;
+      transmitBtn.innerHTML = '<span class="material-symbols-outlined text-[20px] animate-spin">autorenew</span><span>TRANSMITTING VIA MESH...</span>';
+      transmitBtn.classList.add('bg-secondary');
+      setTimeout(() => {
+        transmitBtn.innerHTML = '<span class="material-symbols-outlined text-[20px]">check_circle</span><span>TRANSMITTED TO EOC (ACK-200)</span>';
+        setTimeout(() => {
+          transmitBtn.innerHTML = originalHtml;
+          transmitBtn.classList.remove('bg-secondary');
+        }, 2200);
+      }, 1000);
+    });
+  })();
+</script></main><aside class="fixed right-edge-margin-mobile bottom-24 z-40 pointer-events-auto"><button aria-label="Navigate Mission" class="w-14 h-14 rounded-full bg-primary text-on-primary shadow-lg flex items-center justify-center hover:bg-surface-tint active:scale-95 transition-all"><span class="material-symbols-outlined text-[26px]">navigation</span></button></aside><nav class="fixed bottom-0 inset-x-0 z-50 pb-safe bg-surface/90 backdrop-blur-xl shadow-[0_-1px_8px_rgba(0,0,0,0.04)]" data-active-classes="text-secondary font-semibold"><div class="grid grid-cols-4 items-center h-16 px-space-xs"><a class="flex flex-col items-center justify-center min-h-[44px] gap-0.5 text-on-surface-variant transition-colors" data-path="tactical-map" href="#"><span class="material-symbols-outlined text-[22px]">map</span><span class="font-label-sm text-label-sm">Map</span></a><a class="flex flex-col items-center justify-center min-h-[44px] gap-0.5 text-on-surface-variant transition-colors" data-path="incident-missions" href="#"><span class="material-symbols-outlined text-[22px]">assignment</span><span class="font-label-sm text-label-sm">Missions</span></a><a class="flex flex-col items-center justify-center min-h-[44px] gap-0.5 text-on-surface-variant transition-colors" data-path="rescue-team" href="#"><span class="material-symbols-outlined text-[22px]">group</span><span class="font-label-sm text-label-sm">Team</span></a><a aria-current="page" class="flex flex-col items-center justify-center min-h-[44px] gap-0.5 transition-colors text-secondary font-semibold" data-path="sitrep-reports" href="#"><span class="material-symbols-outlined text-[22px]">description</span><span class="font-label-sm text-label-sm">Reports</span></a></div></nav>
+<div id="app-nav"></div>
+</body></html>

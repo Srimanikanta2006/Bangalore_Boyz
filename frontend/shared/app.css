@@ -1,0 +1,43 @@
+/* ClimateShield Shared Shell & Component Extensions */
+
+/* Active Link Styling */
+.nav-item.active {
+  color: var(--color-primary, #0051d5) !important;
+  font-weight: 600;
+}
+
+aside#nav-government .nav-item.active {
+  background-color: #dbe1ff !important; /* secondary-fixed token */
+  color: #00174b !important; /* on-secondary-fixed */
+  font-weight: 700;
+}
+
+/* In-Page Modal & Sliding Panel Utilities */
+.drawer-backdrop {
+  transition: opacity 0.25s ease-in-out;
+}
+
+.drawer-panel {
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.drawer-panel.hidden-panel {
+  transform: translateY(100%);
+}
+
+@media (min-width: 768px) {
+  .drawer-panel.hidden-panel-desktop {
+    transform: translateX(100%);
+  }
+}
+
+/* Desktop layout adjustment when government sidebar is present */
+body.has-gov-sidebar {
+  padding-left: 16rem; /* 256px sidebar width */
+}
+
+@media (max-width: 767px) {
+  body.has-gov-sidebar {
+    padding-left: 0;
+  }
+}

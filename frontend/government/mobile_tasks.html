@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { colors: { "on-surface": "#0b1c30", "on-secondary-container": "#fefcff", "on-primary-fixed": "#131b2e", "surface-container-high": "#dce9ff", "primary-container": "#131b2e", "on-primary-fixed-variant": "#3f465c", "on-tertiary-container": "#0090a9", "on-primary-container": "#7c839b", "outline-variant": "#c6c6cd", "surface-container-low": "#eff4ff", "background": "#f8f9ff", "surface-container-lowest": "#ffffff", "inverse-surface": "#213145", "surface-container": "#e5eeff", "secondary-container": "#316bf3", "on-tertiary-fixed": "#001f26", "surface-dim": "#cbdbf5", "secondary-fixed-dim": "#b4c5ff", "error-container": "#ffdad6", "tertiary": "#000000", "on-background": "#0b1c30", "outline": "#76777d", "surface-variant": "#d3e4fe", "surface-container-highest": "#d3e4fe", "surface": "#f8f9ff", "inverse-primary": "#bec6e0", "on-secondary": "#ffffff", "secondary-fixed": "#dbe1ff", "on-tertiary": "#ffffff", "surface-bright": "#f8f9ff", "on-error": "#ffffff", "tertiary-container": "#001f26", "tertiary-fixed": "#acedff", "primary-fixed-dim": "#bec6e0", "on-tertiary-fixed-variant": "#004e5c", "tertiary-fixed-dim": "#4cd7f6", "inverse-on-surface": "#eaf1ff", "on-secondary-fixed": "#00174b", "error": "#ba1a1a", "secondary": "#0051d5", "primary-fixed": "#dae2fd", "surface-tint": "#565e74", "primary": "#000000", "on-error-container": "#93000a", "on-surface-variant": "#45464d", "on-primary": "#ffffff", "on-secondary-fixed-variant": "#003ea8" }, borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, spacing: { "space-2xl": "3rem", "space-xs": "0.5rem", "panel-width-sm": "20rem", "space-sm": "0.75rem", "edge-margin-desktop": "1.5rem", "space-xl": "2rem", "space-2xs": "0.25rem", "panel-width-lg": "32rem", "space-md": "1rem", "panel-width-md": "26rem", "edge-margin-mobile": "1rem", "space-lg": "1.5rem" }, fontFamily: { "title-lg": ["Plus Jakarta Sans"], "label-md": ["Manrope"], "data-metric-md": ["Manrope"], "label-sm": ["Manrope"], "headline-md": ["Plus Jakarta Sans"], "body-md": ["Manrope"], "body-lg": ["Manrope"], "headline-lg": ["Plus Jakarta Sans"], "headline-xl-mobile": ["Plus Jakarta Sans"], "code-sm": ["Manrope"], "headline-xl": ["Plus Jakarta Sans"], "body-sm": ["Manrope"], "headline-lg-mobile": ["Plus Jakarta Sans"], "data-metric-lg": ["Manrope"] }, fontSize: { "title-lg": ["16px", { "lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600" }], "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600" }], "data-metric-md": ["20px", { "lineHeight": "24px", "letterSpacing": "-0.02em", "fontWeight": "700" }], "label-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.04em", "fontWeight": "600" }], "headline-md": ["20px", { "lineHeight": "28px", "letterSpacing": "-0.015em", "fontWeight": "600" }], "body-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0em", "fontWeight": "400" }], "body-lg": ["15px", { "lineHeight": "24px", "letterSpacing": "-0.005em", "fontWeight": "400" }], "headline-lg": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "700" }], "headline-xl-mobile": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "700" }], "code-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.01em", "fontWeight": "500" }], "headline-xl": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.025em", "fontWeight": "700" }], "body-sm": ["13px", { "lineHeight": "18px", "letterSpacing": "0em", "fontWeight": "400" }], "headline-lg-mobile": ["22px", { "lineHeight": "30px", "letterSpacing": "-0.015em", "fontWeight": "700" }], "data-metric-lg": ["32px", { "lineHeight": "36px", "letterSpacing": "-0.03em", "fontWeight": "700" }] } } } };</script><style>@layer base{html,body{width:100%;margin:0;padding:0;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  
+<script src="../shared/config.js"></script>
+<link rel="stylesheet" href="../shared/app.css" />
+<script src="../shared/app.js" defer></script>
+</head><body class="bg-surface font-body-md text-body-md text-on-surface flex flex-col min-h-screen"><header class="fixed top-0 w-full z-50 bg-surface/80 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] pt-safe"><div class="h-20 px-edge-margin-mobile flex flex-col justify-center gap-space-2xs"><div class="flex items-center justify-between"><div class="flex items-center gap-space-xs"><img alt="Brand logo. - Primary color: #0f172a
+- Font: plusJakartaSans
+- Mode: light
+- Roundness: rounded-md
+" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1WZa1gNvntWWeiT4QhM-l_fIhJeTNPgwhOocSm5zkFiyeUn3CdWKg2P6QBAp2739f4ineyLsZACoh0wcEewdNPLn7dJp1NR4H3lnvVimUYZHBtoiKTEcHeUelauAMp_CGDEiOGu2-Yqz4_Vqk5IejETJ6u1R9tsOCq5DwbAv411fFrUovtU623EzW2rGPgJX0iZQ2U-lv-rR-wRns1wPkTfcV5BBGcpGIRxWJQowEeXYjkRRS5BZt3IWUg"/><span class="font-headline-md text-headline-md text-on-surface tracking-tight">Tasks</span></div><div class="flex items-center gap-space-xs"><div class="flex items-center gap-space-2xs bg-surface-container px-space-xs py-space-2xs rounded-full"><span class="w-2 h-2 rounded-full bg-secondary animate-pulse"></span><span class="font-label-sm text-label-sm text-on-surface">LVL 2 ALERT</span></div><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div><div class="flex items-center justify-between text-on-surface-variant font-code-sm text-code-sm"><div class="flex items-center gap-space-2xs"><span class="material-symbols-outlined text-[14px] text-secondary">sensors</span><span>Grid 99.8% Online</span></div><span class="font-label-sm text-label-sm text-on-surface-variant">EOC Gov Operational Mobile</span></div></div></header><main class="flex-1 flex flex-col relative w-full pt-20 pb-28 bg-surface"><div class="flex flex-col w-full px-edge-margin-mobile gap-space-md">
+<!-- Operational Telemetry Bar -->
+<div class="flex items-center justify-between bg-surface-container-low px-space-sm py-space-xs rounded-lg shadow-sm">
+<div class="flex items-center gap-space-2xs">
+<span class="w-2 h-2 rounded-full bg-secondary animate-ping"></span>
+<span class="font-label-sm text-label-sm text-on-surface">FirstNet LEO Satellite</span>
+</div>
+<div class="flex items-center gap-space-2xs text-on-surface-variant font-code-sm text-code-sm">
+<span class="material-symbols-outlined text-[14px]">sync_saved_locally</span>
+<span id="sync-timer">Telemetry Synced 12s ago</span>
+</div>
+</div>
+<!-- Operational Metrics Grid -->
+<section class="grid grid-cols-2 gap-space-xs">
+<div class="bg-surface-container-lowest p-space-sm rounded-xl shadow-sm flex flex-col gap-space-2xs">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-on-surface-variant">DEPLOYED</span>
+<span class="material-symbols-outlined text-secondary text-[18px]">group_work</span>
+</div>
+<div class="flex items-baseline gap-space-2xs">
+<span class="font-data-metric-lg text-data-metric-lg text-on-surface">14</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Active Units</span>
+</div>
+<div class="w-full bg-surface-container-high rounded-full h-1 mt-space-2xs overflow-hidden">
+<div class="bg-secondary h-full rounded-full w-4/5"></div>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-space-sm rounded-xl shadow-sm flex flex-col gap-space-2xs">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-on-surface-variant">MOBILIZING</span>
+<span class="material-symbols-outlined text-secondary-container text-[18px]">near_me</span>
+</div>
+<div class="flex items-baseline gap-space-2xs">
+<span class="font-data-metric-lg text-data-metric-lg text-on-surface">3</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">In Transit</span>
+</div>
+<div class="w-full bg-surface-container-high rounded-full h-1 mt-space-2xs overflow-hidden">
+<div class="bg-secondary-container h-full rounded-full w-1/3"></div>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-space-sm rounded-xl shadow-sm flex flex-col gap-space-2xs">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-on-surface-variant">OPERATING</span>
+<span class="material-symbols-outlined text-secondary text-[18px]">location_on</span>
+</div>
+<div class="flex items-baseline gap-space-2xs">
+<span class="font-data-metric-lg text-data-metric-lg text-on-surface">4</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">On Scene</span>
+</div>
+<div class="w-full bg-surface-container-high rounded-full h-1 mt-space-2xs overflow-hidden">
+<div class="bg-secondary h-full rounded-full w-2/5"></div>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-space-sm rounded-xl shadow-sm flex flex-col gap-space-2xs">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-on-surface-variant">VERIFICATION</span>
+<span class="material-symbols-outlined text-on-tertiary-container text-[18px]">fact_check</span>
+</div>
+<div class="flex items-baseline gap-space-2xs">
+<span class="font-data-metric-lg text-data-metric-lg text-on-surface">2</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Pending Audit</span>
+</div>
+<div class="w-full bg-surface-container-high rounded-full h-1 mt-space-2xs overflow-hidden">
+<div class="bg-on-tertiary-container h-full rounded-full w-1/2"></div>
+</div>
+</div>
+</section>
+<!-- Section Header & Filter Chips -->
+<div class="flex flex-col gap-space-xs mt-space-2xs">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-on-surface text-[20px]">assignment_turned_in</span>
+<span class="font-title-lg text-title-lg text-on-surface">Field Operations</span>
+</div>
+<span class="font-code-sm text-code-sm text-on-surface-variant">District 4 Resilience</span>
+</div>
+<!-- Quick Stepper Blueprint Filter -->
+<div class="flex items-center overflow-x-auto gap-space-xs pb-space-2xs pt-1 no-scrollbar">
+<button class="flex items-center gap-space-2xs px-space-xs py-1 rounded-full bg-primary text-on-primary shadow-sm whitespace-nowrap min-h-[32px]">
+<span class="font-label-sm text-label-sm">All Tasks</span>
+<span class="w-4 h-4 rounded-full bg-surface-container-lowest text-on-surface font-code-sm text-[10px] flex items-center justify-center font-bold">3</span>
+</button>
+<button class="flex items-center gap-space-2xs px-space-xs py-1 rounded-full bg-surface-container-lowest text-on-surface-variant hover:bg-surface-container shadow-sm whitespace-nowrap min-h-[32px]">
+<span class="font-label-sm text-label-sm">Assigned</span>
+<span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+</button>
+<button class="flex items-center gap-space-2xs px-space-xs py-1 rounded-full bg-surface-container-lowest text-on-surface-variant hover:bg-surface-container shadow-sm whitespace-nowrap min-h-[32px]">
+<span class="font-label-sm text-label-sm">En Route</span>
+<span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+</button>
+<button class="flex items-center gap-space-2xs px-space-xs py-1 rounded-full bg-surface-container-lowest text-on-surface-variant hover:bg-surface-container shadow-sm whitespace-nowrap min-h-[32px]">
+<span class="font-label-sm text-label-sm">On Scene</span>
+<span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+</button>
+<button class="flex items-center gap-space-2xs px-space-xs py-1 rounded-full bg-surface-container-lowest text-on-surface-variant hover:bg-surface-container shadow-sm whitespace-nowrap min-h-[32px]">
+<span class="font-label-sm text-label-sm">Audit</span>
+</button>
+</div>
+</div>
+<!-- Active Deployment Tasks List -->
+<div class="flex flex-col gap-space-md">
+<!-- Task 1: In Progress with Telemetry -->
+<article class="bg-surface-container-lowest rounded-xl shadow-sm p-space-md flex flex-col gap-space-sm relative overflow-hidden" id="task-card-1">
+<div class="flex items-start justify-between gap-space-xs">
+<div class="flex flex-col gap-space-2xs">
+<div class="flex items-center gap-space-xs">
+<span class="font-label-sm text-label-sm text-on-surface-variant tracking-wider uppercase">SECTOR 4C • FLOOD DEFENSE</span>
+</div>
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface">Deploy Rapid Inflatable Dam at Culvert 4</h2>
+</div>
+<span class="inline-flex items-center px-space-xs py-space-2xs rounded-full bg-surface-container text-secondary font-label-sm text-label-sm shrink-0">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary mr-1 animate-pulse"></span>
+          72%
+        </span>
+</div>
+<!-- Unit Info Pill -->
+<div class="flex items-center justify-between bg-surface-container-low px-space-sm py-space-xs rounded-lg">
+<div class="flex items-center gap-space-xs">
+<div class="w-7 h-7 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-[16px]">engineering</span>
+</div>
+<div class="flex flex-col">
+<span class="font-title-lg text-title-lg text-on-surface leading-tight">DPW Tactical Crew 04</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Heavy Barrier Rig 2 • 6 Specialists</span>
+</div>
+</div>
+<div class="text-right flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant">EST. REMAINING</span>
+<span class="font-data-metric-md text-data-metric-md text-secondary">18 mins</span>
+</div>
+</div>
+<!-- Live Telemetry Graph & Stepper -->
+<div class="flex flex-col gap-space-2xs bg-surface-container-lowest p-space-xs rounded-lg">
+<div class="flex items-center justify-between font-label-sm text-label-sm text-on-surface-variant">
+<div class="flex items-center gap-space-2xs">
+<span class="material-symbols-outlined text-secondary text-[16px]">sensors</span>
+<span>Hydro Pressure Differential: 1.42 bar</span>
+</div>
+<span class="font-code-sm text-code-sm text-secondary">Telemetry Live</span>
+</div>
+<!-- Simplified SVG Sparkline Visualizing Dam Inflation -->
+<div class="h-8 w-full">
+<svg class="w-full h-full text-secondary" fill="none" preserveaspectratio="none" viewbox="0 0 300 40">
+<path d="M0 32 Q 40 28, 80 30 T 150 18 T 220 12 T 300 6" stroke="currentColor" stroke-linecap="round" stroke-width="2.5"></path>
+<path d="M0 32 Q 40 28, 80 30 T 150 18 T 220 12 T 300 6 L 300 40 L 0 40 Z" fill="currentColor" fill-opacity="0.08"></path>
+</svg>
+</div>
+</div>
+<!-- Workflow Progress Tracker -->
+<div class="grid grid-cols-5 gap-1 py-1">
+<div class="flex flex-col items-center gap-1">
+<div class="w-full h-1.5 rounded-full bg-secondary"></div>
+<span class="font-label-sm text-[10px] text-on-surface-variant">Assigned</span>
+</div>
+<div class="flex flex-col items-center gap-1">
+<div class="w-full h-1.5 rounded-full bg-secondary"></div>
+<span class="font-label-sm text-[10px] text-on-surface-variant">En Route</span>
+</div>
+<div class="flex flex-col items-center gap-1">
+<div class="w-full h-1.5 rounded-full bg-secondary"></div>
+<span class="font-label-sm text-[10px] text-on-surface">On Scene</span>
+</div>
+<div class="flex flex-col items-center gap-1">
+<div class="w-full h-1.5 rounded-full bg-secondary-fixed-dim"></div>
+<span class="font-label-sm text-[10px] text-on-surface-variant">Verify</span>
+</div>
+<div class="flex flex-col items-center gap-1">
+<div class="w-full h-1.5 rounded-full bg-surface-container-high"></div>
+<span class="font-label-sm text-[10px] text-on-surface-variant">Closed</span>
+</div>
+</div>
+<!-- Operational Action -->
+<button class="w-full h-11 rounded-lg bg-primary text-on-primary font-title-lg text-title-lg flex items-center justify-center gap-space-xs shadow-sm active:opacity-90 transition-opacity" onclick="handleVerification(1)">
+<span class="material-symbols-outlined text-[20px]">verified_user</span>
+<span>Verify &amp; Clear Sector</span>
+</button>
+</article>
+<!-- Task 2: Route Clearance On Scene -->
+<article class="bg-surface-container-lowest rounded-xl shadow-sm p-space-md flex flex-col gap-space-sm relative" id="task-card-2">
+<div class="flex items-start justify-between gap-space-xs">
+<div class="flex flex-col gap-space-2xs">
+<span class="font-label-sm text-label-sm text-on-surface-variant tracking-wider uppercase">ACCESS CORRIDOR • TRAUMA ACCESS</span>
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface">Ambulance Route Clearance — St. Jude Gate B</h2>
+</div>
+<span class="inline-flex items-center px-space-xs py-space-2xs rounded-full bg-surface-container text-on-surface font-label-sm text-label-sm shrink-0">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary mr-1"></span>
+          ON SCENE
+        </span>
+</div>
+<!-- Unit Info Pill -->
+<div class="flex items-center justify-between bg-surface-container-low px-space-sm py-space-xs rounded-lg">
+<div class="flex items-center gap-space-xs">
+<div class="w-7 h-7 rounded-full bg-secondary text-on-secondary flex items-center justify-center">
+<span class="material-symbols-outlined text-[16px]">water_drop</span>
+</div>
+<div class="flex flex-col">
+<span class="font-title-lg text-title-lg text-on-surface leading-tight">Heavy Pump 02</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Submersible 4000 GPM</span>
+</div>
+</div>
+<div class="text-right flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant">RECESSION RATE</span>
+<span class="font-data-metric-md text-data-metric-md text-on-surface font-bold">-12 cm/hr</span>
+</div>
+</div>
+<!-- Route Status Map & Metrics Visual snippet -->
+<div class="flex items-center gap-space-sm bg-surface-container p-space-xs rounded-lg">
+<div class="w-10 h-10 rounded-lg bg-surface-container-highest flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-secondary text-[22px]">directions_car</span>
+</div>
+<div class="flex flex-col flex-1 min-w-0">
+<div class="flex items-center justify-between">
+<span class="font-title-lg text-title-lg text-on-surface">Water Depth: 14cm</span>
+<span class="font-label-sm text-label-sm text-secondary">Target &lt; 5cm</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant truncate">Critical lane clear for standard EMS wheel clearance</span>
+</div>
+</div>
+<!-- Actions -->
+<div class="grid grid-cols-2 gap-space-xs pt-space-2xs">
+<button class="h-11 rounded-lg bg-surface-container text-on-surface font-title-lg text-title-lg flex items-center justify-center gap-space-2xs active:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-[18px]">replay</span>
+<span>Reassign Unit</span>
+</button>
+<button class="h-11 rounded-lg bg-primary text-on-primary font-title-lg text-title-lg flex items-center justify-center gap-space-2xs active:opacity-90 transition-opacity">
+<span class="material-symbols-outlined text-[18px]">open_in_new</span>
+<span>Open Video Feed</span>
+</button>
+</div>
+</article>
+<!-- Task 3: Cooling Center Backup Generator Switch -->
+<article class="bg-surface-container-lowest rounded-xl shadow-sm p-space-md flex flex-col gap-space-sm relative" id="task-card-3">
+<div class="flex items-start justify-between gap-space-xs">
+<div class="flex flex-col gap-space-2xs">
+<span class="font-label-sm text-label-sm text-on-surface-variant tracking-wider uppercase">COMMUNITY FACILITY • POWER RESILIENCE</span>
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface">Cooling Center Backup Generator Switch</h2>
+</div>
+<span class="inline-flex items-center px-space-xs py-space-2xs rounded-full bg-surface-container-highest text-on-surface font-label-sm text-label-sm shrink-0">
+          AUDIT READY
+        </span>
+</div>
+<!-- Unit Info Pill -->
+<div class="flex items-center justify-between bg-surface-container-low px-space-sm py-space-xs rounded-lg">
+<div class="flex items-center gap-space-xs">
+<div class="w-7 h-7 rounded-full bg-primary text-on-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-[16px]">bolt</span>
+</div>
+<div class="flex flex-col">
+<span class="font-title-lg text-title-lg text-on-surface leading-tight">Municipal Electrical Unit 1</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Lead: Sgt. Miller</span>
+</div>
+</div>
+<div class="text-right flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant">VERIFICATION</span>
+<span class="font-label-sm text-label-sm text-secondary font-bold">Sensor Node 42</span>
+</div>
+</div>
+<!-- Telemetry Confirmation Banner -->
+<div class="flex items-center gap-space-xs bg-surface-container-high px-space-sm py-space-xs rounded-lg text-on-surface">
+<span class="material-symbols-outlined text-secondary text-[20px]">check_circle</span>
+<div class="flex flex-col text-on-surface">
+<span class="font-title-lg text-title-lg leading-snug">480V 3-Phase Stable</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">HVAC units drawing normal nominal load (68kW)</span>
+</div>
+</div>
+<!-- Operational Resolution CTA -->
+<div class="flex items-center gap-space-xs pt-space-2xs">
+<button class="flex-1 h-11 rounded-lg bg-primary text-on-primary font-title-lg text-title-lg flex items-center justify-center gap-space-xs shadow-sm active:opacity-90 transition-opacity" onclick="approveResolution(3)">
+<span class="material-symbols-outlined text-[20px]">task_alt</span>
+<span>Approve Resolution</span>
+</button>
+<button aria-label="Incident Details" class="w-11 h-11 rounded-lg bg-surface-container flex items-center justify-center text-on-surface active:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-[20px]">more_vert</span>
+</button>
+</div>
+</article>
+</div>
+<!-- Secondary Field Resource Summary Map Banner -->
+<div class="bg-surface-container-lowest p-space-md rounded-xl shadow-sm flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<div class="w-10 h-10 rounded-full bg-secondary-fixed flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-[20px]">satellite_alt</span>
+</div>
+<div class="flex flex-col">
+<span class="font-title-lg text-title-lg text-on-surface">EOC Fleet Map Link</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">17 GPS transponders transmitting</span>
+</div>
+</div>
+<button class="h-9 px-space-sm rounded-lg bg-surface-container text-on-surface font-label-md text-label-md flex items-center gap-space-2xs">
+<span>Inspect</span>
+<span class="material-symbols-outlined text-[16px]">chevron_right</span>
+</button>
+</div>
+</div>
+<script>
+  function handleVerification(taskId) {
+    const card = document.getElementById('task-card-' + taskId);
+    if (!card) return;
+    const btn = card.querySelector('button');
+    if (btn) {
+      btn.innerHTML = '<span class="material-symbols-outlined text-[20px] animate-spin">refresh</span><span>Transmitting Clear Code...</span>';
+      btn.classList.add('opacity-75');
+      setTimeout(() => {
+        btn.innerHTML = '<span class="material-symbols-outlined text-[20px]">check</span><span>Sector Cleared</span>';
+        btn.classList.remove('opacity-75', 'bg-primary');
+        btn.classList.add('bg-secondary');
+      }, 1200);
+    }
+  }
+
+  function approveResolution(taskId) {
+    const card = document.getElementById('task-card-' + taskId);
+    if (!card) return;
+    const btn = card.querySelector('button');
+    if (btn) {
+      btn.innerHTML = '<span class="material-symbols-outlined text-[20px] animate-spin">sync</span><span>Recording Audit Log...</span>';
+      setTimeout(() => {
+        card.classList.add('opacity-50', 'transition-opacity');
+        btn.innerHTML = '<span class="material-symbols-outlined text-[20px]">verified</span><span>Audit Confirmed</span>';
+      }, 1000);
+    }
+  }
+
+  // Simulating relative ping countdown
+  let pingSeconds = 12;
+  const syncLabel = document.getElementById('sync-timer');
+  setInterval(() => {
+    pingSeconds = (pingSeconds + 1) % 45;
+    if (syncLabel) {
+      syncLabel.textContent = 'Telemetry Synced ' + pingSeconds + 's ago';
+    }
+  }, 1000);
+</script></main><aside class="fixed bottom-24 right-edge-margin-mobile z-50"><button aria-label="Emergency Broadcast or Critical Dispatch" class="flex items-center justify-center gap-space-xs h-12 px-space-md rounded-full bg-error text-on-error shadow-[0_4px_20px_-2px_rgba(15,23,42,0.18)] min-w-[44px] min-h-[44px] hover:opacity-95 transition-opacity"><span class="material-symbols-outlined text-[20px]">campaign</span><span class="font-title-lg text-title-lg tracking-tight">Dispatch</span></button></aside><nav class="fixed bottom-0 w-full z-50 pb-safe bg-surface/80 backdrop-blur-xl shadow-[0_-1px_8px_rgba(0,0,0,0.04)]" data-active-classes="text-secondary font-semibold"><div class="flex justify-around items-center h-16 px-space-xs"><a class="flex flex-col items-center justify-center gap-space-2xs min-w-[44px] min-h-[44px] px-space-xs text-on-surface-variant hover:text-on-surface transition-colors" data-path="map" href="#"><span class="material-symbols-outlined text-[22px]">map</span><span class="font-label-sm text-label-sm">Map</span></a><a class="flex flex-col items-center justify-center gap-space-2xs min-w-[44px] min-h-[44px] px-space-xs text-on-surface-variant hover:text-on-surface transition-colors" data-path="incidents" href="#"><span class="material-symbols-outlined text-[22px]">warning</span><span class="font-label-sm text-label-sm">Incidents</span></a><a aria-current="page" class="flex flex-col items-center justify-center gap-space-2xs min-w-[44px] min-h-[44px] px-space-xs transition-colors text-secondary font-semibold" data-path="tasks" href="#"><span class="material-symbols-outlined text-[22px]">assignment_turned_in</span><span class="font-label-sm text-label-sm">Tasks</span></a></div></nav>
+<div id="app-nav"></div>
+</body></html>

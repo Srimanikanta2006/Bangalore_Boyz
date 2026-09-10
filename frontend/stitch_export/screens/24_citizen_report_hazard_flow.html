@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@600;700;800&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { colors: { "surface-container-highest": "#d3e4fe", "secondary-container": "#316bf3", "on-secondary-container": "#fefcff", "on-primary-fixed-variant": "#3f465c", "primary-fixed": "#dae2fd", "on-secondary": "#ffffff", "on-secondary-fixed-variant": "#003ea8", "on-tertiary-fixed-variant": "#004e5c", "inverse-surface": "#213145", "on-background": "#0b1c30", "on-surface": "#0b1c30", "secondary-fixed-dim": "#b4c5ff", "on-tertiary": "#ffffff", "error": "#ba1a1a", "on-tertiary-fixed": "#001f26", "surface-bright": "#f8f9ff", "tertiary": "#000000", "surface-tint": "#565e74", "outline-variant": "#c6c6cd", "surface-container": "#e5eeff", "surface-container-lowest": "#ffffff", "error-container": "#ffdad6", "surface-container-low": "#eff4ff", "outline": "#76777d", "on-error-container": "#93000a", "surface": "#f8f9ff", "on-primary-fixed": "#131b2e", "inverse-on-surface": "#eaf1ff", "primary-container": "#131b2e", "on-surface-variant": "#45464d", "inverse-primary": "#bec6e0", "surface-container-high": "#dce9ff", "tertiary-fixed": "#acedff", "secondary-fixed": "#dbe1ff", "on-secondary-fixed": "#00174b", "tertiary-fixed-dim": "#4cd7f6", "primary-fixed-dim": "#bec6e0", "secondary": "#0051d5", "surface-dim": "#cbdbf5", "on-primary-container": "#7c839b", "surface-variant": "#d3e4fe", "background": "#f8f9ff", "on-error": "#ffffff", "on-primary": "#ffffff", "tertiary-container": "#001f26", "primary": "#000000", "on-tertiary-container": "#0090a9" }, borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, spacing: { "space-xs": "0.5rem", "space-md": "1rem", "panel-width-sm": "20rem", "edge-margin-desktop": "1.5rem", "space-2xs": "0.25rem", "space-2xl": "3rem", "panel-width-lg": "32rem", "panel-width-md": "26rem", "edge-margin-mobile": "1rem", "space-xl": "2rem", "space-sm": "0.75rem", "space-lg": "1.5rem" }, fontFamily: { "body-md": ["Manrope"], "headline-lg-mobile": ["Plus Jakarta Sans"], "headline-md": ["Plus Jakarta Sans"], "body-lg": ["Manrope"], "headline-xl": ["Plus Jakarta Sans"], "data-metric-lg": ["Manrope"], "headline-xl-mobile": ["Plus Jakarta Sans"], "body-sm": ["Manrope"], "label-md": ["Manrope"], "title-lg": ["Plus Jakarta Sans"], "code-sm": ["Manrope"], "label-sm": ["Manrope"], "data-metric-md": ["Manrope"], "headline-lg": ["Plus Jakarta Sans"] }, fontSize: { "body-md": ["14px", { lineHeight: "20px", letterSpacing: "0em", fontWeight: "400" }], "headline-lg-mobile": ["22px", { lineHeight: "30px", letterSpacing: "-0.015em", fontWeight: "700" }], "headline-md": ["20px", { lineHeight: "28px", letterSpacing: "-0.015em", fontWeight: "600" }], "body-lg": ["15px", { lineHeight: "24px", letterSpacing: "-0.005em", fontWeight: "400" }], "headline-xl": ["36px", { lineHeight: "44px", letterSpacing: "-0.025em", fontWeight: "700" }], "data-metric-lg": ["32px", { lineHeight: "36px", letterSpacing: "-0.03em", fontWeight: "700" }], "headline-xl-mobile": ["28px", { lineHeight: "36px", letterSpacing: "-0.02em", fontWeight: "700" }], "body-sm": ["13px", { lineHeight: "18px", letterSpacing: "0em", fontWeight: "400" }], "label-md": ["12px", { lineHeight: "16px", letterSpacing: "0.02em", fontWeight: "600" }], "title-lg": ["16px", { lineHeight: "24px", letterSpacing: "-0.01em", fontWeight: "600" }], "code-sm": ["12px", { lineHeight: "16px", letterSpacing: "0.01em", fontWeight: "500" }], "label-sm": ["11px", { lineHeight: "14px", letterSpacing: "0.04em", fontWeight: "600" }], "data-metric-md": ["20px", { lineHeight: "24px", letterSpacing: "-0.02em", fontWeight: "700" }], "headline-lg": ["28px", { lineHeight: "36px", letterSpacing: "-0.02em", fontWeight: "700" }] } } } };</script><style>@layer base{html,body{width:100vw;margin:0;padding:0;min-height:100%;}body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}}::-webkit-scrollbar{display:none;}</style><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  
+<script src="/shared/config.js"></script>
+<link rel="stylesheet" href="/shared/app.css" />
+<script src="/shared/app.js" defer></script>
+</head><body class="bg-surface text-on-surface font-body-md text-body-md min-h-screen flex flex-col relative"><header class="fixed top-0 w-full z-50 pt-safe px-edge-margin-mobile"><div class="h-16 flex items-center justify-between mt-space-2xs px-space-sm rounded-xl bg-surface-container-lowest/90 backdrop-blur-xl shadow-[0_4px_20px_-2px_rgba(15,23,42,0.08)]"><div class="flex items-center gap-space-xs min-w-0"><button aria-label="Go back" class="w-11 h-11 rounded-lg flex items-center justify-center text-on-surface hover:bg-surface-container transition-colors shrink-0" onclick="history.back()"><span class="material-symbols-outlined text-[22px]">arrow_back</span></button><div class="flex flex-col min-w-0"><span class="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-bold truncate">ClimateShield Rescue</span><h1 class="font-title-lg text-title-lg text-on-surface font-bold truncate tracking-tight">Hazard Report</h1></div></div><div class="flex items-center gap-space-xs shrink-0"><img alt="Profile" class="w-8 h-8 rounded-full object-cover shadow-[0_1px_8px_rgba(0,0,0,0.04)]" src="https://lh3.googleusercontent.com/aida/AEtjO1WZa1gNvntWWeiT4QhM-l_fIhJeTNPgwhOocSm5zkFiyeUn3CdWKg2P6QBAp2739f4ineyLsZACoh0wcEewdNPLn7dJp1NR4H3lnvVimUYZHBtoiKTEcHeUelauAMp_CGDEiOGu2-Yqz4_Vqk5IejETJ6u1R9tsOCq5DwbAv411fFrUovtU623EzW2rGPgJX0iZQ2U-lv-rR-wRns1wPkTfcV5BBGcpGIRxWJQowEeXYjkRRS5BZt3IWUg"/></div></div></header><main class="flex-1 flex flex-col relative w-full pt-16 bg-surface pb-safe"><div class="flex flex-col w-full px-edge-margin-mobile pb-space-2xl">
+<!-- Progress Tracker & Urgency Banner -->
+<div class="flex items-center justify-between py-space-sm">
+<div class="flex items-center gap-space-2xs">
+<span class="inline-flex w-2 h-2 rounded-full bg-secondary animate-pulse"></span>
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-secondary font-bold">Field Triage Active</span>
+</div>
+<div class="flex items-center gap-1.5 px-space-xs py-0.5 rounded-full bg-surface-container-high text-on-surface-variant font-code-sm text-code-sm">
+<span class="material-symbols-outlined text-[14px]">satellite_alt</span>
+<span>GPS High-Precision</span>
+</div>
+</div>
+<!-- Incident Verification Card / Location Anchor -->
+<div class="w-full bg-surface-container-lowest rounded-xl p-space-md shadow-sm mb-space-md">
+<div class="flex items-start justify-between gap-space-xs">
+<div class="flex items-start gap-space-xs">
+<div class="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center text-secondary shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-[20px]">near_me</span>
+</div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-1.5 flex-wrap">
+<span class="font-title-lg text-title-lg text-on-surface font-bold truncate">Bayshore Blvd &amp; 4th St</span>
+<span class="px-2 py-0.5 rounded-full bg-surface-container-high text-on-surface text-label-sm font-label-sm">GPS Pinned</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Tampa Bay Coastal Sector • Accuracy ±3m</p>
+</div>
+</div>
+<button aria-label="Recalibrate GPS" class="p-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors shrink-0" type="button">
+<span class="material-symbols-outlined text-[18px]">my_location</span>
+</button>
+</div>
+</div>
+<!-- Hazard Selection Grid Header -->
+<div class="flex items-baseline justify-between mb-space-xs">
+<h2 class="font-headline-md text-headline-md text-on-surface font-bold">Classify Phenomenon</h2>
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Step 1 of 3</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-space-sm">Select primary environmental threat observed at coordinates.</p>
+<!-- 4x2 Hazard Matrix Grid -->
+<div aria-label="Hazard Type Selection" class="grid grid-cols-2 gap-space-xs mb-space-lg" id="hazardGrid" role="radiogroup">
+<!-- Item 1: Flash Flood (Selected by Default) -->
+<button aria-checked="true" class="hazard-card group relative text-left p-space-sm rounded-xl bg-surface-container-highest transition-all duration-150 shadow-sm flex flex-col justify-between h-[96px]" data-hazard="flash-flood" role="radio" type="button">
+<div class="flex items-start justify-between w-full">
+<div class="w-8 h-8 rounded-lg bg-surface-container-lowest flex items-center justify-center text-[#06B6D4] shadow-sm">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">flood</span>
+</div>
+<span class="check-pill flex items-center justify-center w-5 h-5 rounded-full bg-primary text-on-primary">
+<span class="material-symbols-outlined text-[14px]">check</span>
+</span>
+</div>
+<div class="min-w-0">
+<div class="font-title-lg text-title-lg text-on-surface font-bold leading-tight truncate">Flash Flood</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant truncate">Standing/rapid water</div>
+</div>
+</button>
+<!-- Item 2: Road Blocked / Debris -->
+<button aria-checked="false" class="hazard-card group relative text-left p-space-sm rounded-xl bg-surface-container-low transition-all duration-150 hover:bg-surface-container flex flex-col justify-between h-[96px]" data-hazard="road-blocked" role="radio" type="button">
+<div class="flex items-start justify-between w-full">
+<div class="w-8 h-8 rounded-lg bg-surface-container-lowest flex items-center justify-center text-on-surface-variant shadow-sm">
+<span class="material-symbols-outlined text-[20px]">scan</span>
+</div>
+<span class="check-pill hidden items-center justify-center w-5 h-5 rounded-full bg-primary text-on-primary">
+<span class="material-symbols-outlined text-[14px]">check</span>
+</span>
+</div>
+<div class="min-w-0">
+<div class="font-title-lg text-title-lg text-on-surface font-bold leading-tight truncate">Road Blocked</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant truncate">Impassable debris</div>
+</div>
+</button>
+<!-- Item 3: Fallen Tree / Power Line (Amber) -->
+<button aria-checked="false" class="hazard-card group relative text-left p-space-sm rounded-xl bg-surface-container-low transition-all duration-150 hover:bg-surface-container flex flex-col justify-between h-[96px]" data-hazard="power-line" role="radio" type="button">
+<div class="flex items-start justify-between w-full">
+<div class="w-8 h-8 rounded-lg bg-surface-container-lowest flex items-center justify-center text-[#D97706] shadow-sm">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">electric_bolt</span>
+</div>
+<span class="check-pill hidden items-center justify-center w-5 h-5 rounded-full bg-primary text-on-primary">
+<span class="material-symbols-outlined text-[14px]">check</span>
+</span>
+</div>
+<div class="min-w-0">
+<div class="font-title-lg text-title-lg text-on-surface font-bold leading-tight truncate">Downed Line</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant truncate">Tree or wire hazard</div>
+</div>
+</button>
+<!-- Item 4: Extreme Heat Zone (Orange) -->
+<button aria-checked="false" class="hazard-card group relative text-left p-space-sm rounded-xl bg-surface-container-low transition-all duration-150 hover:bg-surface-container flex flex-col justify-between h-[96px]" data-hazard="extreme-heat" role="radio" type="button">
+<div class="flex items-start justify-between w-full">
+<div class="w-8 h-8 rounded-lg bg-surface-container-lowest flex items-center justify-center text-[#F97316] shadow-sm">
+<span class="material-symbols-outlined text-[20px]">local_fire_department</span>
+</div>
+<span class="check-pill hidden items-center justify-center w-5 h-5 rounded-full bg-primary text-on-primary">
+<span class="material-symbols-outlined text-[14px]">check</span>
+</span>
+</div>
+<div class="min-w-0">
+<div class="font-title-lg text-title-lg text-on-surface font-bold leading-tight truncate">Extreme Heat</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant truncate">Thermal stress zone</div>
+</div>
+</button>
+<!-- Item 5: Water Main Break -->
+<button aria-checked="false" class="hazard-card group relative text-left p-space-sm rounded-xl bg-surface-container-low transition-all duration-150 hover:bg-surface-container flex flex-col justify-between h-[96px]" data-hazard="water-main" role="radio" type="button">
+<div class="flex items-start justify-between w-full">
+<div class="w-8 h-8 rounded-lg bg-surface-container-lowest flex items-center justify-center text-secondary shadow-sm">
+<span class="material-symbols-outlined text-[20px]">plumbing</span>
+</div>
+<span class="check-pill hidden items-center justify-center w-5 h-5 rounded-full bg-primary text-on-primary">
+<span class="material-symbols-outlined text-[14px]">check</span>
+</span>
+</div>
+<div class="min-w-0">
+<div class="font-title-lg text-title-lg text-on-surface font-bold leading-tight truncate">Water Main</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant truncate">Pressurized rupture</div>
+</div>
+</button>
+<!-- Item 6: Landslide / Mud (Umber) -->
+<button aria-checked="false" class="hazard-card group relative text-left p-space-sm rounded-xl bg-surface-container-low transition-all duration-150 hover:bg-surface-container flex flex-col justify-between h-[96px]" data-hazard="landslide" role="radio" type="button">
+<div class="flex items-start justify-between w-full">
+<div class="w-8 h-8 rounded-lg bg-surface-container-lowest flex items-center justify-center text-[#92400E] shadow-sm">
+<span class="material-symbols-outlined text-[20px]">landslide</span>
+</div>
+<span class="check-pill hidden items-center justify-center w-5 h-5 rounded-full bg-primary text-on-primary">
+<span class="material-symbols-outlined text-[14px]">check</span>
+</span>
+</div>
+<div class="min-w-0">
+<div class="font-title-lg text-title-lg text-on-surface font-bold leading-tight truncate">Landslide / Mud</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant truncate">Slope instability</div>
+</div>
+</button>
+<!-- Item 7: Storm Damage (Violet) -->
+<button aria-checked="false" class="hazard-card group relative text-left p-space-sm rounded-xl bg-surface-container-low transition-all duration-150 hover:bg-surface-container flex flex-col justify-between h-[96px]" data-hazard="storm-damage" role="radio" type="button">
+<div class="flex items-start justify-between w-full">
+<div class="w-8 h-8 rounded-lg bg-surface-container-lowest flex items-center justify-center text-[#7C3AED] shadow-sm">
+<span class="material-symbols-outlined text-[20px]">cyclone</span>
+</div>
+<span class="check-pill hidden items-center justify-center w-5 h-5 rounded-full bg-primary text-on-primary">
+<span class="material-symbols-outlined text-[14px]">check</span>
+</span>
+</div>
+<div class="min-w-0">
+<div class="font-title-lg text-title-lg text-on-surface font-bold leading-tight truncate">Storm Damage</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant truncate">Structural/wind surge</div>
+</div>
+</button>
+<!-- Item 8: Other Climate Hazard -->
+<button aria-checked="false" class="hazard-card group relative text-left p-space-sm rounded-xl bg-surface-container-low transition-all duration-150 hover:bg-surface-container flex flex-col justify-between h-[96px]" data-hazard="other" role="radio" type="button">
+<div class="flex items-start justify-between w-full">
+<div class="w-8 h-8 rounded-lg bg-surface-container-lowest flex items-center justify-center text-on-surface-variant shadow-sm">
+<span class="material-symbols-outlined text-[20px]">emergency</span>
+</div>
+<span class="check-pill hidden items-center justify-center w-5 h-5 rounded-full bg-primary text-on-primary">
+<span class="material-symbols-outlined text-[14px]">check</span>
+</span>
+</div>
+<div class="min-w-0">
+<div class="font-title-lg text-title-lg text-on-surface font-bold leading-tight truncate">Other Hazard</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant truncate">Unclassified anomaly</div>
+</div>
+</button>
+</div>
+<!-- Visual Evidence Attachment Slot -->
+<div class="flex items-baseline justify-between mb-space-xs">
+<h2 class="font-headline-md text-headline-md text-on-surface font-bold">Visual Telemetry</h2>
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">1 file attached</span>
+</div>
+<div class="flex flex-col gap-space-xs mb-space-lg">
+<!-- Active Media Preview & Upload Container -->
+<div class="grid grid-cols-2 gap-space-xs">
+<!-- Attached Preview Thumbnail -->
+<div class="relative h-32 rounded-xl overflow-hidden shadow-sm bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="A ground-level mobile photograph showing urban flash flooding at a street intersection with murky stormwater submerged up to the sidewalk curbs and storm drain grates, overcast rainy lighting, crisp documentary photojournalism style, realistic water reflections." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBnGTttCC3z4E2rK7cVF3S2HzTqliUTLVfEdlmLWSOVh4fcblt9stWJH_etFG7eZ49tjdI-o696NTnpi3ntLtZBhq_XinyyQqZ80FiVOgNKKzFrSHhNb6H1fm3656-fbYbH7SyV98bwtZ467oK0ANJ4csVryFYAsoLMUIQlg_Ev6L-cZ1xQiBkJJTq_qvkWXce1YVlu-DV2Yt77pK_MauJnLb3NnqmHkS_vKE_8t6h9s52vc6lqpo9U"/>
+<div class="absolute inset-0 bg-gradient-to-t from-primary/80 via-transparent to-transparent"></div>
+<div class="absolute bottom-2 left-2 right-2 flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-on-primary font-bold drop-shadow">IMG_9402.JPG</span>
+<button aria-label="Remove photo" class="w-6 h-6 rounded-full bg-inverse-surface/80 text-on-primary flex items-center justify-center hover:bg-error transition-colors" type="button">
+<span class="material-symbols-outlined text-[14px]">close</span>
+</button>
+</div>
+<div class="absolute top-2 left-2 px-1.5 py-0.5 rounded bg-surface-container-lowest/90 backdrop-blur-sm text-on-surface font-code-sm text-code-sm font-semibold">
+          14:28:02
+        </div>
+</div>
+<!-- Add Media Slot -->
+<label class="h-32 flex flex-col items-center justify-center p-space-sm rounded-xl bg-surface-container-lowest shadow-sm cursor-pointer hover:bg-surface-container-low transition-colors text-center relative">
+<input accept="image/*,video/*" capture="environment" class="sr-only" type="file"/>
+<div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-secondary mb-1.5">
+<span class="material-symbols-outlined text-[22px]">add_a_photo</span>
+</div>
+<span class="font-title-lg text-title-lg text-on-surface font-bold text-xs">Attach Media</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant text-[11px] mt-0.5">Photo or 10s video</span>
+</label>
+</div>
+</div>
+<!-- Incident Context Details -->
+<div class="flex items-baseline justify-between mb-space-xs">
+<label class="font-headline-md text-headline-md text-on-surface font-bold" for="hazardDescription">Field Notes &amp; Severity</label>
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Optional</span>
+</div>
+<div class="relative bg-surface-container-lowest rounded-xl p-space-sm shadow-sm mb-space-lg">
+<textarea class="w-full bg-transparent resize-none font-body-md text-body-md text-on-surface placeholder:text-on-surface-variant/60 focus:outline-none" id="hazardDescription" placeholder="Add context (e.g. water height above sidewalk, electrical arcing, impassable for passenger vehicles)..." rows="3">Standing water ~14 inches deep across north lane. Drainage backed up with floating organic debris.</textarea>
+<div class="flex items-center justify-between pt-space-xs mt-space-2xs">
+<div class="flex items-center gap-1 text-on-surface-variant font-code-sm text-code-sm">
+<span class="material-symbols-outlined text-[14px]">mic</span>
+<span>Voice dictation ready</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">87 / 280</span>
+</div>
+</div>
+<!-- Live Sensor Baseline Card -->
+<div class="w-full bg-surface-container-lowest rounded-xl p-space-md shadow-sm mb-space-xl">
+<div class="flex items-center justify-between mb-space-xs">
+<div class="flex items-center gap-space-2xs">
+<span class="material-symbols-outlined text-secondary text-[18px]">waves</span>
+<span class="font-label-md text-label-md text-on-surface font-bold">Nearby Hydro-Gauge #44B</span>
+</div>
+<span class="px-2 py-0.5 rounded-full bg-error-container text-on-error-container font-label-sm text-label-sm font-bold">Surge Spike</span>
+</div>
+<div class="grid grid-cols-2 gap-space-sm">
+<div class="bg-surface-container-low p-space-xs rounded-lg">
+<span class="font-label-sm text-label-sm text-on-surface-variant block">Water Crest Level</span>
+<span class="font-data-metric-md text-data-metric-md text-on-surface font-bold">+2.4 ft</span>
+</div>
+<div class="bg-surface-container-low p-space-xs rounded-lg">
+<span class="font-label-sm text-label-sm text-on-surface-variant block">Rate of Influx</span>
+<span class="font-data-metric-md text-data-metric-md text-on-surface font-bold">+0.8 in/m</span>
+</div>
+</div>
+</div>
+<!-- Sticky Bottom Operational CTA Container -->
+<div class="sticky bottom-0 w-full pt-space-xs pb-safe bg-surface/90 backdrop-blur-md mt-auto">
+<div class="p-space-xs bg-surface-container-lowest rounded-xl shadow-lg">
+<button class="w-full h-12 rounded-lg bg-primary hover:bg-[#1E293B] text-on-primary font-body-md text-body-md font-bold flex items-center justify-center gap-space-xs transition-colors shadow-sm active:scale-[0.99]" id="submitReportBtn" type="button">
+<span class="material-symbols-outlined text-[20px]">send</span>
+<span>Submit Hazard Report</span>
+</button>
+<p class="text-center font-label-sm text-label-sm text-on-surface-variant mt-1.5 pb-0.5">Dispatches real-time packet to Emergency Ops Center (EOC-9)</p>
+</div>
+</div>
+</div>
+<script>
+  (function() {
+    const cards = document.querySelectorAll('.hazard-card');
+    cards.forEach(card => {
+      card.addEventListener('click', () => {
+        cards.forEach(c => {
+          c.setAttribute('aria-checked', 'false');
+          c.classList.remove('bg-surface-container-highest', 'shadow-sm');
+          c.classList.add('bg-surface-container-low');
+          const pill = c.querySelector('.check-pill');
+          if (pill) pill.classList.add('hidden');
+        });
+
+        card.setAttribute('aria-checked', 'true');
+        card.classList.remove('bg-surface-container-low');
+        card.classList.add('bg-surface-container-highest', 'shadow-sm');
+        const pill = card.querySelector('.check-pill');
+        if (pill) pill.classList.remove('hidden');
+      });
+    });
+
+    const submitBtn = document.getElementById('submitReportBtn');
+    if (submitBtn) {
+      submitBtn.addEventListener('click', () => {
+        submitBtn.disabled = true;
+        const originalHTML = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<span class="material-symbols-outlined text-[20px] animate-spin">progress_activity</span><span>Encrypting &amp; Routing...</span>';
+        setTimeout(() => {
+          submitBtn.innerHTML = '<span class="material-symbols-outlined text-[20px]">check_circle</span><span>Report Transmitted #8841</span>';
+          submitBtn.classList.remove('bg-primary');
+          submitBtn.classList.add('bg-secondary');
+        }, 1200);
+      });
+    }
+  })();
+</script></main>
+<div id="app-nav"></div>
+</body></html>

@@ -1,0 +1,35 @@
+[
+  {
+    "id": "INC-4091",
+    "title": "Substation 4B Inundation Risk",
+    "severity": "CRITICAL",
+    "category": "Infrastructure Threat",
+    "location": "Substation 4B, Sector 12",
+    "status": "DISPATCHED",
+    "assignedTeam": "Tactical Unit Bravo-4",
+    "etaMinutes": 8,
+    "timestamp": "12m ago"
+  },
+  {
+    "id": "INC-4092",
+    "title": "Bridge Access Clearance Failure",
+    "severity": "HIGH",
+    "category": "Evacuation Route Blocked",
+    "location": "North River Causeway",
+    "status": "TRIAGED",
+    "assignedTeam": "Pending Dispatch",
+    "etaMinutes": 15,
+    "timestamp": "18m ago"
+  },
+  {
+    "id": "INC-4095",
+    "title": "Community Center Evacuation SOS",
+    "severity": "CRITICAL",
+    "category": "Life Safety",
+    "location": "District 4 Shelter A",
+    "status": "OPERATING",
+    "assignedTeam": "Rescue Alpha-1",
+    "etaMinutes": 3,
+    "timestamp": "4m ago"
+  }
+]

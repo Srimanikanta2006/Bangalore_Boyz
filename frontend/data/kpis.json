@@ -1,0 +1,12 @@
+{
+  "activeHazards": 4,
+  "deployedUnits": 14,
+  "mobilizingUnits": 3,
+  "operatingOnScene": 4,
+  "pendingAudit": 2,
+  "districtRiskScore": "8.4 / 10",
+  "threatLevel": "CRITICAL - FLOOD PHASE 3",
+  "activeIncidents": 18,
+  "evacuatedCitizens": 3420,
+  "gridOnlinePercent": "99.8%"
+}

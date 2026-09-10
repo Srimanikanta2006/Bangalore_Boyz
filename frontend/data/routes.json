@@ -1,0 +1,19 @@
+[
+  {
+    "id": "RT-01",
+    "name": "Elevated Expressway Bypass",
+    "status": "RECOMMENDED / SAFE",
+    "clearance": "100%",
+    "timeMinutes": 14,
+    "distanceKm": 8.2,
+    "hazardRisk": "LOW"
+  },
+  {
+    "id": "RT-02",
+    "name": "River Road Corridor",
+    "status": "IMPASSABLE - FLOODED",
+    "clearance": "0%",
+    "waterDepth": "1.2m",
+    "hazardRisk": "CRITICAL"
+  }
+]

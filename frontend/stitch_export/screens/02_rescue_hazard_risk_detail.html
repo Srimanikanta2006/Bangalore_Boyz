@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{width:100vw;margin:0;padding:0;}body{overscroll-behavior:none;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "on-tertiary-container": "#0090a9", "outline-variant": "#c6c6cd", "secondary": "#0051d5", "surface-dim": "#cbdbf5", "secondary-fixed": "#dbe1ff", "on-secondary-fixed": "#00174b", "on-primary-container": "#7c839b", "tertiary-fixed-dim": "#4cd7f6", "on-tertiary-fixed": "#001f26", "surface-tint": "#565e74", "primary": "#000000", "on-primary": "#ffffff", "surface-container-highest": "#d3e4fe", "error": "#ba1a1a", "surface": "#f8f9ff", "primary-container": "#131b2e", "inverse-on-surface": "#eaf1ff", "on-tertiary": "#ffffff", "on-error": "#ffffff", "on-tertiary-fixed-variant": "#004e5c", "on-secondary": "#ffffff", "error-container": "#ffdad6", "surface-container": "#e5eeff", "surface-container-high": "#dce9ff", "surface-container-lowest": "#ffffff", "primary-fixed-dim": "#bec6e0", "tertiary": "#000000", "on-secondary-fixed-variant": "#003ea8", "tertiary-fixed": "#acedff", "surface-container-low": "#eff4ff", "surface-variant": "#d3e4fe", "on-error-container": "#93000a", "tertiary-container": "#001f26", "background": "#f8f9ff", "inverse-surface": "#213145", "outline": "#76777d", "on-background": "#0b1c30", "on-secondary-container": "#fefcff", "on-primary-fixed": "#131b2e", "on-surface-variant": "#45464d", "on-surface": "#0b1c30", "on-primary-fixed-variant": "#3f465c", "secondary-container": "#316bf3", "surface-bright": "#f8f9ff", "primary-fixed": "#dae2fd", "inverse-primary": "#bec6e0", "secondary-fixed-dim": "#b4c5ff" }, "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, "spacing": { "edge-margin-mobile": "1rem", "panel-width-sm": "20rem", "space-sm": "0.75rem", "panel-width-md": "26rem", "panel-width-lg": "32rem", "space-2xl": "3rem", "space-xl": "2rem", "edge-margin-desktop": "1.5rem", "space-xs": "0.5rem", "space-2xs": "0.25rem", "space-lg": "1.5rem", "space-md": "1rem" }, "fontFamily": { "body-md": ["Manrope"], "title-lg": ["Plus Jakarta Sans"], "label-md": ["Manrope"], "data-metric-md": ["Manrope"], "headline-lg-mobile": ["Plus Jakarta Sans"], "body-lg": ["Manrope"], "headline-xl-mobile": ["Plus Jakarta Sans"], "headline-lg": ["Plus Jakarta Sans"], "code-sm": ["Manrope"], "data-metric-lg": ["Manrope"], "label-sm": ["Manrope"], "body-sm": ["Manrope"], "headline-xl": ["Plus Jakarta Sans"], "headline-md": ["Plus Jakarta Sans"] }, "fontSize": { "body-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0em", "fontWeight": "400" }], "title-lg": ["16px", { "lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600" }], "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600" }], "data-metric-md": ["20px", { "lineHeight": "24px", "letterSpacing": "-0.02em", "fontWeight": "700" }], "headline-lg-mobile": ["22px", { "lineHeight": "30px", "letterSpacing": "-0.015em", "fontWeight": "700" }], "body-lg": ["15px", { "lineHeight": "24px", "letterSpacing": "-0.005em", "fontWeight": "400" }], "headline-xl-mobile": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "700" }], "headline-lg": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "700" }], "code-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.01em", "fontWeight": "500" }], "data-metric-lg": ["32px", { "lineHeight": "36px", "letterSpacing": "-0.03em", "fontWeight": "700" }], "label-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.04em", "fontWeight": "600" }], "body-sm": ["13px", { "lineHeight": "18px", "letterSpacing": "0em", "fontWeight": "400" }], "headline-xl": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.025em", "fontWeight": "700" }], "headline-md": ["20px", { "lineHeight": "28px", "letterSpacing": "-0.015em", "fontWeight": "600" }] } } } }</script><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  
+<script src="/shared/config.js"></script>
+<link rel="stylesheet" href="/shared/app.css" />
+<script src="/shared/app.js" defer></script>
+</head><body class="bg-surface font-body-md text-body-md text-on-surface flex flex-col min-h-screen"><header class="fixed top-0 inset-x-0 z-50 bg-surface/80 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] pt-safe"><div class="h-20 px-edge-margin-mobile flex flex-col justify-center gap-space-2xs"><div class="flex items-center justify-between gap-space-xs"><div class="flex items-center gap-space-xs"><img alt="Brand logo. - Primary color: #0f172a
+- Font: plusJakartaSans
+- Mode: light
+- Roundness: rounded-md
+" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1WZa1gNvntWWeiT4QhM-l_fIhJeTNPgwhOocSm5zkFiyeUn3CdWKg2P6QBAp2739f4ineyLsZACoh0wcEewdNPLn7dJp1NR4H3lnvVimUYZHBtoiKTEcHeUelauAMp_CGDEiOGu2-Yqz4_Vqk5IejETJ6u1R9tsOCq5DwbAv411fFrUovtU623EzW2rGPgJX0iZQ2U-lv-rR-wRns1wPkTfcV5BBGcpGIRxWJQowEeXYjkRRS5BZt3IWUg"/><div class="flex flex-col"><span class="font-title-lg text-title-lg text-on-surface tracking-tight leading-none">ClimateShield</span><span class="font-label-sm text-label-sm text-on-surface-variant leading-none">Tactical Map</span></div></div><div class="flex items-center gap-space-xs"><span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-surface-container-high text-on-surface font-label-sm text-label-sm"><span class="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse"></span>Taskforce Alpha-02</span><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div><div class="flex items-center justify-between text-on-surface-variant font-code-sm text-code-sm px-0.5"><div class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px] text-secondary">hub</span><span>Mesh P2P Active • 12 Nodes</span></div><div class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-600"></span><span class="font-label-sm text-label-sm uppercase text-on-surface">OP-READY</span></div></div></div></header><main class="flex flex-col relative w-full pt-20 pb-28 bg-surface flex-grow"><div class="flex flex-col w-full px-edge-margin-mobile gap-space-md">
+<!-- Tactical Inset GIS Map Preview -->
+<div class="relative w-full rounded-xl overflow-hidden shadow-md bg-surface-container">
+<div class="w-full h-48 bg-cover bg-center" data-location="Bayshore Underpass Sector 04-B Flood Zone" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAUIXC8Is22HqtljpNf56jhFKQYLu_HJ_m3O98afzQ_u9gUWGBhrY0T9iBgM_X3rqNZbYOgIrtKZGFUvjsPpbShLspudoYz_OITzt16GYE3QQGuZHV_zzUD_AnOQaf5Zzom763AiiS5eBxjSs1C9KGSlJWRANDAAkokRdmp1oOeRGY1jFYjGjJvrVsOgwj3ToRozb_sAgwW2ToCIUdK87S1WVywzOP5N6SeUWw57qQX93MSi90-k1e-')"></div>
+<!-- Cartographic Overlay Elements -->
+<div class="absolute inset-0 bg-gradient-to-t from-primary/80 via-primary/20 to-transparent pointer-events-none"></div>
+<!-- Top Badge Row over Map -->
+<div class="absolute top-space-xs inset-x-space-xs flex items-center justify-between pointer-events-auto">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface/90 backdrop-blur-md text-on-surface font-label-sm text-label-sm shadow-sm">
+<span class="w-2 h-2 rounded-full bg-error animate-ping"></span>
+        LIVE GIS: SEC-04B
+      </span>
+<button aria-label="Expand Tactical View" class="w-8 h-8 rounded-full bg-surface/90 backdrop-blur-md text-on-surface flex items-center justify-center shadow-sm active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-[18px]">fullscreen</span>
+</button>
+</div>
+<!-- Map Bottom Label Strip -->
+<div class="absolute bottom-space-xs inset-x-space-xs flex items-end justify-between text-on-primary">
+<div class="flex flex-col">
+<span class="font-code-sm text-code-sm text-surface-container-highest tracking-wide uppercase">Pinch Point Focus</span>
+<span class="font-title-lg text-title-lg font-bold leading-tight">Bayshore Underpass Culvert</span>
+</div>
+<div class="flex items-center gap-1 bg-primary/70 backdrop-blur-sm px-2 py-0.5 rounded text-surface font-code-sm text-code-sm">
+<span class="material-symbols-outlined text-[14px] text-tertiary-fixed-dim">radar</span>
+<span>LAT 37.7649 N</span>
+</div>
+</div>
+</div>
+<!-- Incident Status & Classification Header -->
+<div class="flex flex-col bg-surface-container-lowest rounded-xl p-space-md shadow-sm gap-space-xs">
+<div class="flex items-center justify-between gap-space-xs flex-wrap">
+<!-- Hazard Type Chip -->
+<div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface-container text-on-surface font-label-sm text-label-sm">
+<span class="w-2 h-2 rounded-sm bg-on-tertiary-container"></span>
+<span class="tracking-wider uppercase">FLOOD / FLASH INUNDATION</span>
+</div>
+<!-- Severity Pill -->
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-error-container text-on-error-container font-label-sm text-label-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-error"></span>
+        CRITICAL • DO NOT ENTER
+      </span>
+</div>
+<div class="flex items-baseline justify-between mt-space-2xs">
+<div>
+<span class="font-label-sm text-label-sm uppercase text-on-surface-variant tracking-wider">Dynamic Risk Index</span>
+<div class="flex items-baseline gap-1">
+<span class="font-data-metric-lg text-data-metric-lg text-error">94</span>
+<span class="font-title-lg text-title-lg text-on-surface-variant font-normal">/ 100</span>
+</div>
+</div>
+<div class="text-right flex flex-col items-end">
+<span class="inline-flex items-center gap-1 font-label-sm text-label-sm text-secondary font-semibold">
+<span class="material-symbols-outlined text-[14px]">satellite_alt</span>
+          LEO Sat-Link Sync
+        </span>
+<span class="font-code-sm text-code-sm text-on-surface-variant">Sensor Telemetry: 18s ago</span>
+</div>
+</div>
+<!-- Micro telemetry rate indicator -->
+<div class="w-full bg-surface-container rounded-full h-1.5 overflow-hidden mt-1">
+<div class="bg-error h-full rounded-full transition-all duration-500" style="width: 94%;"></div>
+</div>
+</div>
+<!-- DO NOT ENTER Operational Directive Callout -->
+<div class="flex items-start gap-space-sm p-space-md rounded-xl bg-error-container text-on-error-container shadow-sm">
+<span class="material-symbols-outlined text-[28px] text-error shrink-0">dangerous</span>
+<div class="flex flex-col gap-0.5">
+<span class="font-title-lg text-title-lg text-on-error-container font-bold">RESTRICTED ACCESS CORRIDOR</span>
+<p class="font-body-md text-body-md text-on-error-container leading-snug">
+        Heavy hydraulic undertow active at railway culvert. Light and standard high-water rescue vehicles will capsize. Amphibious tracked craft and zodiacs only.
+      </p>
+</div>
+</div>
+<!-- High-Consequence Telemetry Grid (2x2) -->
+<div class="grid grid-cols-2 gap-space-xs">
+<!-- Depth Metric -->
+<div class="flex flex-col p-space-sm bg-surface-container-lowest rounded-xl shadow-sm gap-space-2xs">
+<div class="flex items-center justify-between text-on-surface-variant">
+<span class="font-label-sm text-label-sm uppercase">Water Depth</span>
+<span class="material-symbols-outlined text-[18px] text-error">water</span>
+</div>
+<div class="flex items-baseline gap-1">
+<span class="font-data-metric-md text-data-metric-md text-on-surface">1.65</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">m</span>
+</div>
+<span class="font-code-sm text-code-sm text-error font-semibold flex items-center gap-0.5">
+<span class="material-symbols-outlined text-[14px]">trending_up</span>
+        +22 cm / 10m
+      </span>
+</div>
+<!-- Velocity Metric -->
+<div class="flex flex-col p-space-sm bg-surface-container-lowest rounded-xl shadow-sm gap-space-2xs">
+<div class="flex items-center justify-between text-on-surface-variant">
+<span class="font-label-sm text-label-sm uppercase">Flow Velocity</span>
+<span class="material-symbols-outlined text-[18px] text-error">speed</span>
+</div>
+<div class="flex items-baseline gap-1">
+<span class="font-data-metric-md text-data-metric-md text-on-surface">3.4</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">m/s</span>
+</div>
+<span class="font-code-sm text-code-sm text-error font-medium truncate">
+        Extreme drag force
+      </span>
+</div>
+<!-- Debris Load -->
+<div class="flex flex-col p-space-sm bg-surface-container-lowest rounded-xl shadow-sm gap-space-2xs col-span-2">
+<div class="flex items-center justify-between text-on-surface-variant">
+<span class="font-label-sm text-label-sm uppercase">Subsurface Debris Load</span>
+<span class="material-symbols-outlined text-[18px] text-secondary">warning</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface font-semibold">
+        Submerged Sedans (2) • Fallen Utility Timber
+      </p>
+<span class="font-code-sm text-code-sm text-on-surface-variant">
+        Acoustic sonar echoes indicate vehicle chassis pinned against intake grating.
+      </span>
+</div>
+<!-- Clearance Margin Status -->
+<div class="flex flex-col p-space-sm bg-surface-container-lowest rounded-xl shadow-sm gap-space-2xs col-span-2">
+<div class="flex items-center justify-between text-on-surface-variant">
+<span class="font-label-sm text-label-sm uppercase">Vehicle Clearance Status</span>
+<span class="material-symbols-outlined text-[18px] text-error">block</span>
+</div>
+<p class="font-body-md text-body-md text-error font-bold">
+        Impassable for all non-amphibious ground vehicles
+      </p>
+</div>
+</div>
+<!-- Tactical Alternate Route Sequence -->
+<div class="flex flex-col p-space-md bg-surface-container-lowest rounded-xl shadow-sm gap-space-sm">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-secondary text-[20px]">alt_route</span>
+<span class="font-title-lg text-title-lg text-on-surface font-bold">Recommended Detour</span>
+</div>
+<span class="inline-flex items-center px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant font-code-sm text-code-sm">
+        +3.2 km • +7 min
+      </span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+      High-ground bypass established around underpass basin:
+    </p>
+<!-- Compact Waypoint Sequence Ribbon -->
+<div class="flex items-center gap-1.5 overflow-x-auto pb-1">
+<div class="shrink-0 flex items-center px-2.5 py-1.5 rounded-lg bg-surface-container-high text-on-surface font-label-sm text-label-sm font-semibold">
+        Gate 3 Ramp
+      </div>
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant shrink-0">arrow_forward</span>
+<div class="shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-secondary-fixed text-on-secondary-fixed font-label-sm text-label-sm font-semibold">
+<span class="material-symbols-outlined text-[14px]">terrain</span>
+        Skyline (+18m MSL)
+      </div>
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant shrink-0">arrow_forward</span>
+<div class="shrink-0 flex items-center px-2.5 py-1.5 rounded-lg bg-surface-container-high text-on-surface font-label-sm text-label-sm font-semibold">
+        East Canal Levee
+      </div>
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant shrink-0">arrow_forward</span>
+<div class="shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-primary text-on-primary font-label-sm text-label-sm font-semibold">
+<span class="material-symbols-outlined text-[14px]">flag</span>
+        Objective
+      </div>
+</div>
+</div>
+<!-- Hardware Telemetry Diagnostics Strip -->
+<div class="flex flex-col p-space-md bg-surface-container-low rounded-xl gap-space-2xs">
+<span class="font-label-sm text-label-sm uppercase text-on-surface-variant font-bold">Hardware Sensor Diagnostics</span>
+<div class="grid grid-cols-3 gap-space-2xs text-center mt-1">
+<div class="bg-surface-container-lowest p-2 rounded-lg">
+<span class="font-code-sm text-code-sm text-on-surface-variant block">Flowmeter</span>
+<span class="font-label-md text-label-md font-bold text-on-surface">#44B Acoustic</span>
+</div>
+<div class="bg-surface-container-lowest p-2 rounded-lg">
+<span class="font-code-sm text-code-sm text-on-surface-variant block">Head Pres.</span>
+<span class="font-label-md text-label-md font-bold text-on-surface">2.1 bar</span>
+</div>
+<div class="bg-surface-container-lowest p-2 rounded-lg">
+<span class="font-code-sm text-code-sm text-on-surface-variant block">Turbidity</span>
+<span class="font-label-md text-label-md font-bold text-error">Severe / High</span>
+</div>
+</div>
+</div>
+<!-- Operational Field Actions Stack -->
+<div class="flex flex-col gap-space-xs mt-space-2xs">
+<!-- Secondary Warning Broadcast -->
+<button class="w-full h-11 px-space-md rounded-lg bg-surface-container-highest text-on-surface font-title-lg text-title-lg flex items-center justify-center gap-2 active:bg-surface-dim transition-colors" id="broadcastWarningBtn" type="button">
+<span class="material-symbols-outlined text-[20px] text-error">campaign</span>
+<span>Broadcast Warning to Nearby Units</span>
+</button>
+<!-- Primary Operational Action -->
+<button class="w-full h-12 px-space-md rounded-lg bg-primary text-on-primary font-title-lg text-title-lg flex items-center justify-center gap-2 shadow-md hover:bg-surface-tint active:scale-[0.99] transition-all" id="deployBarrierBtn" type="button">
+<span class="material-symbols-outlined text-[22px]">fence</span>
+<span>Request Corridor Barrier Deployment</span>
+</button>
+</div>
+<!-- Micro Interaction Toast Feedback container -->
+<div class="fixed top-24 left-1/2 -translate-x-1/2 z-50 bg-primary text-on-primary px-4 py-2 rounded-full shadow-lg text-label-md font-label-md opacity-0 pointer-events-none transition-opacity duration-200 flex items-center gap-2" id="statusNotification">
+<span class="material-symbols-outlined text-[16px] text-tertiary-fixed-dim">check_circle</span>
+<span id="notificationMessage">Dispatch acknowledged</span>
+</div>
+</div>
+<script>
+  (function() {
+    const notifyToast = document.getElementById('statusNotification');
+    const notifyMsg = document.getElementById('notificationMessage');
+    let toastTimer;
+
+    function showToast(msg) {
+      if (!notifyToast || !notifyMsg) return;
+      notifyMsg.textContent = msg;
+      notifyToast.classList.remove('opacity-0', 'pointer-events-none');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        notifyToast.classList.add('opacity-0', 'pointer-events-none');
+      }, 2500);
+    }
+
+    const broadcastBtn = document.getElementById('broadcastWarningBtn');
+    if (broadcastBtn) {
+      broadcastBtn.addEventListener('click', function() {
+        broadcastBtn.classList.add('bg-surface-dim');
+        showToast('Hazard priority broadcast sent to 4 tactical units');
+        setTimeout(() => broadcastBtn.classList.remove('bg-surface-dim'), 300);
+      });
+    }
+
+    const deployBtn = document.getElementById('deployBarrierBtn');
+    if (deployBtn) {
+      deployBtn.addEventListener('click', function() {
+        deployBtn.innerHTML = '<span class="material-symbols-outlined text-[22px] animate-spin">progress_activity</span><span>Transmitting Command...</span>';
+        setTimeout(() => {
+          deployBtn.innerHTML = '<span class="material-symbols-outlined text-[22px] text-emerald-400">task_alt</span><span>Barrier Team Dispatched</span>';
+          deployBtn.classList.replace('bg-primary', 'bg-surface-container-highest');
+          deployBtn.classList.replace('text-on-primary', 'text-on-surface');
+          showToast('Engineering Taskforce Bravo en route to Sec-04B');
+        }, 1200);
+      });
+    }
+  })();
+</script></main><aside class="fixed right-edge-margin-mobile bottom-24 z-40 pointer-events-auto"><button aria-label="Navigate Mission" class="w-14 h-14 rounded-full bg-primary text-on-primary shadow-lg flex items-center justify-center hover:bg-surface-tint active:scale-95 transition-all"><span class="material-symbols-outlined text-[26px]">navigation</span></button></aside><nav class="fixed bottom-0 inset-x-0 z-50 pb-safe bg-surface/90 backdrop-blur-xl shadow-[0_-1px_8px_rgba(0,0,0,0.04)]" data-active-classes="text-secondary font-semibold"><div class="grid grid-cols-4 items-center h-16 px-space-xs"><a aria-current="page" class="flex flex-col items-center justify-center min-h-[44px] gap-0.5 transition-colors text-secondary font-semibold" data-path="tactical-map" href="#"><span class="material-symbols-outlined text-[22px]">map</span><span class="font-label-sm text-label-sm">Map</span></a><a class="flex flex-col items-center justify-center min-h-[44px] gap-0.5 text-on-surface-variant transition-colors" data-path="incident-missions" href="#"><span class="material-symbols-outlined text-[22px]">assignment</span><span class="font-label-sm text-label-sm">Missions</span></a><a class="flex flex-col items-center justify-center min-h-[44px] gap-0.5 text-on-surface-variant transition-colors" data-path="rescue-team" href="#"><span class="material-symbols-outlined text-[22px]">group</span><span class="font-label-sm text-label-sm">Team</span></a><a class="flex flex-col items-center justify-center min-h-[44px] gap-0.5 text-on-surface-variant transition-colors" data-path="sitrep-reports" href="#"><span class="material-symbols-outlined text-[22px]">description</span><span class="font-label-sm text-label-sm">Reports</span></a></div></nav>
+<div id="app-nav"></div>
+</body></html>
