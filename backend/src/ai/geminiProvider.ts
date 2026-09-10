@@ -23,17 +23,16 @@ export interface ExplanationResult {
   errorDetails?: string;
 }
 
-const DEFAULT_TIMEOUT_MS = 15_000;
+const DEFAULT_TIMEOUT_MS = 45_000;
 
 const CANDIDATE_MODELS = [
+  "gemini-3.6-flash",
+  "gemini-3.6-pro",
+  "gemini-3.0-flash",
+  "gemini-2.5-flash",
+  "gemini-2.0-flash",
   "gemini-1.5-flash-latest",
   "gemini-1.5-flash",
-  "gemini-2.0-flash-exp",
-  "gemini-2.0-flash",
-  "gemini-1.5-flash-002",
-  "gemini-1.5-flash-001",
-  "gemini-1.5-pro-latest",
-  "gemini-1.5-pro",
   "gemini-pro",
 ];
 
@@ -63,18 +62,7 @@ async function resolveModel(
   fetchFn: typeof fetch = fetch,
 ): Promise<string> {
   if (preferredModel) return preferredModel;
-
-  // Query Google API to find which models this key actually has access to
-  const available = await listAvailableModels(apiKey, fetchFn);
-  if (available.length > 0) {
-    for (const candidate of CANDIDATE_MODELS) {
-      if (available.includes(candidate)) return candidate;
-    }
-    return available[0];
-  }
-
-  // Default fallback if list is unavailable
-  return "gemini-1.5-flash-latest";
+  return "gemini-3.6-flash";
 }
 
 function createPrompt(request: ExplainRequest): string {
@@ -149,6 +137,12 @@ export async function explainWithGeminiOrFallback(
   request: ExplainRequest,
   options: GeminiProviderOptions = {},
 ): Promise<ExplanationResult> {
+  try {
+    (process as unknown as { loadEnvFile?: () => void }).loadEnvFile?.();
+  } catch {
+    // ignore if no .env file
+  }
+
   const apiKey = (options.apiKey ?? process.env.GEMINI_API_KEY ?? "").trim();
   if (!apiKey) {
     return {
@@ -241,7 +235,11 @@ export async function explainWithGeminiOrFallback(
 
     return { response: validation.data, usedFallback: false, modelUsed: model };
   } catch (err: unknown) {
-    const errorDetails = err instanceof Error ? err.message : String(err);
+    const errorDetails = controller.signal.aborted
+      ? `Request timed out after ${(options.timeoutMs ?? DEFAULT_TIMEOUT_MS) / 1000}s.`
+      : err instanceof Error
+      ? err.message
+      : String(err);
     return {
       response: buildFallbackExplanation(request),
       usedFallback: true,
