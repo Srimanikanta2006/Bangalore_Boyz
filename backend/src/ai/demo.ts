@@ -61,6 +61,7 @@ console.log("===================================================================
 console.log("⚡ CLIMATESHIELD COMPOUND CASCADE & ROLE-SPECIFIC EXPLANATION LAYER");
 console.log("================================================================================");
 console.log(`Provider: ${result.usedFallback ? "Deterministic Fallback" : "Gemini"}`);
+if (result.modelUsed) console.log(`Model: ${result.modelUsed}`);
 if (result.fallbackReason) console.log(`Fallback Reason: ${result.fallbackReason}`);
 if (result.errorDetails) console.log(`Details: ${result.errorDetails}`);
 console.log(`Incident ID: ${resp.incidentId} | Confidence: ${(resp.confidence * 100).toFixed(0)}%`);
