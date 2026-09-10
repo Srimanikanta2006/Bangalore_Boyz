@@ -2,6 +2,7 @@ import { createApp } from './app';
 import { env } from './config/env';
 import { prisma } from './db/prisma';
 import { startWeatherPoller, stopWeatherPoller } from './services/weather.poller';
+import { startHazardPipelineWorker } from './queue/hazardPipeline.queue';
 
 const app = createApp();
 const server = app.listen(env.PORT, () => {
@@ -14,6 +15,8 @@ const server = app.listen(env.PORT, () => {
     }),
   );
   startWeatherPoller();
+  // No-op if REDIS_URL is unset - the hazard pipeline falls back to inline processing.
+  startHazardPipelineWorker();
 });
 
 async function shutdown(signal: string): Promise<void> {

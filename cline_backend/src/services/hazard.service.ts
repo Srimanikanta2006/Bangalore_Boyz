@@ -3,6 +3,7 @@ import { prisma } from '../db/prisma';
 import { Errors } from '../utils/errors';
 import { buildPaginated, resolvePagination } from '../utils/pagination';
 import { AuditActions, recordAudit } from './audit.service';
+import { enqueueHazardIngested } from '../queue/hazardPipeline.queue';
 import type { AuthUser } from '../types/auth';
 
 export interface HazardQuery {
@@ -110,5 +111,11 @@ export async function createHazard(input: CreateHazardInput, user: AuthUser) {
     entityId: hazard.id,
     metadata: { type: hazard.type, severity: hazard.severity, zone: zone.name },
   });
+
+  // Chunk H: hazard ingestion -> risk recompute -> notification fan-out -> report
+  // generation pipeline (BullMQ+Redis when configured, inline fallback otherwise).
+  // Never blocks or fails hazard creation - fire-and-forget by design.
+  void enqueueHazardIngested(hazard.id);
+
   return hazard;
 }

@@ -29,5 +29,14 @@ services:
       timeout: 5s
       retries: 10
 
+  # Optional: only needed if you set REDIS_URL in .env to run the async hazard
+  # pipeline (Chunk H) as real BullMQ jobs instead of its default inline fallback.
+  redis:
+    image: redis:7-alpine
+    container_name: climateshield-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+
 volumes:
   climateshield_pgdata:
