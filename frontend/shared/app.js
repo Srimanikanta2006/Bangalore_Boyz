@@ -1,6 +1,6 @@
 /**
  * ClimateShield Application Core Engine
- * Handles navigation partial injection, active highlighting,
+ * Handles navigation partial injection, sliding sidebar drawer toggle,
  * relative path resolution, data binding, and in-page modal/sheet toggles.
  */
 
@@ -9,6 +9,7 @@
     initShell();
     initDataBinding();
     initInteractivity();
+    initSidebarToggle();
   });
 
   function getBasePath() {
@@ -39,10 +40,12 @@
   function activateCurrentRoleNav() {
     const path = window.location.pathname.replace(/\\/g, '/');
 
+    // Hide all role navs by default
+    document.querySelectorAll(".role-nav").forEach(el => el.classList.add("hidden"));
+
     let role = "citizen";
     if (path.includes("/government/")) {
       role = "government";
-      document.body.classList.add("has-gov-sidebar");
     } else if (path.includes("/rescue/")) {
       role = "rescue";
     } else if (path.includes("login.html")) {
@@ -61,6 +64,25 @@
       const href = link.getAttribute("href");
       if (href && (href === filename || href.endsWith('/' + filename))) {
         link.classList.add("active");
+      }
+    });
+  }
+
+  function initSidebarToggle() {
+    // Add event listener for sidebar toggle buttons [☰]
+    document.body.addEventListener("click", function (e) {
+      const toggleBtn = e.target.closest("[data-action='toggle-sidebar']");
+      if (toggleBtn) {
+        e.preventDefault();
+        const sidebar = document.querySelector("aside.gov-sidebar") || document.querySelector("aside");
+        const container = document.querySelector(".gov-main-container") || document.querySelector(".pl-64");
+
+        if (sidebar) {
+          sidebar.classList.toggle("collapsed");
+        }
+        if (container) {
+          container.classList.toggle("sidebar-collapsed");
+        }
       }
     });
   }

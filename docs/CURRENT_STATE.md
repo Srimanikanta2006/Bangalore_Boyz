@@ -13,6 +13,14 @@ This file acts as the live status dashboard for the project. Every team member a
 
 ## Completed
 - [x] Repository initialization on GitHub (`main` branch)
+- [x] Reorganized `frontend/` into 3 structured role directories (`citizen/`, `government/`, `rescue/`)
+- [x] Built shared vanilla JS shell (`shared/nav.html`, `shared/app.js`, `shared/app.css`) with nav partial injection
+- [x] Built pluggable mock data layer (`frontend/data/*.json`) with `shared/config.js` (`DATA_MODE = "mock" | "live"`)
+- [x] Wired end-to-end judge demo click paths across all 24 screens
+- [x] Fixed sidebar overlap, desktop header alignment, and role navigation isolation
+- [x] Restored `response_center.html` to pristine layout and removed duplicate header buttons
+- [x] Built interactive sliding drawer Command Center sidebar with header toggle `[ ☰ ]`
+- [x] Created `NAVIGATION_MAP.md` site graph documentation
 - [x] Global AI coding agent instructions created (`AGENTS.md`)
 - [x] Standard project documentation hierarchy created (`docs/`)
 - [x] Environment variable template created (`.env.example`)
