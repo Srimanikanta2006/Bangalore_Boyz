@@ -48,9 +48,10 @@ This document describes the high-level architecture of the `Bangalore_Boyz` proj
 * **Access Model**: The API is the only database client used by the frontend. The named Docker volume persists local development data.
 
 ### 4. AI Agents & Orchestration Layer
-* **Purpose**: Autonomous task execution, data analysis, and domain-specific AI processing.
-* **Architecture**: Structured orchestrator managing single/multi-agent workflows with validated JSON data exchange.
-* **Tech Stack**: [STATUS: UNDECIDED - To be updated based on problem statement]
+* **Purpose**: Grounded decision-support for incident response — interpret verified engine facts and propose an operator-approved response plan (never autonomous execution).
+* **Architecture**: Explicit orchestrator (`orchestration/`) coordinating specialist agents (`agents/`: Risk Analyst, Cascade, Dispatch Planner, Comms) in dependency order, followed by a deterministic Validation/integration stage that emits a single **PROPOSED** `ResponsePlan`. All exchange is validated JSON. See `docs/ORCHESTRATION.md`.
+* **Tech Stack**: TypeScript/Node. LLM via a pluggable `LlmProvider` port (Gemini adapter); every agent has a deterministic fallback, so the pipeline runs with no API key and AI is never a single point of failure.
+* **Grounding**: controlled action catalog, no invented assets/actions, risk never recomputed, confidence capped at engine confidence, per-run state persisted (`orchestration/.runs/`).
 
 ---
 

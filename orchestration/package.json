@@ -1,0 +1,22 @@
+{
+  "name": "@climateshield/orchestration",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "ClimateShield incident-response orchestrator coordinating the specialist AI agents into a PROPOSED, operator-approved response plan.",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test tests/orchestrator.test.ts",
+    "demo": "tsx src/demo.ts"
+  },
+  "dependencies": {
+    "@climateshield/agents": "file:../agents"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "tsx": "^4.16.0",
+    "typescript": "^5.5.3"
+  }
+}
