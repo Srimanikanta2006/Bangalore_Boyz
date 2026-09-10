@@ -1,6 +1,6 @@
-﻿import type { AffectedAsset, ExplainRequest, RiskLevel } from "../ai/schemas.ts";
-import { assetById } from "./pilotGraph.ts";
-import type { InfrastructureGraph, SafeRoute, SimulationSnapshot } from "./types.ts";
+import type { AffectedAsset, ExplainRequest, RiskLevel } from "../ai/schemas";
+import { assetById } from "./pilotGraph";
+import type { InfrastructureGraph, SafeRoute, SimulationSnapshot } from "./types";
 
 function worstLevel(levels: RiskLevel[]): RiskLevel {
   const rank: Record<RiskLevel, number> = { low: 0, medium: 1, high: 2, critical: 3 };

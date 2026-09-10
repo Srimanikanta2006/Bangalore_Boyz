@@ -1,7 +1,7 @@
-﻿import { propagateCascades } from "./cascadeEngine.ts";
-import { assetById, PILOT_GRAPH } from "./pilotGraph.ts";
-import { isCascadeOrigin, riskLevelFromScore, scoreGraph } from "./riskEngine.ts";
-import type { Hazard, HazardSource, InfrastructureGraph, RiskScore, SimulationSnapshot } from "./types.ts";
+import { propagateCascades } from "./cascadeEngine";
+import { assetById, PILOT_GRAPH } from "./pilotGraph";
+import { isCascadeOrigin, riskLevelFromScore, scoreGraph } from "./riskEngine";
+import type { Hazard, HazardSource, InfrastructureGraph, RiskScore, SimulationSnapshot } from "./types";
 
 let incidentCounter = 0;
 

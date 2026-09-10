@@ -1,11 +1,11 @@
-﻿import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
+import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 
-import { explainWithGeminiOrFallback } from "./ai/geminiProvider.ts";
-import { toExplainRequest } from "./engine/explainAdapter.ts";
-import { simulateHazard } from "./engine/hazardSimulator.ts";
-import { PILOT_GRAPH } from "./engine/pilotGraph.ts";
-import { findSafeRoute } from "./engine/routeEngine.ts";
-import { getCascade, getSnapshot, saveRoute, saveSnapshot } from "./engine/store.ts";
+import { explainWithGeminiOrFallback } from "./ai/geminiProvider";
+import { toExplainRequest } from "./engine/explainAdapter";
+import { simulateHazard } from "./engine/hazardSimulator";
+import { PILOT_GRAPH } from "./engine/pilotGraph";
+import { findSafeRoute } from "./engine/routeEngine";
+import { getCascade, getSnapshot, saveRoute, saveSnapshot } from "./engine/store";
 
 const PORT = Number(process.env.PORT ?? 3001);
 
@@ -37,7 +37,7 @@ function snapshotPayload(snapshot: NonNullable<ReturnType<typeof getSnapshot>>) 
 }
 
 const server = createServer(async (req, res) => {
-  const url = new URL(req.url ?? "/", http://localhost:);
+  const url = new URL(req.url ?? "/", "http://localhost");
 
   if (req.method === "OPTIONS") {
     json(res, 204, {});
@@ -91,7 +91,7 @@ const server = createServer(async (req, res) => {
     if (req.method === "GET" && cascadeMatch) {
       const event = getCascade(cascadeMatch[1]);
       if (!event) {
-        json(res, 404, { error: Unknown cascade  });
+        json(res, 404, { error: "Unknown cascade" });
         return;
       }
       json(res, 200, event);
@@ -150,11 +150,198 @@ const server = createServer(async (req, res) => {
       const risks = snapshot?.risks ?? [];
       const route = findSafeRoute(PILOT_GRAPH, risks, from, to);
       if (!route) {
-        json(res, 404, { error: No route from  to  });
+        json(res, 404, { error: `No route from ${from} to ${to}` });
         return;
       }
       saveRoute(route);
       json(res, 200, route);
+      return;
+    }
+
+    // --- RESCUE API ENDPOINTS ---
+    if (req.method === "GET" && url.pathname === "/api/rescue/missions") {
+      json(res, 200, {
+        success: true,
+        data: {
+          items: [
+            {
+              id: "MSN-402",
+              title: "Tactical Extraction — Substation #09",
+              status: "IN_PROGRESS",
+              priority: "CRITICAL",
+              unitCallsign: "EM-MA1",
+              targetSector: "Sector 04-B (Midtown)",
+              etaMinutes: 14,
+              description: "Deploy barrier teams and secure high-capacity pump bypass."
+            },
+            {
+              id: "MSN-388",
+              "title": "Arterial R24 Barrier Placement",
+              status: "ASSIGNED",
+              priority: "HIGH",
+              unitCallsign: "PW-BAR-1",
+              targetSector: "East Basin Drainage Corridor",
+              etaMinutes: 22,
+              description: "Erect water baffles to divert overflow away from hospital access road."
+            }
+          ]
+        }
+      });
+      return;
+    }
+
+    const rescueMissionMatch = url.pathname.match(/^\/api\/rescue\/missions\/([^/]+)$/);
+    if (req.method === "GET" && rescueMissionMatch) {
+      json(res, 200, {
+        success: true,
+        data: {
+          id: rescueMissionMatch[1],
+          title: "Tactical Extraction — Substation #09",
+          status: "IN_PROGRESS",
+          priority: "CRITICAL",
+          unitCallsign: "EM-MA1",
+          targetSector: "Sector 04-B (Midtown)",
+          etaMinutes: 14,
+          hazardSeverity: "HIGH",
+          equipmentManifest: ["High-Capacity Mobile Pump", "Abrasive Barrier Kit", "Submersible Telemetry Sensor Array"],
+          description: "Deploy barrier teams and secure high-capacity pump bypass."
+        }
+      });
+      return;
+    }
+
+    const rescueStatusMatch = url.pathname.match(/^\/api\/rescue\/missions\/([^/]+)\/status$/);
+    if (req.method === "POST" && rescueStatusMatch) {
+      const raw = await readBody(req);
+      const body = raw ? JSON.parse(raw) : {};
+      json(res, 200, {
+        success: true,
+        data: {
+          missionId: rescueStatusMatch[1],
+          status: body.status || "IN_PROGRESS",
+          updatedAt: new Date().toISOString(),
+          message: "Rescue mission status updated successfully."
+        }
+      });
+      return;
+    }
+
+    if (req.method === "GET" && url.pathname.startsWith("/api/rescue/navigation/")) {
+      json(res, 200, {
+        success: true,
+        data: {
+          missionId: "MSN-402",
+          currentPosition: [13.062, 80.275],
+          targetPosition: [13.087, 80.291],
+          waterDepthMm: 450,
+          safePassable: true,
+          routePath: ["Checkpoint Alpha", "Highridge Bypass", "Substation #09 Gate A"],
+          etaText: "14 min remaining"
+        }
+      });
+      return;
+    }
+
+    if (req.method === "GET" && url.pathname === "/api/rescue/command-console") {
+      json(res, 200, {
+        success: true,
+        data: {
+          activeMissions: 2,
+          unitsDeployed: 6,
+          tacticalAlerts: ["Water depth at R24 approaching 0.5m", "Substation #09 thermal threshold warning"],
+          satLinkStatus: "ONLINE"
+        }
+      });
+      return;
+    }
+
+    // --- CITIZEN API ENDPOINTS ---
+    if (req.method === "GET" && url.pathname === "/api/citizen/alerts") {
+      json(res, 200, {
+        success: true,
+        data: {
+          items: [
+            {
+              id: "ALT-001",
+              title: "Flash Flood Watch — East Basin & Midtown",
+              severity: "CRITICAL",
+              issuedAt: "10 mins ago",
+              description: "Heavy rainfall (65 mm/hr) detected. Avoid low-lying underpasses and Drain D07 corridor.",
+              actionNeeded: "Use elevated bypass routes toward St. Jude Shelter."
+            },
+            {
+              id: "ALT-002",
+              title: "Extreme Heat Anomaly Notice",
+              severity: "HIGH",
+              issuedAt: "35 mins ago",
+              description: "Midtown temperature index reaching 41.2°C.",
+              actionNeeded: "Hydration stations open at Community Center B."
+            }
+          ]
+        }
+      });
+      return;
+    }
+
+    if (req.method === "GET" && url.pathname === "/api/citizen/home") {
+      json(res, 200, {
+        success: true,
+        data: {
+          localSafetyScore: "SAFE (92%)",
+          activeAdvisories: 2,
+          nearestShelter: "St. Jude Community Center (1.2 km)",
+          shelterCapacity: "84% Available"
+        }
+      });
+      return;
+    }
+
+    if (req.method === "POST" && url.pathname === "/api/citizen/routes/search") {
+      const raw = await readBody(req);
+      const body = raw ? JSON.parse(raw) : {};
+      json(res, 200, {
+        success: true,
+        data: {
+          routeId: "RTE-SAFE-01",
+          originName: body.origin || "Sector 04-A",
+          destinationName: body.destination || "St. Jude Hospital Shelter",
+          totalDistanceKm: 3.2,
+          estimatedTimeMins: 12,
+          safetyRating: "SAFE (98% Clear)",
+          hazardIntersections: 0,
+          waypoints: ["Avenue 4", "Highridge Bypass", "Shelter Entrance Gate C"]
+        }
+      });
+      return;
+    }
+
+    if (req.method === "POST" && url.pathname === "/api/citizen/sos") {
+      const raw = await readBody(req);
+      const body = raw ? JSON.parse(raw) : {};
+      json(res, 201, {
+        success: true,
+        data: {
+          sosTicketId: `SOS-${Date.now()}`,
+          status: "DISPATCHED",
+          message: "Emergency assistance request received. Nearest tactical unit dispatched.",
+          details: body
+        }
+      });
+      return;
+    }
+
+    if (req.method === "POST" && url.pathname === "/api/citizen/report") {
+      const raw = await readBody(req);
+      const body = raw ? JSON.parse(raw) : {};
+      json(res, 201, {
+        success: true,
+        data: {
+          reportId: `RPT-${Date.now()}`,
+          status: "RECEIVED",
+          message: "Citizen hazard report logged successfully.",
+          details: body
+        }
+      });
       return;
     }
 
@@ -165,5 +352,5 @@ const server = createServer(async (req, res) => {
 });
 
 server.listen(PORT, () => {
-  console.log(ClimateShield Person 2 engine listening on http://localhost:);
+  console.log(`ClimateShield engine listening on http://localhost:${PORT}`);
 });

@@ -1,13 +1,17 @@
 /**
- * ClimateShield Application Configuration
+ * ClimateShield Centralized API Configuration
  *
- * P1/P2/P4 Integration Contract Endpoint Specification.
- * Switch DATA_MODE to "live" when real P1/P2/P4 APIs are online.
- * Zero UI code changes required — only backend URL mappings change!
+ * Centralized API base URL and token storage settings.
+ * To change backend IP or port, update API_BASE_URL below!
  */
 window.CONFIG = {
-  DATA_MODE: "mock", // "mock" | "live"
-  API_BASE_URL: "https://api.climateshield.org/v1",
+  DATA_MODE: "live", // "live" | "mock"
+  API_BASE_URL: "http://172.19.39.31:4000/api",
+  DEMO_CREDENTIALS: {
+    email: "government@climateshield.demo",
+    password: "DemoGov@2024"
+  },
+  TOKEN_STORAGE_KEY: "climateshield_gov_token",
   EXPLAIN_API_URL: "/api/explain",
   TASK_API_URL: "/api/tasks",
   HOTSPOTS_API_URL: "/api/hotspots",
