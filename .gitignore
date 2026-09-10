@@ -26,12 +26,16 @@ build/
 out/
 .next/
 .nuxt/
+.vite/
 *.sqlite
 *.db
 
 # Logs
 logs/
 *.log
+
+# Server local mock state
+server/data/*.json
 
 # Editor & OS settings
 .vscode/*

@@ -1,0 +1,117 @@
+{
+  "info": {
+    "name": "ClimateShield Backend — Complete API",
+    "description": "Import this collection into Postman. Run Login first; it saves the JWT to the collection variable token. Seed-data IDs/codes are preconfigured.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:4000/api" },
+    { "key": "token", "value": "" },
+    { "key": "incidentId", "value": "INC-204" },
+    { "key": "taskId", "value": "TASK-001" },
+    { "key": "unitId", "value": "PW-DRAIN-A1" },
+    { "key": "assetId", "value": "DRAIN-07" },
+    { "key": "zoneId", "value": "EB" },
+    { "key": "departmentId", "value": "PW" },
+    { "key": "hazardId", "value": "hz_ff_eb" },
+    { "key": "simulationId", "value": "" },
+    { "key": "hotspotId", "value": "" }
+  ],
+  "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+  "item": [
+    {
+      "name": "00 - Public and auth",
+      "item": [
+        { "name": "Health", "request": { "auth": { "type": "noauth" }, "method": "GET", "url": "{{baseUrl}}/health" } },
+        { "name": "Login (saves token)", "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["const body = pm.response.json();", "pm.collectionVariables.set('token', body.data.token);"] } }], "request": { "auth": { "type": "noauth" }, "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"email\": \"government@climateshield.demo\",\n  \"password\": \"DemoGov@2024\"\n}" }, "url": "{{baseUrl}}/auth/login" } },
+        { "name": "Current user", "request": { "method": "GET", "url": "{{baseUrl}}/auth/me" } }
+      ]
+    },
+    {
+      "name": "01 - Dashboard and response center",
+      "item": [
+        { "name": "Government overview", "request": { "method": "GET", "url": "{{baseUrl}}/government/overview" } },
+        { "name": "Response center", "request": { "method": "GET", "url": "{{baseUrl}}/response-center" } },
+        { "name": "Create proposed zone response plan", "request": { "method": "POST", "url": "{{baseUrl}}/zones/{{zoneId}}/response-plan" } }
+      ]
+    },
+    {
+      "name": "02 - Incidents",
+      "item": [
+        { "name": "List incidents", "request": { "method": "GET", "url": "{{baseUrl}}/incidents?page=1&limit=20&severity=CRITICAL" } },
+        { "name": "Get incident", "request": { "method": "GET", "url": "{{baseUrl}}/incidents/{{incidentId}}" } },
+        { "name": "Get incident cascade", "request": { "method": "GET", "url": "{{baseUrl}}/incidents/{{incidentId}}/cascade" } },
+        { "name": "Create incident", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"title\": \"Postman drainage obstruction test\",\n  \"description\": \"Created while testing the API.\",\n  \"type\": \"DRAINAGE_FAILURE\",\n  \"severity\": \"HIGH\",\n  \"zoneId\": \"EB\",\n  \"hazardId\": \"hz_ff_eb\",\n  \"primaryAssetId\": \"DRAIN-07\"\n}" }, "url": "{{baseUrl}}/incidents" } },
+        { "name": "Update incident", "request": { "method": "PATCH", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"title\": \"Updated incident title\",\n  \"severity\": \"HIGH\"\n}" }, "url": "{{baseUrl}}/incidents/{{incidentId}}" } },
+        { "name": "Update incident status", "request": { "method": "PATCH", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"status\": \"ACKNOWLEDGED\",\n  \"note\": \"Postman acknowledgement\"\n}" }, "url": "{{baseUrl}}/incidents/{{incidentId}}/status" } },
+        { "name": "Dispatch unit to incident", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"unitId\": \"PW-DRAIN-A1\"\n}" }, "url": "{{baseUrl}}/incidents/{{incidentId}}/dispatch" } }
+      ]
+    },
+    {
+      "name": "03 - Tasks",
+      "item": [
+        { "name": "List tasks", "request": { "method": "GET", "url": "{{baseUrl}}/tasks?page=1&limit=20" } },
+        { "name": "Get task", "request": { "method": "GET", "url": "{{baseUrl}}/tasks/{{taskId}}" } },
+        { "name": "Task history", "request": { "method": "GET", "url": "{{baseUrl}}/tasks/{{taskId}}/history" } },
+        { "name": "Create manual task", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"title\": \"Postman asset inspection\",\n  \"description\": \"Inspect drain and report condition.\",\n  \"assetId\": \"DRAIN-07\",\n  \"assignedDepartmentId\": \"PW\",\n  \"priority\": \"HIGH\"\n}" }, "url": "{{baseUrl}}/tasks" } },
+        { "name": "Update task status", "request": { "method": "PATCH", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"status\": \"ACKNOWLEDGED\",\n  \"note\": \"Postman test\"\n}" }, "url": "{{baseUrl}}/tasks/{{taskId}}/status" } },
+        { "name": "Assign unit to task", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"unitId\": \"PW-PUMP-B2\"\n}" }, "url": "{{baseUrl}}/tasks/{{taskId}}/assign" } },
+        { "name": "Verify completed task", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"note\": \"Verified from Postman\"\n}" }, "url": "{{baseUrl}}/tasks/{{taskId}}/verify" } }
+      ]
+    },
+    {
+      "name": "04 - Units and departments",
+      "item": [
+        { "name": "List units", "request": { "method": "GET", "url": "{{baseUrl}}/units?page=1&limit=20&status=AVAILABLE" } },
+        { "name": "Get unit", "request": { "method": "GET", "url": "{{baseUrl}}/units/{{unitId}}" } },
+        { "name": "Update unit status", "request": { "method": "PATCH", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"status\": \"ASSIGNED\",\n  \"note\": \"Postman state-machine test\"\n}" }, "url": "{{baseUrl}}/units/{{unitId}}/status" } },
+        { "name": "List departments", "request": { "method": "GET", "url": "{{baseUrl}}/departments?page=1&limit=20&type=PUBLIC_WORKS" } },
+        { "name": "Get department", "request": { "method": "GET", "url": "{{baseUrl}}/departments/{{departmentId}}" } },
+        { "name": "Department units", "request": { "method": "GET", "url": "{{baseUrl}}/departments/{{departmentId}}/units?page=1&limit=20" } },
+        { "name": "Department readiness", "request": { "method": "GET", "url": "{{baseUrl}}/departments/{{departmentId}}/readiness" } }
+      ]
+    },
+    {
+      "name": "05 - Infrastructure",
+      "item": [
+        { "name": "List infrastructure", "request": { "method": "GET", "url": "{{baseUrl}}/infrastructure?page=1&limit=20&zoneId=EB" } },
+        { "name": "Get infrastructure asset", "request": { "method": "GET", "url": "{{baseUrl}}/infrastructure/{{assetId}}" } },
+        { "name": "Telemetry", "request": { "method": "GET", "url": "{{baseUrl}}/infrastructure/{{assetId}}/telemetry?metric=water_depth&limit=50" } },
+        { "name": "Risk assessment", "request": { "method": "GET", "url": "{{baseUrl}}/infrastructure/{{assetId}}/risk" } },
+        { "name": "Dependencies", "request": { "method": "GET", "url": "{{baseUrl}}/infrastructure/{{assetId}}/dependencies" } },
+        { "name": "Facility logs", "request": { "method": "GET", "url": "{{baseUrl}}/infrastructure/{{assetId}}/logs" } },
+        { "name": "Assign rapid team", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"unitId\": \"PW-PUMP-B2\",\n  \"note\": \"Postman test dispatch\"\n}" }, "url": "{{baseUrl}}/infrastructure/{{assetId}}/assign-team" } },
+        { "name": "Request maintenance", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"description\": \"Postman inspection and maintenance request\",\n  \"priority\": \"HIGH\"\n}" }, "url": "{{baseUrl}}/infrastructure/{{assetId}}/maintenance" } },
+        { "name": "Reroute traffic", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"reason\": \"Postman route-advisory test\"\n}" }, "url": "{{baseUrl}}/infrastructure/BRG-02/reroute" } }
+      ]
+    },
+    {
+      "name": "06 - Zones, hazards, and map",
+      "item": [
+        { "name": "List zones", "request": { "method": "GET", "url": "{{baseUrl}}/zones?page=1&limit=20&riskLevel=CRITICAL" } },
+        { "name": "Get zone", "request": { "method": "GET", "url": "{{baseUrl}}/zones/{{zoneId}}" } },
+        { "name": "Zone cascade", "request": { "method": "GET", "url": "{{baseUrl}}/zones/{{zoneId}}/cascade" } },
+        { "name": "List hazards", "request": { "method": "GET", "url": "{{baseUrl}}/hazards?page=1&limit=20&activeOnly=true" } },
+        { "name": "Get hazard", "request": { "method": "GET", "url": "{{baseUrl}}/hazards/{{hazardId}}" } },
+        { "name": "Create hazard", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"type\": \"FLASH_FLOOD\",\n  \"severity\": \"HIGH\",\n  \"zoneId\": \"EB\",\n  \"rainfallRate\": 55,\n  \"waterDepth\": 0.8,\n  \"source\": \"OPERATOR\"\n}" }, "url": "{{baseUrl}}/hazards" } },
+        { "name": "Map assets (GeoJSON)", "request": { "method": "GET", "url": "{{baseUrl}}/map/assets?zoneId=EB" } },
+        { "name": "Map hazards (GeoJSON)", "request": { "method": "GET", "url": "{{baseUrl}}/map/hazards?severity=CRITICAL" } },
+        { "name": "Map incidents (GeoJSON)", "request": { "method": "GET", "url": "{{baseUrl}}/map/incidents" } },
+        { "name": "Map units (GeoJSON)", "request": { "method": "GET", "url": "{{baseUrl}}/map/units?status=AVAILABLE" } },
+        { "name": "Map overlays (GeoJSON)", "request": { "method": "GET", "url": "{{baseUrl}}/map/overlays" } }
+      ]
+    },
+    {
+      "name": "07 - Simulator, analytics, hotspots, audit",
+      "item": [
+        { "name": "Create simulation", "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["const body = pm.response.json();", "if (body.success) pm.collectionVariables.set('simulationId', body.data.id);"] } }], "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"name\": \"Postman flash flood test\",\n  \"scenarioType\": \"FLASH_FLOOD\",\n  \"rainfallRate\": 65,\n  \"stormDuration\": 4.5,\n  \"drainageThroughput\": 75,\n  \"tidalSurge\": 1.8,\n  \"temperature\": 28.4\n}" }, "url": "{{baseUrl}}/simulations" } },
+        { "name": "List simulations", "request": { "method": "GET", "url": "{{baseUrl}}/simulations?page=1&limit=20&status=COMPLETED" } },
+        { "name": "Get simulation", "request": { "method": "GET", "url": "{{baseUrl}}/simulations/{{simulationId}}" } },
+        { "name": "Analytics overview", "request": { "method": "GET", "url": "{{baseUrl}}/analytics/overview" } },
+        { "name": "List hotspots", "request": { "method": "GET", "url": "{{baseUrl}}/hotspots?page=1&limit=20&minRecurrence=0" } },
+        { "name": "Get hotspot (set hotspotId first)", "request": { "method": "GET", "url": "{{baseUrl}}/hotspots/{{hotspotId}}" } },
+        { "name": "Audit log", "request": { "method": "GET", "url": "{{baseUrl}}/audit?page=1&limit=50" } }
+      ]
+    }
+  ]
+}

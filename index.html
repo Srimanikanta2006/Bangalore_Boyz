@@ -1,10 +1,178 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta http-equiv="refresh" content="0; url=frontend/login.html" />
-  <script>window.location.href = "frontend/login.html";</script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ClimateShield | Resilience Platform Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0B1120;
+      --card: #151F32;
+      --border: #1E293B;
+      --primary: #316BF3;
+      --text: #F8FAFC;
+      --muted: #94A3B8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .portal-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      max-width: 640px;
+      width: 100%;
+      padding: 36px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .shield-icon {
+      width: 48px;
+      height: 48px;
+      background: #1E293B;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #4CD7F6;
+    }
+    h1 { font-size: 24px; font-weight: 800; letter-spacing: -0.02em; }
+    p.sub { color: var(--muted); font-size: 14px; font-family: 'Manrope', sans-serif; margin-top: 2px; }
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 9999px;
+      background: rgba(49, 107, 243, 0.15);
+      color: #93C5FD;
+      margin-bottom: 24px;
+    }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: #22C55E; animation: pulse 2s infinite; }
+    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+    .nav-grid { display: flex; flex-direction: column; gap: 12px; }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #0F172A;
+      border: 1px solid #1E293B;
+      padding: 16px 20px;
+      border-radius: 14px;
+      text-decoration: none;
+      color: var(--text);
+      transition: all 0.2s ease;
+    }
+    .nav-item:hover {
+      border-color: var(--primary);
+      background: #182238;
+      transform: translateY(-2px);
+    }
+    .nav-item.primary {
+      background: linear-gradient(135deg, #1D4ED8, #2563EB);
+      border-color: #3B82F6;
+    }
+    .nav-item.primary:hover {
+      background: linear-gradient(135deg, #2563EB, #3B82F6);
+    }
+    .nav-left { display: flex; align-items: center; gap: 14px; }
+    .nav-title { font-size: 15px; font-weight: 700; }
+    .nav-desc { font-size: 12px; color: var(--muted); font-family: 'Manrope', sans-serif; }
+    .nav-item.primary .nav-desc { color: #DBEAFE; }
+    .footer {
+      margin-top: 24px;
+      text-align: center;
+      font-size: 12px;
+      color: var(--muted);
+      font-family: 'Manrope', sans-serif;
+    }
+  </style>
+  <script>
+    // Auto-redirect to Vite dev server if running, fallback after 1.5s
+    fetch('http://localhost:5173/login', { mode: 'no-cors' })
+      .then(() => {
+        window.location.href = 'http://localhost:5173/login';
+      })
+      .catch(() => {
+        // Dev server not active on standard port, remain on portal
+      });
+  </script>
 </head>
 <body>
-  <p>Redirecting to <a href="frontend/login.html">ClimateShield Login</a>...</p>
+  <div class="portal-card">
+    <div class="header">
+      <div class="shield-icon">
+        <span class="material-symbols-outlined" style="font-size: 28px;">shield_with_heart</span>
+      </div>
+      <div>
+        <h1>ClimateShield Platform</h1>
+        <p class="sub">Urban Climate Risk, Heat & Flood Resilience Suite</p>
+      </div>
+    </div>
+
+    <div class="status-badge">
+      <span class="dot"></span>
+      <span>Unified Team Release (v4.2) • All Systems Ready</span>
+    </div>
+
+    <div class="nav-grid">
+      <a href="http://localhost:5173/login" class="nav-item primary">
+        <div class="nav-left">
+          <span class="material-symbols-outlined">rocket_launch</span>
+          <div>
+            <div class="nav-title">Launch React Interactive Application (Recommended)</div>
+            <div class="nav-desc">Vite Dev Server (Port 5173) • 8 Consolidated Stitch Screens & Operations Console</div>
+          </div>
+        </div>
+        <span class="material-symbols-outlined">arrow_forward</span>
+      </a>
+
+      <a href="http://localhost:5173/console" class="nav-item">
+        <div class="nav-left">
+          <span class="material-symbols-outlined" style="color: #60A5FA;">dashboard</span>
+          <div>
+            <div class="nav-title">EOC Operations Command Center</div>
+            <div class="nav-desc">Interactive GIS risk map, cascade modeling, and asset vulnerability matrix</div>
+          </div>
+        </div>
+        <span class="material-symbols-outlined">open_in_new</span>
+      </a>
+
+      <a href="frontend/login.html" class="nav-item">
+        <div class="nav-left">
+          <span class="material-symbols-outlined" style="color: #34D399;">grid_view</span>
+          <div>
+            <div class="nav-title">Static Wireframe Prototypes</div>
+            <div class="nav-desc">Standalone HTML screens with offline pre-compiled Tailwind styling</div>
+          </div>
+        </div>
+        <span class="material-symbols-outlined">chevron_right</span>
+      </a>
+    </div>
+
+    <div class="footer">
+      Bangalore_Boyz • Swarnandhra College Hackathon 2026 • Problem Statement 5
+    </div>
+  </div>
 </body>
 </html>

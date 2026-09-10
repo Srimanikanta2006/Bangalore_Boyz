@@ -1,0 +1,167 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"><link href="https://fonts.googleapis.com" rel="preconnect"><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"><link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@600;700;800&amp;display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { colors: { "surface-container-highest": "#d3e4fe", "secondary-container": "#316bf3", "on-secondary-container": "#fefcff", "on-primary-fixed-variant": "#3f465c", "primary-fixed": "#dae2fd", "on-secondary": "#ffffff", "on-secondary-fixed-variant": "#003ea8", "on-tertiary-fixed-variant": "#004e5c", "inverse-surface": "#213145", "on-background": "#0b1c30", "on-surface": "#0b1c30", "secondary-fixed-dim": "#b4c5ff", "on-tertiary": "#ffffff", "error": "#ba1a1a", "on-tertiary-fixed": "#001f26", "surface-bright": "#f8f9ff", "tertiary": "#000000", "surface-tint": "#565e74", "outline-variant": "#c6c6cd", "surface-container": "#e5eeff", "surface-container-lowest": "#ffffff", "error-container": "#ffdad6", "surface-container-low": "#eff4ff", "outline": "#76777d", "on-error-container": "#93000a", "surface": "#f8f9ff", "on-primary-fixed": "#131b2e", "inverse-on-surface": "#eaf1ff", "primary-container": "#131b2e", "on-surface-variant": "#45464d", "inverse-primary": "#bec6e0", "surface-container-high": "#dce9ff", "tertiary-fixed": "#acedff", "secondary-fixed": "#dbe1ff", "on-secondary-fixed": "#00174b", "tertiary-fixed-dim": "#4cd7f6", "primary-fixed-dim": "#bec6e0", "secondary": "#0051d5", "surface-dim": "#cbdbf5", "on-primary-container": "#7c839b", "surface-variant": "#d3e4fe", "background": "#f8f9ff", "on-error": "#ffffff", "on-primary": "#ffffff", "tertiary-container": "#001f26", "primary": "#000000", "on-tertiary-container": "#0090a9" }, borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, spacing: { "space-xs": "0.5rem", "space-md": "1rem", "panel-width-sm": "20rem", "edge-margin-desktop": "1.5rem", "space-2xs": "0.25rem", "space-2xl": "3rem", "panel-width-lg": "32rem", "panel-width-md": "26rem", "edge-margin-mobile": "1rem", "space-xl": "2rem", "space-sm": "0.75rem", "space-lg": "1.5rem" }, fontFamily: { "body-md": ["Manrope"], "headline-lg-mobile": ["Plus Jakarta Sans"], "headline-md": ["Plus Jakarta Sans"], "body-lg": ["Manrope"], "headline-xl": ["Plus Jakarta Sans"], "data-metric-lg": ["Manrope"], "headline-xl-mobile": ["Plus Jakarta Sans"], "body-sm": ["Manrope"], "label-md": ["Manrope"], "title-lg": ["Plus Jakarta Sans"], "code-sm": ["Manrope"], "label-sm": ["Manrope"], "data-metric-md": ["Manrope"], "headline-lg": ["Plus Jakarta Sans"] }, fontSize: { "body-md": ["14px", { lineHeight: "20px", letterSpacing: "0em", fontWeight: "400" }], "headline-lg-mobile": ["22px", { lineHeight: "30px", letterSpacing: "-0.015em", fontWeight: "700" }], "headline-md": ["20px", { lineHeight: "28px", letterSpacing: "-0.015em", fontWeight: "600" }], "body-lg": ["15px", { lineHeight: "24px", letterSpacing: "-0.005em", fontWeight: "400" }], "headline-xl": ["36px", { lineHeight: "44px", letterSpacing: "-0.025em", fontWeight: "700" }], "data-metric-lg": ["32px", { lineHeight: "36px", letterSpacing: "-0.03em", fontWeight: "700" }], "headline-xl-mobile": ["28px", { lineHeight: "36px", letterSpacing: "-0.02em", fontWeight: "700" }], "body-sm": ["13px", { lineHeight: "18px", letterSpacing: "0em", fontWeight: "400" }], "label-md": ["12px", { lineHeight: "16px", letterSpacing: "0.02em", fontWeight: "600" }], "title-lg": ["16px", { lineHeight: "24px", letterSpacing: "-0.01em", fontWeight: "600" }], "code-sm": ["12px", { lineHeight: "16px", letterSpacing: "0.01em", fontWeight: "500" }], "label-sm": ["11px", { lineHeight: "14px", letterSpacing: "0.04em", fontWeight: "600" }], "data-metric-md": ["20px", { lineHeight: "24px", letterSpacing: "-0.02em", fontWeight: "700" }], "headline-lg": ["28px", { lineHeight: "36px", letterSpacing: "-0.02em", fontWeight: "700" }] } } } };</script><style>@layer base{html,body{width:100vw;margin:0;padding:0;min-height:100%;}body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}}::-webkit-scrollbar{display:none;}</style><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head><body class="bg-surface text-on-surface font-body-md text-body-md min-h-screen flex flex-col relative"><header class="fixed top-0 w-full z-50 pt-safe px-edge-margin-mobile"><div class="h-16 flex items-center justify-between mt-space-2xs px-space-sm rounded-xl bg-surface-container-lowest/90 backdrop-blur-xl shadow-[0_4px_20px_-2px_rgba(15,23,42,0.08)]"><div class="flex items-center gap-space-xs min-w-0"><button aria-label="Go back" class="w-11 h-11 rounded-lg flex items-center justify-center text-on-surface hover:bg-surface-container transition-colors shrink-0" onclick="history.back()"><span class="material-symbols-outlined text-[22px]">arrow_back</span></button><div class="flex flex-col min-w-0"><span class="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-bold truncate">ClimateShield Rescue</span><h1 class="font-title-lg text-title-lg text-on-surface font-bold truncate tracking-tight">Nav Active</h1></div></div><div class="flex items-center gap-space-xs shrink-0"><img alt="Profile" class="w-8 h-8 rounded-full object-cover shadow-[0_1px_8px_rgba(0,0,0,0.04)]" src="https://lh3.googleusercontent.com/aida/AEtjO1WZa1gNvntWWeiT4QhM-l_fIhJeTNPgwhOocSm5zkFiyeUn3CdWKg2P6QBAp2739f4ineyLsZACoh0wcEewdNPLn7dJp1NR4H3lnvVimUYZHBtoiKTEcHeUelauAMp_CGDEiOGu2-Yqz4_Vqk5IejETJ6u1R9tsOCq5DwbAv411fFrUovtU623EzW2rGPgJX0iZQ2U-lv-rR-wRns1wPkTfcV5BBGcpGIRxWJQowEeXYjkRRS5BZt3IWUg"></div></div></header><main class="flex-1 flex flex-col relative w-full pt-16 bg-surface pb-safe"><div class="flex flex-col w-full relative">
+<!-- Map Canvas Simulation Area -->
+<div class="relative w-full h-[580px] bg-surface-container overflow-hidden">
+<!-- Static GIS Background Map Integration -->
+<div class="absolute inset-0 w-full h-full bg-cover bg-center" data-location="Skyline Parkway, Oakland Hills, CA" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAk4u3Nb8pno6o6xt0eRtwq4L5Hf3wTZ6tG-v7CUasxEDLOFVfobnQ604Zhqw0HczAN5Oeug9uug8eUrRmHWdk0mDIWPrtEFxfBTq7AYZQaygdxrPOHSpub1GURZ6AlNWipIr5buNJDz-LlCyvf8-frm-DG-slUAcykY8N4QK03IbXN7NzqiljCLYQg7Uc44X9gtN6tdAUrVFbuU0ZoRmX9r6VfXfWy8rWunG6iPQtVlFyrew8qn2dg')"></div>
+<!-- Active Route Vector Overlay with Pulsing Directional Chevrons -->
+<svg class="absolute inset-0 w-full h-full pointer-events-none" fill="none" preserveAspectRatio="none" viewBox="0 0 400 580">
+<!-- Original Hazard Path (Strikethrough / Subdued Alert) -->
+<path d="M 200 470 L 200 310 L 280 230" opacity="0.65" stroke="#DC2626" stroke-dasharray="6 6" stroke-linecap="round" stroke-width="4"></path>
+<!-- Safe Rerouted Active Path -->
+<path class="drop-shadow-md" d="M 200 470 L 200 320 L 150 250 L 150 140 L 220 80" stroke="#0051d5" stroke-linecap="round" stroke-linejoin="round" stroke-width="8"></path>
+<path d="M 200 470 L 200 320 L 150 250 L 150 140 L 220 80" opacity="0.85" stroke="#fefcff" stroke-dasharray="8 12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+<animate attributeName="stroke-dashoffset" dur="1.2s" repeatCount="indefinite" values="40;0"></animate>
+</path>
+<!-- Rescue Vehicle Pulse Origin -->
+<circle cx="200" cy="460" fill="#316bf3" fill-opacity="0.25" r="18">
+<animate attributeName="r" dur="2s" repeatCount="indefinite" values="12;26;12"></animate>
+<animate attributeName="fill-opacity" dur="2s" repeatCount="indefinite" values="0.4;0.05;0.4"></animate>
+</circle>
+<circle cx="200" cy="460" fill="#0051d5" r="8" stroke="#ffffff" stroke-width="2"></circle>
+<!-- Hazard Pin Marker on discarded route -->
+<g transform="translate(268, 218)">
+<circle cx="12" cy="12" fill="#ba1a1a" fill-opacity="0.2" r="12"></circle>
+<circle cx="12" cy="12" fill="#ba1a1a" r="7"></circle>
+</g>
+</svg>
+<!-- Top Left Elevation / Telemetry Pill Badge -->
+<div class="absolute top-space-xs left-edge-margin-mobile z-20">
+<div class="inline-flex items-center gap-space-2xs px-space-xs py-1 rounded-full bg-surface-container-lowest/95 shadow-md backdrop-blur-md">
+<span class="w-2 h-2 rounded-full bg-[#16A34A] animate-ping"></span>
+<span class="w-2 h-2 rounded-full bg-[#16A34A] -ml-space-2xs"></span>
+<span class="font-label-sm text-label-sm text-[#15803D] uppercase tracking-wide">Low Risk Corridor</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant font-medium">Safe MSL +18m</span>
+</div>
+</div>
+<!-- Top Right Compass and Layer Action Control -->
+<div class="absolute top-space-xs right-edge-margin-mobile z-20 flex flex-col gap-space-2xs">
+<button aria-label="Recenter map" class="w-10 h-10 rounded-lg bg-surface-container-lowest shadow-md flex items-center justify-center text-on-surface hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined text-[20px] text-secondary">explore</span>
+</button>
+<button aria-label="Toggle Elevation Mesh" class="w-10 h-10 rounded-lg bg-surface-container-lowest shadow-md flex items-center justify-center text-on-surface hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined text-[20px]">layers</span>
+</button>
+</div>
+<!-- Floating HUD Stack (Maneuver + Dynamic Reroute Alert) -->
+<div class="absolute top-12 left-edge-margin-mobile right-edge-margin-mobile z-30 flex flex-col gap-space-xs">
+<!-- Primary Next Maneuver Panel -->
+<div class="w-full bg-primary-container text-on-primary rounded-xl p-space-md shadow-xl flex items-start justify-between">
+<div class="flex items-start gap-space-sm min-w-0">
+<div class="w-12 h-12 rounded-lg bg-secondary flex items-center justify-center shrink-0 text-on-secondary shadow-sm">
+<span class="material-symbols-outlined text-[30px]">turn_right</span>
+</div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-space-2xs text-secondary-fixed">
+<span class="font-label-sm text-label-sm uppercase tracking-wider font-semibold">In 450 meters</span>
+<span class="text-on-primary-container">•</span>
+<span class="font-label-sm text-label-sm">Lane 2 or 3</span>
+</div>
+<h2 class="font-headline-md text-headline-md text-on-primary truncate tracking-tight">Turn right on Skyline Pkwy</h2>
+<!-- Micro Lane Guidance Representation -->
+<div class="flex items-center gap-1.5 mt-space-2xs">
+<span class="material-symbols-outlined text-[16px] text-on-primary-container opacity-40">straight</span>
+<span class="material-symbols-outlined text-[16px] text-on-primary-container opacity-40">straight</span>
+<span class="material-symbols-outlined text-[18px] text-tertiary-fixed font-bold">turn_right</span>
+<span class="material-symbols-outlined text-[18px] text-tertiary-fixed font-bold">turn_right</span>
+</div>
+</div>
+</div>
+<div class="shrink-0 flex flex-col items-end pl-space-2xs">
+<span class="font-data-metric-md text-data-metric-md text-tertiary-fixed">450<span class="font-label-sm text-label-sm ml-0.5">m</span></span>
+<span class="font-label-sm text-label-sm text-on-primary-container">Next 1.2km</span>
+</div>
+</div>
+<!-- Dynamic Live Rerouting Toast Notification -->
+<div class="w-full bg-surface-container-lowest text-on-surface rounded-xl p-space-sm shadow-xl flex items-start gap-space-xs transition-all duration-300" id="rerouteToast">
+<div class="w-8 h-8 rounded-lg bg-error-container text-on-error-container flex items-center justify-center shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-[18px]">warning</span>
+</div>
+<div class="flex flex-col flex-1 min-w-0">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-error uppercase font-bold tracking-wider">Dynamic Re-Route</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant font-medium">+2 min delta</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface mt-0.5 leading-snug">
+            Flood risk detected 800m ahead on original path. Auto-adjusted via Highline Ridge.
+          </p>
+<div class="flex items-center gap-space-sm mt-space-xs">
+<button class="font-label-sm text-label-sm text-secondary font-bold hover:underline" onclick="document.getElementById('rerouteToast').classList.add('hidden')">
+              Accept Optimal
+            </button>
+<button class="font-label-sm text-label-sm text-on-surface-variant hover:text-on-surface" onclick="document.getElementById('rerouteToast').classList.add('hidden')">
+              Dismiss
+            </button>
+</div>
+</div>
+<button aria-label="Close notification" class="text-on-surface-variant hover:text-on-surface shrink-0 p-1" onclick="document.getElementById('rerouteToast').classList.add('hidden')">
+<span class="material-symbols-outlined text-[18px]">close</span>
+</button>
+</div>
+</div>
+<!-- Quick Emergency Incident Reporting FAB Button -->
+<div class="absolute bottom-space-lg right-edge-margin-mobile z-20">
+<button aria-label="Quick Report Hazard" class="w-14 h-14 rounded-full bg-error text-on-error shadow-xl flex items-center justify-center hover:opacity-95 active:scale-95 transition-all">
+<span class="material-symbols-outlined text-[28px]">report_problem</span>
+</button>
+</div>
+<!-- Live Telemetry / Satellite Fix Float Tag -->
+<div class="absolute bottom-space-lg left-edge-margin-mobile z-20">
+<div class="flex items-center gap-space-2xs px-space-xs py-1 rounded-lg bg-surface-container-lowest/90 backdrop-blur-sm shadow-sm">
+<span class="material-symbols-outlined text-[15px] text-secondary">satellite_alt</span>
+<span class="font-label-sm text-label-sm text-on-surface font-mono">RTK FIX: 0.04m</span>
+</div>
+</div>
+</div>
+<!-- Bottom Docked Navigation Operational Summary Sheet -->
+<div class="w-full bg-surface-container-lowest shadow-[0_-6px_24px_rgba(15,23,42,0.06)] rounded-t-xl px-edge-margin-mobile pt-space-md pb-space-lg flex flex-col gap-space-md z-40">
+<!-- Top Drag Indicator & Overview Stats Line -->
+<div class="w-full flex flex-col items-center">
+<div class="w-10 h-1 rounded-full bg-surface-variant mb-space-xs"></div>
+<!-- Metrics Bento Grid -->
+<div class="w-full grid grid-cols-3 gap-space-xs text-center py-space-2xs">
+<div class="flex flex-col items-center justify-center p-space-xs rounded-lg bg-surface-container-low">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Remaining</span>
+<span class="font-data-metric-lg text-data-metric-lg text-secondary font-bold tracking-tight mt-0.5">18</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant -mt-1 font-semibold">MINUTES</span>
+</div>
+<div class="flex flex-col items-center justify-center p-space-xs rounded-lg bg-surface-container-low">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Distance</span>
+<span class="font-data-metric-lg text-data-metric-lg text-on-surface font-bold tracking-tight mt-0.5">6.2</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant -mt-1 font-semibold">KILOMETERS</span>
+</div>
+<div class="flex flex-col items-center justify-center p-space-xs rounded-lg bg-surface-container-low">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">ETA</span>
+<span class="font-data-metric-lg text-data-metric-lg text-on-surface font-bold tracking-tight mt-0.5">14:42</span>
+<span class="font-label-sm text-label-sm text-[#15803D] -mt-1 font-bold">ON TIME</span>
+</div>
+</div>
+</div>
+<!-- Active Route Details & Alternative Trigger -->
+<div class="flex items-center justify-between px-space-2xs">
+<div class="flex items-center gap-space-xs min-w-0">
+<div class="w-2.5 h-2.5 rounded-full bg-secondary"></div>
+<span class="font-body-sm text-body-sm text-on-surface-variant truncate">To: Station 14 High-Ground Refuge</span>
+</div>
+<button class="font-label-sm text-label-sm text-secondary hover:text-on-secondary-fixed-variant font-bold uppercase tracking-wider shrink-0 transition-colors">
+        View Alternatives
+      </button>
+</div>
+<!-- Single Primary Operational Action Area -->
+<div class="w-full flex items-center gap-space-sm pt-space-2xs">
+<button class="flex-1 h-11 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface font-title-lg text-title-lg font-bold flex items-center justify-center gap-space-2xs transition-colors">
+<span class="material-symbols-outlined text-[20px]">add_alert</span>
+        Report Hazard
+      </button>
+<button class="flex-1 h-11 rounded-lg bg-primary hover:bg-inverse-surface text-on-primary font-title-lg text-title-lg font-bold flex items-center justify-center gap-space-2xs transition-colors shadow-sm">
+<span class="material-symbols-outlined text-[20px]">cancel</span>
+        End Route
+      </button>
+</div>
+</div>
+</div></main></body></html>
