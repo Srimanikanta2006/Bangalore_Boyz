@@ -75,6 +75,12 @@
 
 ---
 
+## 1b. Region correction — Andhra Pradesh (coastal), not a generic city
+
+A teammate-supplied research dossier confirms the actual hackathon context: **Sustainable Smart Cities & Climate Tech, Problem Statement 5, Andhra Pradesh** — a coastal state with cyclone, storm-surge, and monsoon-flood exposure. This **corrects** the earlier "Assam" real-world-grounding idea in §3 below (Assam is real and well-documented, but it's the wrong region for this brief). The dossier itself cites a directly relevant, well-documented precedent: **Cyclone Hudhud (2014, Visakhapatnam, Andhra Pradesh)** — including the detail that Bhuvan's disaster-imagery layer processed 25,000+ citizen-submitted photos during that event, which is a strong, honest parallel to our own citizen-photo-evidence feature. See the revised §3.
+
+Positioning takeaway from the dossier (worth stating explicitly in any pitch/demo narrative): commercial climate-risk platforms (Jupiter Intelligence, Cervest, One Concern, ClimateAi, Tomorrow.io) sell portfolio-level risk *scores* to insurers/enterprises on multi-year contracts — none of them offer the geography → risk → alert → task → response-closure **workflow** a municipal corporation, campus, or industrial park actually needs. That gap is exactly ClimateShield's pitch, and it's also exactly what our Task/Unit dispatch state machine already does that a "risk score API" does not.
+
 ## 2. Free/Real API catalog
 
 | Provider | Endpoint | Key? | Status | Used for |
@@ -95,23 +101,40 @@
 
 Every one of these is genuinely free (no paid tier required to use what we use) and either already wired or has a concrete, scoped integration plan below — nothing is "planned" without a real, checked endpoint.
 
+### 2b. India/Andhra-Pradesh-specific sources (from teammate research dossier) — status honestly assessed
+
+| Source | What it offers | Why not integrated yet (or how) |
+|---|---|---|
+| **CPCB National AQI** (`data.gov.in`, `airquality.cpcb.gov.in`) | Real Indian CAAQMS station AQI (PM2.5/PM10/NO2/SO2/CO/O3/NH3) | Free, real REST API via a `data.gov.in` signup key. **Credible near-term addition** — same integration shape as our existing Open-Meteo AQI client, just an India-specific alternate/supplementary source. Not added yet purely because it needs a registered key (signup friction), not a technical blocker. Documented here as the concrete next step rather than silently skipped. |
+| **OpenAQ** | Aggregated global open AQI incl. Indian stations | Free, no key, clean REST — actually **easier** to integrate than CPCB directly and could be added as a redundancy/cross-check source without any signup friction at all. |
+| **IMD API Portal** | Official Indian current weather/forecast/warnings (source of record) | Portal/PDF-doc-first, IP-whitelisting on some feeds. We already treat Open-Meteo as the live weather source of record (clearly labeled `LIVE_OBSERVED`/provider `Open-Meteo`) — IMD would be additive/citation-only, not a replacement, given the access friction the dossier itself flags. |
+| **CWC Flood Forecast / AFF** | Real river-gauge levels/discharge, 325 stations | Dashboard-first, no clean public REST API (confirmed by the dossier). Our **Open-Meteo Flood API (GloFAS)** addition (§2, Chunk E) is the honest global-fallback equivalent the dossier itself recommends pairing with every government-portal source. |
+| **Bhuvan (ISRO/NRSC)** | India-specific satellite imagery + disaster layers, has a token-based API | Real and India-specific, strongest "built for India" option per the dossier. Flagged as a **credible Phase-3 stretch** (geospatial intelligence differentiator) — not added now due to token-registration time cost within remaining scope, documented honestly rather than faked. |
+| **INCOIS (storm surge / high wave / OSF)** | Cyclone storm-surge & coastal advisories — **the single most relevant source for Andhra Pradesh's coastline** | No public JSON API today (bulletin/portal-based, confirmed by the dossier). Correct architecture per the dossier: treat as a **planned integration via SACHET's CAP feed**, not claim direct access we don't have. |
+| **SACHET (NDMA)** | National Common Alerting Protocol (CAP) early-warning aggregator (IMD+CWC+INCOIS+GSI), public CAP/RSS feed | **This is the single most valuable addition to demonstrate** — not because we'd claim to *be* SACHET, but because if our own generated alerts are structured as valid CAP XML (`alert → info → area`), we can show protocol-level compatibility with the national dissemination chain. Concrete, scoped task: (a) ingest SACHET's public CAP/RSS feed as one more read-only reference signal (same pattern as the ReliefWeb panel, Chunk F), and (b) emit our own government-approved alerts in valid CAP XML shape as an export format. Both are real, buildable, and honestly scoped — added as **Chunk F2**. |
+| **MSG91 / Twilio (SMS/WhatsApp)** | Real alert delivery channel | Currently our `Notification` model is DB-only (no delivery channel) — this is the actual, concrete fix for §7's "alert delivery reliability" gap. MSG91 is the dossier's correctly-reasoned recommendation for India-only cost (~₹0.15-0.20/SMS vs Twilio's USD pricing). Requires a signup key; documented as the specific provider choice for Chunk I rather than a vague "some email provider." |
+| **Razorpay Subscriptions** | Real recurring-billing API (sandbox/test mode available with no real money) | Concrete, buildable monetization proof for Phase 2's "subscriptions/enterprise licensing" ask — a per-district/per-asset monthly plan gated behind Razorpay's **test mode**, demoable without real transactions. Upgrades §0's "low priority, doc-only" monetization note to a scoped, buildable Chunk J item. |
+| **Kafka / RabbitMQ / Redis Streams (BullMQ)** | Async event processing | Confirms the plan's existing Chunk H recommendation (BullMQ+Redis) as the right-sized choice for a Node.js stack within hackathon time, vs. standing up Kafka/RabbitMQ infrastructure. |
+
 ---
 
-## 3. Real-world grounding: 2024 Assam / Northeast India floods
+## 3. Real-world grounding: Cyclone Hudhud (2014, Visakhapatnam, Andhra Pradesh) — corrected region
 
-Researched (Wikipedia, cross-referenced with ReliefWeb/press citations already in that article) — genuine figures, not invented:
+Researched directly (Wikipedia, IMD post-cyclone report, UN damage assessment) — genuine, precisely-sourced figures, replacing the earlier Assam draft which was the wrong region for this brief:
 
-- **109 deaths** in Assam; **1,325 villages across 19 districts** inundated
-- Worst-hit districts: **Karimganj, Darrang, Tamulpur**
-- **400,000 people impacted**, 14,000 initially displaced (300,000+ displaced by the season's end)
-- Rivers above danger level: **Brahmaputra, Kopili, Barak, Kushiyara** (13+ rivers total); **2,000+ island villages** at risk
-- Kaziranga National Park flooded — **200+ wild animals died, including 10 rhinos**
-- **Assam Rifles rescued 500** stranded civilians; Army rescued **70 students/teachers** in Changlang district, Arunachal Pradesh
+- **Made landfall at Visakhapatnam, Andhra Pradesh on 12 October 2014** at peak intensity — 950 mbar central pressure, 185 km/h sustained winds (IMD 3-min) / 215 km/h (JTWC 1-min), Category 4-equivalent
+- **116 total deaths** (India + Nepal combined); **US$11 billion in damage** (UN 2015 assessment) — one of the costliest North Indian Ocean cyclones on record
+- **Andhra Pradesh specifically:** 46 deaths, 43 injuries, **41,269 houses** damaged, **237,854 hectares** of cropland impacted, **2,446,532 livestock/poultry** died, **27,041 electric poles** downed, **6,075 km of roads** affected, **73 villages isolated** for up to 2 days
+- **730,000 people** moved to relief camps across AP+Odisha (111,000 pre-emptively evacuated in AP alone, 370 relief camps readied)
+- **1.4 m storm surge** at Visakhapatnam; **380 mm rainfall in 24h** at Gantyada (highest in the state)
+- Visakhapatnam Airport flooded/roof torn off, closed 11-17 Oct (₹500 crore / $81.93M damage); Indira Gandhi Zoological Park lost 1,000m of walls with animals roaming loose
+- **Real, coordinated multi-agency response** (directly maps to our Task/Unit dispatch model): 44 NDRF teams + 8 rescue teams pre-positioned; a Navy-led joint operation "**Lehar**" deployed 20 Navy rescue teams, 25 Army rescue teams, 17 Coast Guard ships, 7 Air Force aircraft; 12 NDRF teams + 5,000 power-company workers on cleanup
 
-**How to use this honestly (no fabricated Assam geometry):** we have real OSM-imported geography for Chennai only — we do **not** have real village-level polygons for Assam. Rather than inventing fake Assam zone boundaries (which would be exactly the kind of hallucination you told me to avoid), the plan is:
+**How to use this honestly (no fabricated Visakhapatnam geometry — yet):** we currently only have real OSM-imported geography for Chennai. Rather than inventing fake Visakhapatnam zone boundaries, the plan is:
 
-1. **"Historical Disaster Intelligence" panel** (Chunk F) — a read-only reference widget on the Government Analytics/Hotspots screen, powered by the **live ReliefWeb API** (real current disaster reports, filterable by country/hazard type) plus this cited 2024 Assam case study as static, clearly-sourced reference text (`dataQuality: REAL_HISTORICAL_REFERENCE`, with a citation link). This demonstrates real-world awareness and research to judges without pretending our Chennai demo data represents Assam.
-2. **Optional stretch (Chunk J):** if there's time, run a second real OSM import (like `import-chennai.ts`) for a real Northeast India city/district (e.g., Guwahati) to get genuine second-city geography — this is a legitimate, scoped task, not assumed as part of the core plan.
+1. **"Historical Disaster Intelligence" panel** (Chunk F) — a read-only reference widget on the Government Analytics/Hotspots screen, powered by the **live ReliefWeb API** (real current disaster reports, filterable to India/cyclone) plus this cited Cyclone Hudhud case study as static, clearly-sourced reference text (`dataQuality: REAL_HISTORICAL_REFERENCE`, with citation links to Wikipedia/the IMD report). This demonstrates real regional research to judges without pretending our Chennai demo data represents Visakhapatnam.
+2. **Chunk F2 — SACHET CAP feed** (added per the dossier, see §2b): ingest SACHET's public CAP/RSS feed as a second live reference signal alongside ReliefWeb, and emit our own government-approved alerts in valid CAP XML shape (protocol-compatibility demo, not a claim of direct SACHET integration).
+3. **Upgraded stretch goal (was optional, now recommended given the region correction):** run a real OSM/Overpass import (same pattern as `import-chennai.ts`) for **Visakhapatnam** specifically — this would let the Hudhud case study anchor to genuine local geography (real roads, real hospital locations, a real "Andhra University campus" or "Indira Gandhi Zoological Park" asset) rather than only living in a text panel. Scoped as Chunk J given import-script time cost, but now clearly the most narratively powerful option if time allows.
 
 ---
 
@@ -163,16 +186,30 @@ Today: Citizen report/SOS → auto-`Incident` → Government resolves it → **n
 
 ---
 
+## 7b. Auth regression found during re-audit (Chunk A0 — fix before proceeding)
+
+A teammate's "transport layer -> cline_backend" PR (merged to `main`) wired `GovCommandCenterPage`/`GovZoneCascadePage` to the backend, but introduced a real regression rather than reusing the existing, working auth system:
+
+- **Two independent, unsynchronized token stores**: the pre-existing `lib/api.ts`/`AuthContext` (used by the citizen app) stores its JWT under `localStorage['cs_auth_token']`; the new `services/api.ts` transport layer stores/reads its own copy under a *different* key, `localStorage['cs_token']`. They are bridged today only by a manual `localStorage.setItem('cs_token', token)` line added to `LoginPage.tsx` after a successful login — a patch, not a fix.
+- **Multiple no-auth bypass paths were added to `LoginPage.tsx`**: a "Direct Launch" button that navigates straight to a role's home route with **no login call at all**, a per-role bypass on any login error, and the Rescue role *always* bypassing auth (there's no backend account it could log into, since Rescue is meant to be `FIELD_OPERATOR` — see §1).
+- **Route guards are inconsistent**: Citizen routes have the real `RequireAuth roles={['CITIZEN']}` guard. Government HQ desktop routes only check *token presence* (not role) via a locally-defined `RequireGovernmentLogin`. **Government Mobile routes and all 6 Rescue routes have no guard at all.**
+
+**Fix (Chunk A0, before A/B):** unify on the single existing `lib/api.ts` + `AuthContext`/`RequireAuth` system (already built, already correct), delete the second token store and the bypass buttons, and apply `RequireAuth roles={[...GOVERNMENT_ROLES]}` / `RequireAuth roles={['FIELD_OPERATOR']}` consistently to every gov/mobile/rescue route — mirroring exactly what already works for `/citizen/*`.
+
+---
+
 ## 8. Ordered chunk plan
 
 | # | Chunk | Why this order |
 |---|---|---|
+| **A0** | **Fix an auth regression found during re-audit** (see below) before touching more pages | A teammate's transport-layer PR introduced two independent, unsynchronized token stores and multiple no-auth "Direct Launch" bypass buttons — must be cleaned up first so new pages aren't built on top of it |
 | A | Wire `GovResponseCenterPage` + `GovSimulatorPage` to the real, already-working backend endpoints | Biggest "fake→real" jump for least effort — backend is 100% ready |
 | B | Wire all 6 Rescue pages to real task/unit endpoints (`FIELD_OPERATOR`) | Completes the Citizen→Gov→**Rescue** loop end to end — currently the single biggest gap |
 | C | Wire remaining Gov pages (Critical Asset Monitor, Mobile Map/Triage/Tasks) | Finishes Government side |
 | D | Citizen notification on their own report/SOS resolution | Small, closes the full loop both directions |
 | E | Open-Meteo Flood/GloFAS integration | Real flood-specific signal, cheap to add |
-| F | ReliefWeb "Disaster Intelligence" panel + cited 2024 Assam case study | Real-world grounding, judge-visible research depth |
+| F | ReliefWeb "Disaster Intelligence" panel + cited Cyclone Hudhud (2014, Visakhapatnam, AP) case study | Real-world grounding, judge-visible research depth, correct region |
+| F2 | SACHET CAP/RSS feed ingestion (read-only reference) + emit our own alerts in valid CAP XML | Demonstrates protocol-compatibility with India's national alert system without overclaiming access |
 | G | AI/ML additions: Gemini vision photo triage, statistical forecasting, clustering-derived hotspots | High "wow factor," builds on existing Gemini plumbing |
 | H | Message queue (BullMQ+Redis) for hazard/risk/notification pipeline | Phase 3 requirement |
 | I | `/metrics` endpoint, extended rate limiting, notification outbox | Phase 3 hardening |
