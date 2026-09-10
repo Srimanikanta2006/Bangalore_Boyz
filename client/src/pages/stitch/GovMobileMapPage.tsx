@@ -1,24 +1,65 @@
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { 
-  Shield, Radio, AlertTriangle, Layers, LocateFixed, 
-  Waves, Timer, ChevronDown, ChevronRight, FolderOpen, 
-  Send, Map as MapIcon, ClipboardList, CheckSquare,
-  AlertOctagon, Truck, User
+import {
+  Radio, AlertTriangle, Timer, Send, Map as MapIcon,
+  ClipboardList, CheckSquare, AlertOctagon, User, RefreshCw,
 } from 'lucide-react';
+import { fetchResponseCenter, dispatchUnitToIncident, type ResponseCenterData } from '../../services/api';
+
+const POLL_INTERVAL_MS = 15000;
+
+function slaLabel(minutes: number | null): string {
+  if (minutes == null) return 'No SLA';
+  if (minutes <= 0) return 'OVERDUE';
+  const h = Math.floor(minutes / 60);
+  const m = Math.floor(minutes % 60);
+  return h > 0 ? `${h}h ${m}m` : `${m}m`;
+}
 
 export const GovMobileMapPage: React.FC = () => {
   const navigate = useNavigate();
+  const [data, setData] = useState<ResponseCenterData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [dispatching, setDispatching] = useState(false);
+  const [dispatchError, setDispatchError] = useState<string | null>(null);
+  const [dispatched, setDispatched] = useState(false);
 
-  const [activeSector, setActiveSector] = useState('Sector 4');
-  const [activeCardIndex, setActiveCardIndex] = useState(1);
-  const [dispatchedBackup, setDispatchedBackup] = useState(false);
+  const load = useCallback(async () => {
+    try {
+      const result = await fetchResponseCenter();
+      setData(result);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-  const handleDispatch = () => {
-    setDispatchedBackup(true);
-    setTimeout(() => {
-      navigate('/gov/mobile/triage');
-    }, 900);
+  useEffect(() => {
+    load();
+    const interval = setInterval(load, POLL_INTERVAL_MS);
+    return () => clearInterval(interval);
+  }, [load]);
+
+  const topIncident = data?.activeIncidents[0] ?? null;
+  const secondIncident = data?.activeIncidents[1] ?? null;
+
+  const handleDispatch = async () => {
+    if (!topIncident || dispatching) return;
+    const unit = data?.availableUnits[0];
+    if (!unit) {
+      setDispatchError('No available units to dispatch.');
+      return;
+    }
+    setDispatching(true);
+    setDispatchError(null);
+    try {
+      await dispatchUnitToIncident(topIncident.id, unit.id);
+      setDispatched(true);
+      await load();
+    } catch (err) {
+      setDispatchError((err as Error)?.message ?? 'Dispatch failed.');
+    } finally {
+      setDispatching(false);
+    }
   };
 
   return (
@@ -28,230 +69,130 @@ export const GovMobileMapPage: React.FC = () => {
         <div className="h-20 px-4 flex flex-col justify-center gap-1">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-[#0f172a] text-white flex items-center justify-center font-bold text-xs">
-                GOV
-              </div>
+              <div className="w-8 h-8 rounded-lg bg-[#0f172a] text-white flex items-center justify-center font-bold text-xs">GOV</div>
               <span className="font-bold text-base tracking-tight text-[#0b1c30]">Map</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1.5 bg-[#e5eeff] px-2.5 py-1 rounded-full text-xs font-semibold text-[#0b1c30]">
-                <span className="w-2 h-2 rounded-full bg-[#0051d5] animate-pulse" />
-                <span>LVL 2 ALERT</span>
-              </div>
+              {data && data.summary.critical > 0 && (
+                <div className="flex items-center gap-1.5 bg-[#e5eeff] px-2.5 py-1 rounded-full text-xs font-semibold text-[#0b1c30]">
+                  <span className="w-2 h-2 rounded-full bg-[#0051d5] animate-pulse" />
+                  <span>{data.summary.critical} CRITICAL</span>
+                </div>
+              )}
               <div className="w-8 h-8 rounded-full bg-[#0f172a] flex items-center justify-center text-white">
                 <User className="w-4 h-4" />
               </div>
             </div>
           </div>
-          <div className="flex items-center justify-between text-[#45464d] text-xs font-mono px-0.5">
-            <div className="flex items-center gap-1">
-              <Radio className="w-3.5 h-3.5 text-[#0051d5]" />
-              <span>Grid 99.8% Online</span>
-            </div>
-            <span className="text-[11px] text-[#45464d]">EOC Gov Operational Mobile</span>
-          </div>
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="flex-1 flex flex-col relative w-full pt-20">
-        {/* Map Viewport Canvas */}
-        <div className="relative w-full h-[520px] bg-slate-900 overflow-hidden">
-          <div 
-            className="absolute inset-0 w-full h-full bg-cover bg-center opacity-75"
-            style={{ backgroundImage: `url('https://images.unsplash.com/photo-1547683905-f686c993aae5?auto=format&fit=crop&w=800&q=80')` }}
-          />
-
-          {/* Interactive Simulated GIS Vector Layer */}
-          <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 400 580" preserveAspectRatio="none">
-            {/* Inundation Vector Polygon */}
-            <polygon 
-              points="40,240 180,210 290,260 260,380 110,390 30,320" 
-              fill="#0090a9" 
-              fillOpacity="0.25" 
-              stroke="#0090a9" 
-              strokeWidth="2" 
-              strokeDasharray="4 2" 
-            />
-            {/* Blocked Roads Vector (Red Dashed) */}
-            <path d="M60,330 L160,290 L240,310" fill="none" stroke="#ba1a1a" strokeWidth="4" strokeDasharray="6 4" strokeLinecap="round" />
-            <path d="M160,290 L190,210" fill="none" stroke="#ba1a1a" strokeWidth="3.5" strokeDasharray="5 3" strokeLinecap="round" />
-          </svg>
-
-          {/* Hospital Pin (St. Jude Medical) */}
-          <div className="absolute top-[230px] left-[175px] -translate-x-1/2 -translate-y-1/2 flex flex-col items-center pointer-events-auto cursor-pointer">
-            <div className="flex items-center gap-1.5 bg-white px-2.5 py-0.5 rounded-full shadow-md text-xs font-bold text-[#0b1c30]">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#ba1a1a] animate-ping" />
-              St. Jude Trauma Hub
-            </div>
-            <div className="w-8 h-8 rounded-full bg-[#ba1a1a] text-white flex items-center justify-center shadow-lg mt-1 font-bold text-xs">
-              H
-            </div>
-          </div>
-
-          {/* Active Unit 4 Beacon */}
-          <div className="absolute top-[340px] left-[95px] -translate-x-1/2 -translate-y-1/2 flex items-center gap-1.5 bg-[#0f172a] text-white px-3 py-1 rounded-full shadow-md text-xs font-mono font-semibold">
-            <Truck className="w-3.5 h-3.5 text-[#4cd7f6]" />
-            <span>Pump Unit 4</span>
-          </div>
-
-          {/* Floating Top Overlay: EOC Status & Sector Select */}
+        {/* Simplified decorative map viewport (chrome only) */}
+        <div className="relative w-full h-[220px] bg-slate-900 overflow-hidden flex items-center justify-center">
+          <span className="material-symbols-outlined text-white/20" style={{ fontSize: 56 }}>map</span>
           <div className="absolute top-3 inset-x-4 flex items-center justify-between gap-2 z-10">
             <div className="flex items-center gap-2 bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-full shadow-sm text-xs">
               <span className="flex h-2 w-2 relative">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#ba1a1a] opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#ba1a1a]" />
+                <span className={`relative inline-flex rounded-full h-2 w-2 ${loading ? 'bg-secondary' : 'bg-[#ba1a1a]'}`} />
               </span>
-              <span className="font-bold text-[#ba1a1a] uppercase">Lvl 2 Escalation</span>
-              <span className="text-slate-300">•</span>
-              <span className="text-[#45464d]">Bayshore</span>
+              <span className="text-[#45464d]">{loading ? 'Syncing…' : `${data?.summary.activeIncidents ?? 0} active incidents`}</span>
             </div>
-
-            <button 
-              onClick={() => setActiveSector(s => s === 'Sector 4' ? 'All Sectors' : 'Sector 4')}
-              className="flex items-center gap-1 bg-white/95 backdrop-blur-md h-8 px-3 rounded-full text-xs font-bold text-[#0b1c30] shadow-sm active:scale-95 transition-transform"
-            >
-              <span>{activeSector}</span>
-              <ChevronDown className="w-3.5 h-3.5" />
-            </button>
-          </div>
-
-          {/* Map Control Tools */}
-          <div className="absolute top-14 right-4 flex flex-col gap-2 z-10">
-            <button className="w-9 h-9 rounded-full bg-white/95 backdrop-blur-md text-[#0b1c30] shadow-md flex items-center justify-center active:scale-95">
-              <Layers className="w-4 h-4 text-[#45464d]" />
-            </button>
-            <button className="w-9 h-9 rounded-full bg-white/95 backdrop-blur-md text-[#0051d5] shadow-md flex items-center justify-center active:scale-95">
-              <LocateFixed className="w-4 h-4" />
-            </button>
-            <button className="w-9 h-9 rounded-full bg-white/95 backdrop-blur-md text-[#0090a9] shadow-md flex items-center justify-center active:scale-95">
-              <Waves className="w-4 h-4" />
-            </button>
           </div>
         </div>
 
-        {/* Swipeable Incident Card Stack Module */}
+        {/* Real Incident Card Stack */}
         <div className="w-full px-4 -mt-10 relative z-20 flex flex-col gap-2">
-          {/* Stack Header */}
           <div className="flex items-center justify-between px-1">
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-bold text-[#0b1c30]">Active Inundations</span>
-              <span className="px-2 py-0.5 rounded-full bg-[#ffdad6] text-[#93000a] text-[10px] font-bold">
-                1 Urgent
-              </span>
-            </div>
-            <div className="text-xs text-[#45464d] font-mono">
-              <span className="font-bold text-[#0b1c30]">Card {activeCardIndex}</span> / 3
-            </div>
+            <span className="text-sm font-bold text-[#0b1c30]">Active Incidents</span>
+            <span className="text-xs text-[#45464d] font-mono">{data?.summary.activeIncidents ?? 0} total</span>
           </div>
 
-          {/* Primary Foreground Critical Incident Card */}
-          <div className="relative w-full bg-white rounded-2xl shadow-lg border border-[#e5eeff] overflow-hidden flex flex-col">
-            <div className="absolute top-0 left-0 bottom-0 w-1.5 bg-[#ba1a1a]" />
-            <div className="p-4 pl-5 flex flex-col gap-2.5">
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-1.5">
-                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#ffdad6] text-[#93000a] text-[10px] font-bold">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#ba1a1a]" />
-                    CRITICAL
-                  </span>
-                  <span className="text-xs text-[#45464d] font-mono">#INC-204</span>
-                </div>
-                <div className="flex items-center gap-1 bg-[#ffdad6]/70 text-[#93000a] px-2 py-0.5 rounded-full text-xs font-mono font-bold">
-                  <Timer className="w-3.5 h-3.5 text-[#ba1a1a] animate-pulse" />
-                  <span>04:12 SLA</span>
-                </div>
-              </div>
+          {!loading && !topIncident && (
+            <div className="p-6 text-center text-sm text-[#76777d] bg-white rounded-2xl border border-[#e5eeff]">No active incidents right now.</div>
+          )}
 
-              <div>
-                <h2 className="text-base font-bold text-[#0b1c30] leading-tight">
-                  Flash Inundation on Bayshore Arterial
-                </h2>
-                <p className="text-xs text-[#ba1a1a] font-medium flex items-center gap-1 mt-0.5">
-                  <AlertOctagon className="w-3.5 h-3.5 shrink-0" />
-                  Hospital Corridor Trauma Route Impassable
-                </p>
-              </div>
-
-              {/* Metrics Matrix */}
-              <div className="grid grid-cols-3 gap-2 bg-[#eff4ff] p-2.5 rounded-xl border border-[#d3e4fe]">
-                <div className="flex flex-col">
-                  <span className="text-[10px] text-[#45464d] uppercase font-semibold">Water Depth</span>
-                  <div className="flex items-baseline gap-0.5">
-                    <span className="text-xl font-extrabold text-[#ba1a1a]">1.1</span>
-                    <span className="text-xs text-[#45464d]">m</span>
+          {topIncident && (
+            <div className="relative w-full bg-white rounded-2xl shadow-lg border border-[#e5eeff] overflow-hidden flex flex-col">
+              <div className="absolute top-0 left-0 bottom-0 w-1.5 bg-[#ba1a1a]" />
+              <div className="p-4 pl-5 flex flex-col gap-2.5">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#ffdad6] text-[#93000a] text-[10px] font-bold">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#ba1a1a]" />
+                      {topIncident.severity}
+                    </span>
+                    <span className="text-xs text-[#45464d] font-mono">#{topIncident.incidentCode}</span>
                   </div>
-                  <span className="text-[10px] text-[#ba1a1a] font-mono font-bold">+0.2m/15m</span>
-                </div>
-                <div className="flex flex-col col-span-2">
-                  <span className="text-[10px] text-[#45464d] uppercase font-semibold">Threatened Target</span>
-                  <span className="text-xs font-bold text-[#0b1c30] truncate">St. Jude Medical</span>
-                  <span className="text-[10px] text-[#45464d]">Level 1 Trauma Wing</span>
-                </div>
-              </div>
-
-              {/* Telemetry Row */}
-              <div className="flex items-center justify-between py-2 bg-[#e5eeff]/70 px-3 rounded-xl border border-[#dce9ff]">
-                <div className="flex items-center gap-2">
-                  <Truck className="w-4 h-4 text-[#0051d5]" />
-                  <div>
-                    <span className="text-xs font-bold text-[#0b1c30] block">Unit 4 (Heavy High-Cap Pump)</span>
-                    <span className="text-[10px] text-[#45464d] font-mono">ETA 3 mins • 0.4 mi away</span>
+                  <div className="flex items-center gap-1 bg-[#ffdad6]/70 text-[#93000a] px-2 py-0.5 rounded-full text-xs font-mono font-bold">
+                    <Timer className="w-3.5 h-3.5 text-[#ba1a1a] animate-pulse" />
+                    <span>{slaLabel(topIncident.slaMinutesRemaining)}</span>
                   </div>
                 </div>
-                <span className="w-2 h-2 rounded-full bg-[#0051d5] animate-ping" />
-              </div>
 
-              {/* Actions */}
-              <div className="flex items-center gap-2 pt-1">
-                <button 
-                  onClick={() => navigate('/gov/mobile/triage')}
-                  className="flex-1 h-11 bg-[#eff4ff] hover:bg-[#e5eeff] text-[#0b1c30] rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5 border border-[#d3e4fe]"
-                >
-                  <FolderOpen className="w-4 h-4" />
-                  <span>Full Dossier</span>
-                </button>
-                <button 
-                  onClick={handleDispatch}
-                  disabled={dispatchedBackup}
-                  className={`flex-[1.4] h-11 text-white rounded-xl text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-md transition-all ${
-                    dispatchedBackup ? 'bg-emerald-600' : 'bg-[#0f172a] hover:bg-[#1e293b]'
-                  }`}
-                >
-                  <Send className="w-3.5 h-3.5 text-[#4cd7f6]" />
-                  <span>{dispatchedBackup ? 'Dispatched' : 'Dispatch Backup'}</span>
-                </button>
+                <div>
+                  <h2 className="text-base font-bold text-[#0b1c30] leading-tight">{topIncident.title}</h2>
+                  {topIncident.assetName && (
+                    <p className="text-xs text-[#ba1a1a] font-medium flex items-center gap-1 mt-0.5">
+                      <AlertOctagon className="w-3.5 h-3.5 shrink-0" />
+                      {topIncident.assetName}
+                    </p>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 bg-[#eff4ff] p-2.5 rounded-xl border border-[#d3e4fe]">
+                  <div className="flex flex-col">
+                    <span className="text-[10px] text-[#45464d] uppercase font-semibold">Zone</span>
+                    <span className="text-xs font-bold text-[#0b1c30] truncate">{topIncident.zoneName ?? '—'}</span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-[10px] text-[#45464d] uppercase font-semibold">Assigned</span>
+                    <span className="text-xs font-bold text-[#0b1c30] truncate">
+                      {topIncident.assignedUnits.length > 0 ? topIncident.assignedUnits.join(', ') : 'Unassigned'}
+                    </span>
+                  </div>
+                </div>
+
+                {dispatchError && <span className="text-xs text-red-700 font-semibold">{dispatchError}</span>}
+
+                <div className="flex items-center gap-2 pt-1">
+                  <button
+                    onClick={() => navigate('/gov/mobile/triage')}
+                    className="flex-1 h-11 bg-[#eff4ff] hover:bg-[#e5eeff] text-[#0b1c30] rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5 border border-[#d3e4fe]"
+                  >
+                    <span>View All Incidents</span>
+                  </button>
+                  <button
+                    onClick={handleDispatch}
+                    disabled={dispatching || dispatched || topIncident.assignedUnits.length > 0}
+                    className={`flex-[1.4] h-11 text-white rounded-xl text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-md transition-all disabled:opacity-60 ${
+                      dispatched ? 'bg-emerald-600' : 'bg-[#0f172a] hover:bg-[#1e293b]'
+                    }`}
+                  >
+                    {dispatching ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5 text-[#4cd7f6]" />}
+                    <span>{dispatched || topIncident.assignedUnits.length > 0 ? 'Dispatched' : 'Quick Dispatch'}</span>
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
-          {/* Secondary Incident Strip */}
-          <div 
-            onClick={() => setActiveCardIndex(2)}
-            className="w-full bg-white p-3 rounded-xl shadow-xs border border-[#e5eeff] flex items-center justify-between cursor-pointer hover:bg-[#f8f9ff]"
-          >
-            <div className="flex items-center gap-2 min-w-0">
-              <span className="w-2 h-2 rounded-full bg-[#316bf3]" />
-              <div className="flex flex-col min-w-0">
-                <span className="text-xs font-bold text-[#0b1c30] truncate">#INC-205 • Substation 9 Grid Inflow</span>
-                <span className="text-[10px] text-[#45464d] font-mono truncate">Water at 0.35m barrier margin</span>
+          {secondIncident && (
+            <div
+              onClick={() => navigate('/gov/mobile/triage')}
+              className="w-full bg-white p-3 rounded-xl shadow-xs border border-[#e5eeff] flex items-center justify-between cursor-pointer hover:bg-[#f8f9ff]"
+            >
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="w-2 h-2 rounded-full bg-[#316bf3]" />
+                <div className="flex flex-col min-w-0">
+                  <span className="text-xs font-bold text-[#0b1c30] truncate">#{secondIncident.incidentCode} • {secondIncident.title}</span>
+                  <span className="text-[10px] text-[#45464d] font-mono truncate">{secondIncident.zoneName ?? '—'}</span>
+                </div>
               </div>
             </div>
-            <ChevronRight className="w-4 h-4 text-[#76777d]" />
-          </div>
+          )}
         </div>
       </main>
-
-      {/* Floating Dispatch FAB */}
-      <aside className="fixed bottom-20 right-4 z-40">
-        <button 
-          onClick={() => navigate('/gov/mobile/triage')}
-          className="flex items-center gap-1.5 h-12 px-4 rounded-full bg-[#ba1a1a] text-white shadow-xl hover:bg-[#93000a] transition-all font-bold text-xs uppercase tracking-wide"
-        >
-          <AlertTriangle className="w-4 h-4" />
-          <span>Dispatch</span>
-        </button>
-      </aside>
 
       {/* Gov Mobile Bottom Navigation */}
       <nav className="fixed bottom-0 inset-x-0 z-50 bg-white/95 backdrop-blur-xl border-t border-[#e5eeff] pb-safe shadow-md">

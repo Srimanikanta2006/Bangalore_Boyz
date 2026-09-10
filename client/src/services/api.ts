@@ -551,3 +551,44 @@ export async function updateFieldTaskStatus(idOrCode: string, status: TaskStatus
 export async function fetchIncidentCascade(incidentId: string): Promise<any> {
   return requestEnvelope<any>(`/incidents/${encodeURIComponent(incidentId)}/cascade`);
 }
+
+// (j) Task verification — GOVERNMENT_ROLES only, real state-machine terminal step.
+export async function verifyTask(idOrCode: string, note?: string): Promise<any> {
+  return requestEnvelope<any>(`/tasks/${encodeURIComponent(idOrCode)}/verify`, jsonInit('POST', { note }));
+}
+
+// (k) Infrastructure assets — real vulnerability/criticality/telemetry/risk scoring (Critical Asset Monitor).
+export interface InfrastructureAssetCard {
+  id: string;
+  assetCode: string;
+  name: string;
+  type: string;
+  zone: { id: string; name: string; code: string } | null;
+  latitude: number;
+  longitude: number;
+  criticality: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  vulnerability: number;
+  operationalStatus: 'OPERATIONAL' | 'DEGRADED' | 'AT_RISK' | 'COMPROMISED' | 'OFFLINE';
+  description: string | null;
+  failoverPower: boolean | null;
+  backupPower: boolean | null;
+  waterProximityM: number | null;
+  evacuationStatus: string | null;
+  beds: number | null;
+  bedOccupancyPercent: number | null;
+  capacity: number | null;
+  occupancyPercent: number | null;
+  telemetry: Record<string, { value: number; unit: string; timestamp: string }>;
+  telemetryDelayMinutes: number | null;
+  risk: { score: number; level: string };
+  activeIncidents: number;
+  activeTasks: number;
+}
+
+export async function fetchInfrastructureAssets(query: { limit?: number; facilityType?: string; status?: string } = {}): Promise<{ items: InfrastructureAssetCard[]; pagination: unknown }> {
+  const params = new URLSearchParams();
+  params.set('limit', String(query.limit ?? 100));
+  if (query.facilityType) params.set('facilityType', query.facilityType);
+  if (query.status) params.set('status', query.status);
+  return requestEnvelope<{ items: InfrastructureAssetCard[]; pagination: unknown }>(`/infrastructure?${params.toString()}`);
+}
