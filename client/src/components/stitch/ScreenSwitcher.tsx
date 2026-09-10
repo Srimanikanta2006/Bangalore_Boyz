@@ -18,8 +18,10 @@ export const ScreenSwitcher: React.FC = () => {
     { label: '9. Operations Console', path: '/console', icon: 'dashboard' },
   ];
 
+  const isConsole = location.pathname === '/' || location.pathname.startsWith('/console') || location.pathname.startsWith('/gov');
+
   return (
-    <div className="fixed top-2 right-2 z-[9999] font-sans text-xs">
+    <div className={`fixed ${isConsole ? 'bottom-4 right-4' : 'top-2 right-2'} z-[9999] font-sans text-xs`}>
       {isOpen ? (
         <div className="bg-slate-900/95 backdrop-blur-xl border border-slate-700 rounded-xl p-3 shadow-2xl text-white w-64 animate-in fade-in slide-in-from-top-2 duration-150">
           <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-800">

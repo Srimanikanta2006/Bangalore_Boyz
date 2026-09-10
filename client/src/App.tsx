@@ -24,39 +24,25 @@ export const App: React.FC = () => {
       <ScreenSwitcher />
 
       <Routes>
-        {/* 1. Login / Instant Role Preview */}
-        <Route path="/login" element={<LoginPage />} />
-
-        {/* 2. Citizen Live Map */}
-        <Route path="/citizen/map" element={<CitizenMapPage />} />
-
-        {/* 3. Citizen Alerts Feed */}
-        <Route path="/citizen/alerts" element={<AlertsFeedPage />} />
-
-        {/* 4. Rescue Incident / Sector Flood Detail */}
-        <Route path="/rescue/incident/:id" element={<FloodDetailPage />} />
-
-        {/* 5. Safe Route Selection (3-Corridor Comparison) */}
-        <Route path="/rescue/route/:incidentId" element={<RouteSelectPage />} />
-
-        {/* 6. Active Mission Navigation (Turn-by-Turn Waypoints) */}
-        <Route path="/rescue/navigate/:routeId" element={<ActiveNavPage />} />
-
-        {/* 7. Emergency SOS Assistance */}
-        <Route path="/rescue/sos" element={<SosEmergencyPage />} />
-        <Route path="/citizen/sos" element={<SosEmergencyPage />} />
-
-        {/* 8. Field Hazard Report */}
-        <Route path="/rescue/report" element={<HazardReportPage />} />
-        <Route path="/citizen/report" element={<HazardReportPage />} />
-
-        {/* Operations Console */}
+        {/* Flagship Climate-Risk Resilience Console (Default Entry Point) */}
+        <Route path="/" element={<OperationsConsole />} />
         <Route path="/console/*" element={<OperationsConsole />} />
         <Route path="/gov/*" element={<OperationsConsole />} />
 
-        {/* Default Entry Point -> Login / Role Preview */}
-        <Route path="/" element={<Navigate to="/login" replace />} />
-        <Route path="*" element={<Navigate to="/login" replace />} />
+        {/* 8 Stitch Mobile Screens */}
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/citizen/map" element={<CitizenMapPage />} />
+        <Route path="/citizen/alerts" element={<AlertsFeedPage />} />
+        <Route path="/rescue/incident/:id" element={<FloodDetailPage />} />
+        <Route path="/rescue/route/:incidentId" element={<RouteSelectPage />} />
+        <Route path="/rescue/navigate/:routeId" element={<ActiveNavPage />} />
+        <Route path="/rescue/sos" element={<SosEmergencyPage />} />
+        <Route path="/citizen/sos" element={<SosEmergencyPage />} />
+        <Route path="/rescue/report" element={<HazardReportPage />} />
+        <Route path="/citizen/report" element={<HazardReportPage />} />
+
+        {/* Fallback to Operations Console */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   );

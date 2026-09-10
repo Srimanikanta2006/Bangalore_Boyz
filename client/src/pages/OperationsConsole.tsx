@@ -127,6 +127,31 @@ export const OperationsConsole: React.FC = () => {
   useEffect(() => {
     loadData();
 
+    // WebSocket telemetry subscription
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}/ws`;
+    let ws: WebSocket | null = null;
+
+    try {
+      ws = new WebSocket(wsUrl);
+      ws.onmessage = (event) => {
+        try {
+          const message = JSON.parse(event.data);
+          if (message.type === 'INIT_SNAPSHOT' || message.type === 'WEATHER_AND_RISK_UPDATE') {
+            const data = message.data || message;
+            if (data.weather) setWeather(data.weather);
+            if (data.risks) setRisks(data.risks);
+            if (data.alerts) setAlerts(data.alerts);
+            if (data.stats) setStats(data.stats);
+          }
+        } catch (e) {
+          // ignore parse error
+        }
+      };
+    } catch (e) {
+      // ignore
+    }
+
     const interval = setInterval(async () => {
       try {
         const [weatherData, risksData, alertsData, incidentsData, tasksData, statsData, qualityData] =
@@ -153,7 +178,10 @@ export const OperationsConsole: React.FC = () => {
       }
     }, 15000);
 
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      if (ws) ws.close();
+    };
   }, [loadData]);
 
   const handleRefreshLive = async () => {
@@ -300,7 +328,7 @@ export const OperationsConsole: React.FC = () => {
   ).length;
 
   return (
-    <div className="flex-1 flex flex-col h-screen overflow-hidden bg-slate-50 text-slate-900">
+    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans antialiased">
       {/* Existing Top Navigation */}
       <TopNav
         weather={weather}
