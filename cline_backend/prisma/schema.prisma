@@ -744,7 +744,20 @@ model Notification {
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
 
+  // Outbox pattern for external delivery channels (SMS/push - Chunk I).
+  // In-app delivery (this DB row existing) is unconditional and already real;
+  // these fields track a SEPARATE, OPTIONAL external channel attempt and are
+  // never set to DELIVERED unless a real provider call actually succeeded -
+  // see src/notifications/delivery.service.ts.
+  deliveryStatus   String    @default("NOT_CONFIGURED") // NOT_CONFIGURED | PENDING | DELIVERED | FAILED
+  deliveryChannel  String? // e.g. "SMS_MSG91" once a real provider is wired
+  deliveryAttempts Int       @default(0)
+  lastDeliveryError String?
+  lastAttemptAt    DateTime?
+  deliveredAt      DateTime?
+
   @@index([userId, read])
+  @@index([deliveryStatus])
 }
 
 // Live weather observations polled/fetched per location (provider-backed history)

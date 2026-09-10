@@ -23,6 +23,15 @@ describe.skipIf(!ready)('critical government journey (end-to-end)', () => {
     expect(res.body.timestamp).toBeTruthy();
   });
 
+  it('metrics: exposes real Prometheus-format request counters after real traffic', async () => {
+    await request(app).get('/api/health');
+    const res = await request(app).get('/metrics');
+    expect(res.status).toBe(200);
+    expect(res.headers['content-type']).toContain('text/plain');
+    expect(res.text).toContain('climateshield_http_requests_total');
+    expect(res.text).toContain('/api/health');
+  });
+
   it('login: returns user + token and never exposes passwordHash', async () => {
     const res = await request(app)
       .post('/api/auth/login')

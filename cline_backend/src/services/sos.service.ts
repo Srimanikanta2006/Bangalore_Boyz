@@ -5,6 +5,7 @@ import { nextSosCode } from '../utils/ids';
 import { AuditActions, recordAudit } from './audit.service';
 import { createIncident } from './incident.service';
 import { resolveZoneForPoint } from './zoneLookup.service';
+import { enqueueDeliveryAttempts } from '../notifications/delivery.service';
 import type { AuthUser } from '../types/auth';
 
 /**
@@ -104,15 +105,23 @@ export async function createSosEvent(user: AuthUser, input: CreateSosInput) {
       select: { id: true },
     });
     if (operators.length > 0) {
-      await prisma.notification.createMany({
-        data: operators.map((o) => ({
-          userId: o.id,
-          type: 'SOS_ALERT',
-          severity: 'CRITICAL',
-          title: `SOS ${sosCode}: ${THREAT_LABEL[input.primaryThreat] ?? input.primaryThreat}`,
-          message: `Citizen SOS near ${zone.name} (${incident.incidentCode}). Internal alert only - no external dispatch integration.`,
-        })),
-      });
+      // Individual creates (not createMany) so we get real ids back to kick off
+      // outbox delivery attempts per notification - fine at demo-scale operator counts.
+      const created = await Promise.all(
+        operators.map((o) =>
+          prisma.notification.create({
+            data: {
+              userId: o.id,
+              type: 'SOS_ALERT',
+              severity: 'CRITICAL',
+              title: `SOS ${sosCode}: ${THREAT_LABEL[input.primaryThreat] ?? input.primaryThreat}`,
+              message: `Citizen SOS near ${zone.name} (${incident.incidentCode}). Internal alert only - no external dispatch integration.`,
+            },
+            select: { id: true },
+          }),
+        ),
+      );
+      enqueueDeliveryAttempts(created.map((n) => n.id));
     }
   } catch (err) {
     // eslint-disable-next-line no-console

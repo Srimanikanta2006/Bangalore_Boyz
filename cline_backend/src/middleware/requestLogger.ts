@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import type { NextFunction, Request, Response } from 'express';
+import { recordHttpRequest } from '../metrics/registry';
 
 /**
  * Structured JSON request logging (satisfies the "Morgan or structured
@@ -25,6 +26,14 @@ export function requestLogger(req: Request, res: Response, next: NextFunction): 
     };
     // eslint-disable-next-line no-console
     console.log(JSON.stringify(entry));
+
+    // Real metrics from real request data (Chunk I /metrics endpoint). Uses the
+    // matched route PATTERN (e.g. "/citizen/reports/:id"), never the raw path,
+    // to keep label cardinality bounded (no user-supplied IDs as metric labels).
+    const route = (req.route as { path?: string } | undefined)?.path
+      ? `${req.baseUrl}${(req.route as { path?: string }).path}`
+      : req.baseUrl || 'unmatched';
+    recordHttpRequest(req.method, route, res.statusCode, durationMs / 1000);
   });
 
   next();

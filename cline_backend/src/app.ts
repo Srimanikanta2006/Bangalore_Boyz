@@ -28,6 +28,7 @@ import weatherRoutes from './routes/weather.routes';
 import locationRoutes from './routes/location.routes';
 import explainRoutes from './routes/explain.routes';
 import citizenRoutes from './routes/citizen.routes';
+import metricsRoutes from './routes/metrics.routes';
 
 export function createApp() {
   const app = express();
@@ -46,6 +47,9 @@ export function createApp() {
   );
   app.use(express.json({ limit: '1mb' }));
   app.use(requestLogger);
+
+  // Top-level (not /api-prefixed), unauthenticated Prometheus scrape target - see metrics.routes.ts.
+  app.use(metricsRoutes);
 
   // Read-only static serving of citizen-uploaded evidence (local disk storage, Stage D §6 Option B).
   app.use(EVIDENCE_URL_PREFIX, express.static(EVIDENCE_DIR));

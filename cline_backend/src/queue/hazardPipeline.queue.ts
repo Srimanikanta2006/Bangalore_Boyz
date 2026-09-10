@@ -19,6 +19,7 @@ import { prisma } from '../db/prisma';
 import { assessAssetRisk, persistRiskScore, type HazardLike } from '../services/risk.service';
 import { hazardToCapXml } from '../services/capExport.service';
 import { AuditActions, recordAudit } from '../services/audit.service';
+import { enqueueDeliveryAttempts } from '../notifications/delivery.service';
 
 const OPERATOR_ROLES = ['GOVERNMENT_OPERATOR', 'DISPATCHER', 'ADMIN'] as const;
 const NOTIFY_SEVERITIES = ['HIGH', 'CRITICAL'] as const;
@@ -57,15 +58,21 @@ async function runNotificationFanout(hazardId: string): Promise<StageResult> {
   const operators = await prisma.user.findMany({ where: { role: { in: OPERATOR_ROLES as unknown as never[] }, isActive: true }, select: { id: true } });
   if (operators.length === 0) return { stage: 'notification_fanout', ok: true, detail: 'no active operators' };
 
-  await prisma.notification.createMany({
-    data: operators.map((o) => ({
-      userId: o.id,
-      type: 'HAZARD_ALERT',
-      severity: hazard.severity,
-      title: `${hazard.severity} ${hazard.type.replace(/_/g, ' ')} — ${hazard.zone.name}`,
-      message: `A new ${hazard.severity} ${hazard.type.replace(/_/g, ' ')} hazard was reported in ${hazard.zone.name}. Risk scores have been recomputed.`,
-    })),
-  });
+  const created = await Promise.all(
+    operators.map((o) =>
+      prisma.notification.create({
+        data: {
+          userId: o.id,
+          type: 'HAZARD_ALERT',
+          severity: hazard.severity,
+          title: `${hazard.severity} ${hazard.type.replace(/_/g, ' ')} — ${hazard.zone.name}`,
+          message: `A new ${hazard.severity} ${hazard.type.replace(/_/g, ' ')} hazard was reported in ${hazard.zone.name}. Risk scores have been recomputed.`,
+        },
+        select: { id: true },
+      }),
+    ),
+  );
+  enqueueDeliveryAttempts(created.map((n) => n.id));
   return { stage: 'notification_fanout', ok: true, detail: `${operators.length} operators notified` };
 }
 

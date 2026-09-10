@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { authenticate, requireRole } from '../middleware/auth';
 import { validate } from '../middleware/validation';
 import { evidenceUpload } from '../middleware/upload';
+import { sosRateLimiter, reportRateLimiter } from '../middleware/rateLimit';
 import { CITIZEN_ROLES } from '../types/auth';
 import { citizenNearbyQuerySchema } from '../validators/citizen.schema';
 import { createCitizenReportSchema } from '../validators/citizenReport.schema';
@@ -55,6 +56,7 @@ router.post(
   '/citizen/reports',
   authenticate,
   requireRole(...CITIZEN_ROLES),
+  reportRateLimiter,
   evidenceUpload,
   validate(createCitizenReportSchema, 'body'),
   citizenController.submitReport,
@@ -71,7 +73,7 @@ router.get('/citizen/reports/:id', authenticate, requireRole(...CITIZEN_ROLES), 
  * linked Incident + notifies GOVERNMENT_ROLES operators (internal alert only,
  * no external 911/112 dispatch integration).
  */
-router.post('/citizen/sos', authenticate, requireRole(...CITIZEN_ROLES), validate(createSosSchema, 'body'), citizenController.submitSos);
+router.post('/citizen/sos', authenticate, requireRole(...CITIZEN_ROLES), sosRateLimiter, validate(createSosSchema, 'body'), citizenController.submitSos);
 
 /** GET /api/citizen/sos - own SOS history only. */
 router.get('/citizen/sos', authenticate, requireRole(...CITIZEN_ROLES), citizenController.mySos);
