@@ -26,6 +26,7 @@ build/
 out/
 .next/
 .nuxt/
+.vite/
 *.sqlite
 *.db
 
