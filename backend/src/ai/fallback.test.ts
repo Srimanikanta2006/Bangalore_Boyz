@@ -1,4 +1,4 @@
-import assert from "node:assert/strict";
+﻿import assert from "node:assert/strict";
 import test from "node:test";
 
 import { isAllowedActionPriority, isValidAction } from "./actionCatalog.ts";
@@ -79,8 +79,26 @@ test("synthesizes compound cascade paths, dependencies, and role briefings", () 
   assert.match(response.roleSpecificBriefings.public, /Road R24/);
 });
 
+test("is fully deterministic for identical input", () => {
+  const response1 = buildFallbackExplanation(compoundIncident);
+  const response2 = buildFallbackExplanation(compoundIncident);
+  assert.deepEqual(response1, response2);
+});
+
 test("never accepts an action outside the controlled catalog", () => {
   assert.equal(isValidAction("deploy_50_workers_and_shutdown_city"), false);
   assert.equal(isAllowedActionPriority("dispatch_drainage_team", "medium"), false);
   assert.equal(isAllowedActionPriority("dispatch_drainage_team", "critical"), true);
+  assert.equal(isAllowedActionPriority("close_road", "critical"), true);
+  assert.equal(isAllowedActionPriority("open_alternate_route", "medium"), true);
+});
+
+test("grounds confidence and bounds it by input risk confidence", () => {
+  const lowConfRequest: ExplainRequest = {
+    ...legacyIncident,
+    risk: { score: 60, level: "medium", confidence: 0.65 },
+  };
+  const response = buildFallbackExplanation(lowConfRequest);
+  assert.ok(response.confidence <= lowConfRequest.risk.confidence);
+  assert.equal(response.confidence, 0.65);
 });

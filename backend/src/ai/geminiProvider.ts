@@ -1,15 +1,9 @@
-import { buildFallbackExplanation } from "./fallback.ts";
+﻿import { buildFallbackExplanation } from "./fallback.ts";
 import type { ExplainRequest, ExplainResponse } from "./schemas.ts";
 import { validateExplainResponse } from "./validation.ts";
 
-export interface ExplanationProvider {
-  explain(request: ExplainRequest): Promise<ExplainResponse>;
-}
-
 export interface GeminiProviderOptions {
-  /** Keep this secret in an environment variable; never commit it. */
   apiKey?: string;
-  /** Choose an available Gemini model in deployment configuration. */
   model?: string;
   timeoutMs?: number;
   fetchFn?: typeof fetch;
@@ -18,68 +12,56 @@ export interface GeminiProviderOptions {
 export interface ExplanationResult {
   response: ExplainResponse;
   usedFallback: boolean;
-  fallbackReason?: "missing_api_key" | "provider_error" | "invalid_model_response";
+  fallbackReason?:
+    | "missing_api_key"
+    | "provider_error"
+    | "invalid_model_response"
+    | "schema_validation_failed"
+    | "action_safety_violation";
   modelUsed?: string;
   errorDetails?: string;
 }
 
 const DEFAULT_TIMEOUT_MS = 45_000;
 
-const CANDIDATE_MODELS = [
-  "gemini-3.6-flash",
-  "gemini-3.6-pro",
-  "gemini-3.0-flash",
-  "gemini-2.5-flash",
-  "gemini-2.0-flash",
-  "gemini-1.5-flash-latest",
-  "gemini-1.5-flash",
-  "gemini-pro",
-];
+/** Default safe model if none specified in GEMINI_MODEL or options */
+export const DEFAULT_GEMINI_MODEL = "gemini-2.5-flash";
 
-export async function listAvailableModels(
-  apiKey: string,
-  fetchFn: typeof fetch = fetch,
-): Promise<string[]> {
-  try {
-    const res = await fetchFn("https://generativelanguage.googleapis.com/v1beta/models", {
-      headers: { "x-goog-api-key": apiKey },
-    });
-    if (!res.ok) return [];
-    const data = (await res.json()) as {
-      models?: Array<{ name: string; supportedGenerationMethods?: string[] }>;
-    };
-    return (data.models ?? [])
-      .filter((m) => m.supportedGenerationMethods?.includes("generateContent"))
-      .map((m) => m.name.replace(/^models\//, ""));
-  } catch {
-    return [];
+/**
+ * Resolves the Gemini model name to use.
+ * Precedence: options.model -> process.env.GEMINI_MODEL -> DEFAULT_GEMINI_MODEL
+ */
+export function resolveModel(preferredModel?: string): string {
+  if (preferredModel && preferredModel.trim().length > 0) {
+    return preferredModel.trim();
   }
-}
-
-async function resolveModel(
-  apiKey: string,
-  preferredModel?: string,
-  fetchFn: typeof fetch = fetch,
-): Promise<string> {
-  if (preferredModel) return preferredModel;
-  return "gemini-3.6-flash";
+  const envModel = process.env.GEMINI_MODEL?.trim();
+  if (envModel && envModel.length > 0) {
+    return envModel;
+  }
+  return DEFAULT_GEMINI_MODEL;
 }
 
 function createPrompt(request: ExplainRequest): string {
   return `You are ClimateShield's compound cascade explanation and operator-assistance layer.
-Use ONLY the verified incident facts below. Do not invent assets, measurements, unverified causal links, or action IDs.
+You must adhere strictly to these safety and grounding rules:
+1. Use ONLY the verified incident facts supplied below.
+2. Do NOT invent environmental measurements, hazard facts, or sensor readings.
+3. Do NOT invent infrastructure assets or unverified relationships.
+4. Do NOT recalculate or invent risk scores.
+5. Do NOT invent action IDs. Only recommend action IDs from the controlled action catalog below.
+6. Represent uncertainties and data freshness honestly without claiming certainty unsupported by verified evidence.
+7. The output is decision-support for human/operator approval, not autonomous execution.
 
-Your job is to organize the verified facts into:
-1. Competing cascade paths and which impact happens first
-2. Which asset is most critical (especially compound dual vulnerabilities)
-3. Safest sequence of human-approved actions from the controlled catalog
-4. Explicit operational dependencies between actions (e.g., do not close road until alternate route is verified)
-5. Uncertainties and required verification checks
-6. Distinct role-specific briefings tailored to Operator, Hospital Manager, Field Drainage Team, and the Public
+Controlled action IDs:
+- dispatch_drainage_team (allowed priorities: high, critical)
+- close_road (allowed priorities: high, critical)
+- open_alternate_route (allowed priorities: medium, high, critical)
+- pre_position_ambulance (allowed priorities: high, critical)
+- notify_facility (allowed priorities: medium, high, critical)
+- issue_local_advisory (allowed priorities: medium, high, critical)
 
-Controlled action IDs: dispatch_drainage_team, close_road, open_alternate_route, pre_position_ambulance, notify_facility, issue_local_advisory.
-
-Return only JSON with this exact shape:
+Return ONLY valid JSON matching this schema:
 {
   "incidentId": "string",
   "situationSummary": "string",
@@ -109,10 +91,11 @@ Return only JSON with this exact shape:
   "impactSummary": "string"
 }
 
-The incidentId must match "${request.incidentId}". confidence must be between 0 and ${request.risk.confidence}.
+Constraint: "incidentId" must exactly match "${request.incidentId}".
+Constraint: "confidence" must be a number between 0 and ${request.risk.confidence}.
 
 Verified incident facts:
-${JSON.stringify(request)}`;
+${JSON.stringify(request, null, 2)}`;
 }
 
 function extractText(payload: unknown): string | undefined {
@@ -130,8 +113,8 @@ function extractText(payload: unknown): string | undefined {
 
 /**
  * Calls Gemini to synthesize compound cascade explanations, action dependencies,
- * and role-specific briefings. Auto-detects supported models for the API key and
- * safely falls back to deterministic synthesis if anything fails.
+ * and role-specific briefings. Uses centralized model config and safely falls back
+ * to deterministic synthesis if anything fails.
  */
 export async function explainWithGeminiOrFallback(
   request: ExplainRequest,
@@ -153,7 +136,7 @@ export async function explainWithGeminiOrFallback(
   }
 
   const fetchFn = options.fetchFn ?? fetch;
-  const model = await resolveModel(apiKey, options.model, fetchFn);
+  const model = resolveModel(options.model);
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), options.timeoutMs ?? DEFAULT_TIMEOUT_MS);
@@ -166,7 +149,7 @@ export async function explainWithGeminiOrFallback(
         signal: controller.signal,
         body: JSON.stringify({
           systemInstruction: {
-            parts: [{ text: "You explain verified compound climate-risk cascades and return safe JSON only." }],
+            parts: [{ text: "You are ClimateShield AI. Explain verified compound climate-risk cascades and return safe JSON only." }],
           },
           contents: [{ role: "user", parts: [{ text: createPrompt(request) }] }],
           generationConfig: { responseMimeType: "application/json", temperature: 0.1 },
