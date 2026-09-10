@@ -284,6 +284,11 @@ export function submitSos(input: SubmitSosInput): Promise<SosEvent> {
   return api.post<SosEvent>('/citizen/sos', input);
 }
 
+/** Own SOS history — GET /api/citizen/sos (ownership-scoped server-side). */
+export function fetchMySosEvents(): Promise<SosEvent[]> {
+  return api.get<SosEvent[]>('/citizen/sos');
+}
+
 export interface RoutePoint {
   latitude: number;
   longitude: number;

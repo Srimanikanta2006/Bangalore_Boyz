@@ -400,6 +400,15 @@ export const HazardReportPage: React.FC = () => {
                   </>
                 )}
               </button>
+              {submittedCode && (
+                <button
+                  type="button"
+                  onClick={() => navigate('/citizen/activity')}
+                  className="w-full text-center font-label-md text-label-md text-secondary font-bold mt-1.5 underline"
+                >
+                  Track this report's status →
+                </button>
+              )}
               <p className="text-center font-label-sm text-label-sm text-on-surface-variant mt-1.5 pb-0.5">
                 Creates a tracked incident for operator review (ClimateShield Ops Center)
               </p>

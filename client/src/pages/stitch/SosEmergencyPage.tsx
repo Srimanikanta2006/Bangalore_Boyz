@@ -398,11 +398,23 @@ export const SosEmergencyPage: React.FC = () => {
               </button>
             </div>
 
-            <div className="text-center py-1">
-              <span className="font-label-sm text-label-sm text-on-surface-variant font-medium">
-                Automatic distress beacon dispatch occurs after a 3-second fail-safe confirmation.
-              </span>
-            </div>
+            {isDispatched ? (
+              <div className="text-center py-1">
+                <button
+                  type="button"
+                  onClick={() => navigate('/citizen/activity')}
+                  className="font-label-md text-label-md text-secondary font-bold underline"
+                >
+                  Track this SOS's status →
+                </button>
+              </div>
+            ) : (
+              <div className="text-center py-1">
+                <span className="font-label-sm text-label-sm text-on-surface-variant font-medium">
+                  Automatic distress beacon dispatch occurs after a 3-second fail-safe confirmation.
+                </span>
+              </div>
+            )}
           </div>
         </div>
       </main>

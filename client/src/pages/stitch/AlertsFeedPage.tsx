@@ -160,14 +160,24 @@ export const AlertsFeedPage: React.FC = () => {
             <span className="font-label-sm text-label-sm uppercase tracking-wider font-semibold">
               Active Citizen Advisories
             </span>
-            <button
-              type="button"
-              onClick={refetch}
-              className="font-label-sm text-label-sm flex items-center gap-1 text-secondary font-medium hover:text-secondary-container transition-colors"
-            >
-              <span className={`material-symbols-outlined text-[14px] ${loading ? 'animate-spin' : ''}`}>sync</span>
-              <span>{loading ? 'Syncing…' : 'Refresh'}</span>
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => navigate('/citizen/activity')}
+                className="font-label-sm text-label-sm flex items-center gap-1 text-on-surface-variant font-medium hover:text-on-surface transition-colors"
+              >
+                <span className="material-symbols-outlined text-[14px]">history</span>
+                <span>My Activity</span>
+              </button>
+              <button
+                type="button"
+                onClick={refetch}
+                className="font-label-sm text-label-sm flex items-center gap-1 text-secondary font-medium hover:text-secondary-container transition-colors"
+              >
+                <span className={`material-symbols-outlined text-[14px] ${loading ? 'animate-spin' : ''}`}>sync</span>
+                <span>{loading ? 'Syncing…' : 'Refresh'}</span>
+              </button>
+            </div>
           </div>
 
           {/* Error banner */}

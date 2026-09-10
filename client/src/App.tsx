@@ -12,6 +12,7 @@ import { CitizenRouteSelectPage } from './pages/stitch/CitizenRouteSelectPage';
 import { CitizenActiveNavPage } from './pages/stitch/CitizenActiveNavPage';
 import { SosEmergencyPage } from './pages/stitch/SosEmergencyPage';
 import { HazardReportPage } from './pages/stitch/HazardReportPage';
+import { CitizenMyActivityPage } from './pages/stitch/CitizenMyActivityPage';
 
 // 3. Rescue Tactical Operations (6 Stitch Screens)
 import { RescueTacticalMapPage } from './pages/stitch/RescueTacticalMapPage';
@@ -73,6 +74,7 @@ export const App: React.FC = () => {
         <Route path="/citizen/navigate" element={Citizen(<CitizenActiveNavPage />)} />
         <Route path="/citizen/sos" element={Citizen(<SosEmergencyPage />)} />
         <Route path="/citizen/report" element={Citizen(<HazardReportPage />)} />
+        <Route path="/citizen/activity" element={Citizen(<CitizenMyActivityPage />)} />
 
         {/* 3. Rescue Tactical Routes (FIELD_OPERATOR-guarded) */}
         <Route path="/rescue/tactical" element={Field(<RescueTacticalMapPage />)} />
