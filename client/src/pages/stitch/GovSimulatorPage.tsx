@@ -1,35 +1,70 @@
 import React, { useState } from 'react';
 import { GovHqLayout } from '../../components/stitch/GovHqLayout';
-import { 
-  Play, RotateCcw, Sliders, Waves, Thermometer, 
-  Droplet, Wind, AlertTriangle, Shield, CheckCircle2, 
-  RefreshCw, TrendingUp, Layers, Compass, ArrowRight
+import {
+  Play, RotateCcw, Sliders, Waves, Thermometer,
+  AlertTriangle, CheckCircle2,
+  RefreshCw, Layers,
 } from 'lucide-react';
+import { createSimulation, type ScenarioType, type SimulationDto } from '../../services/api';
+
+type PresetId = '100-Yr Atmospheric River' | 'Heat Dome + Grid Strain' | 'Flash Surge + Dam Breach' | 'Custom Scenario Sandbox';
+
+const PRESET_TO_SCENARIO: Record<PresetId, ScenarioType> = {
+  '100-Yr Atmospheric River': 'ATMOSPHERIC_RIVER',
+  'Heat Dome + Grid Strain': 'EXTREME_HEAT',
+  'Flash Surge + Dam Breach': 'FLASH_FLOOD',
+  'Custom Scenario Sandbox': 'CUSTOM',
+};
+
+function fmtUsd(n: number): string {
+  if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `$${(n / 1_000).toFixed(0)}K`;
+  return `$${n}`;
+}
 
 export const GovSimulatorPage: React.FC = () => {
-  const [selectedPreset, setSelectedPreset] = useState('100-Yr Atmospheric River');
+  const [selectedPreset, setSelectedPreset] = useState<PresetId>('100-Yr Atmospheric River');
   const [precipRate, setPrecipRate] = useState(65);
   const [stormDuration, setStormDuration] = useState(4.5);
   const [drainageThroughput, setDrainageThroughput] = useState(75);
   const [tidalSurge, setTidalSurge] = useState(1.8);
+  const [temperature, setTemperature] = useState(41);
   const [splitPos, setSplitPos] = useState(50);
+
   const [simulating, setSimulating] = useState(false);
   const [simRunComplete, setSimRunComplete] = useState(false);
+  const [simError, setSimError] = useState<string | null>(null);
+  const [result, setResult] = useState<SimulationDto | null>(null);
 
-  const presets = [
+  const presets: { id: PresetId; icon: typeof Waves }[] = [
     { id: '100-Yr Atmospheric River', icon: Waves },
     { id: 'Heat Dome + Grid Strain', icon: Thermometer },
     { id: 'Flash Surge + Dam Breach', icon: AlertTriangle },
     { id: 'Custom Scenario Sandbox', icon: Sliders },
   ];
 
-  const handleRunSim = () => {
+  const handleRunSim = async () => {
+    if (simulating) return;
     setSimulating(true);
-    setTimeout(() => {
-      setSimulating(false);
+    setSimError(null);
+    try {
+      const scenarioType = PRESET_TO_SCENARIO[selectedPreset];
+      const data = await createSimulation({
+        scenarioType,
+        rainfallRate: scenarioType === 'EXTREME_HEAT' ? undefined : precipRate,
+        stormDuration,
+        drainageThroughput,
+        tidalSurge: scenarioType === 'EXTREME_HEAT' ? undefined : tidalSurge,
+        temperature: scenarioType === 'EXTREME_HEAT' ? temperature : undefined,
+      });
+      setResult(data);
       setSimRunComplete(true);
       setTimeout(() => setSimRunComplete(false), 3000);
-    }, 1200);
+    } catch (err) {
+      setSimError((err as Error)?.message ?? 'Simulation failed.');
+    } finally {
+      setSimulating(false);
+    }
   };
 
   const resetDefaults = () => {
@@ -37,7 +72,10 @@ export const GovSimulatorPage: React.FC = () => {
     setStormDuration(4.5);
     setDrainageThroughput(75);
     setTidalSurge(1.8);
+    setTemperature(41);
     setSplitPos(50);
+    setResult(null);
+    setSimError(null);
   };
 
   return (
@@ -54,20 +92,20 @@ export const GovSimulatorPage: React.FC = () => {
                 <h1 className="font-bold text-lg text-[#0b1c30]">
                   Predictive Risk Sandbox & Hydro-Strain Engine
                 </h1>
-                <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-[#ffdad6] text-[#93000a]">
-                  SIM-CAD V4.8 ACTIVE
+                <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-[#dcfce7] text-[#15803d]">
+                  DETERMINISTIC ENGINE
                 </span>
               </div>
               <p className="text-xs text-[#45464d] mt-0.5">
-                Stress-testing municipal resilience envelopes under compound extreme climatological events.
+                Runs the same deterministic risk engine used for live incidents against synthetic scenario parameters — real math, no AI/LLM.
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#eff4ff] text-xs font-mono text-[#0b1c30] border border-[#d3e4fe]">
-              <span className="w-2 h-2 rounded-full bg-[#0051d5]" />
-              <span>Compute: 128 Nodes (0.04s Delta)</span>
+              <span className={`w-2 h-2 rounded-full ${result ? 'bg-emerald-500' : 'bg-[#0051d5]'}`} />
+              <span>{result ? `Last run: ${result.scenarioType}` : 'No simulation run yet'}</span>
             </div>
             <button 
               type="button"
@@ -214,7 +252,33 @@ export const GovSimulatorPage: React.FC = () => {
                   <span>King Tide Vector</span>
                 </div>
               </div>
+
+              {/* Temperature (used by the EXTREME_HEAT scenario) */}
+              {selectedPreset === 'Heat Dome + Grid Strain' && (
+                <div className="bg-[#eff4ff] p-3 rounded-xl border border-[#d3e4fe] flex flex-col gap-1">
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="font-semibold text-[#0b1c30]">Peak Temperature</span>
+                    <span className="font-mono font-bold text-[#ba1a1a] bg-white px-2 py-0.5 rounded border border-[#d3e4fe]">
+                      {temperature}°C
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min="30"
+                    max="50"
+                    value={temperature}
+                    onChange={e => setTemperature(Number(e.target.value))}
+                    className="w-full h-1.5 bg-[#dce9ff] rounded-lg appearance-none cursor-pointer accent-[#ba1a1a]"
+                  />
+                </div>
+              )}
             </div>
+
+            {simError && (
+              <div className="mt-3 text-xs text-red-700 font-semibold bg-red-50 border border-red-200 rounded-lg p-2">
+                {simError}
+              </div>
+            )}
 
             {/* Run Button */}
             <div className="mt-5">
@@ -304,32 +368,54 @@ export const GovSimulatorPage: React.FC = () => {
               />
             </div>
 
-            {/* Impact Prediction Metrics Bento */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div className="p-3 bg-white rounded-2xl shadow-xs border border-[#e5eeff] text-xs">
-                <span className="text-[10px] text-[#76777d] uppercase font-bold">Predicted At-Risk</span>
-                <span className="text-xl font-extrabold text-[#ba1a1a] block mt-1">14 Facilities</span>
-                <span className="text-[10px] text-[#ba1a1a] font-semibold mt-0.5 block">+6 vs baseline</span>
-              </div>
+            {/* Impact Prediction Metrics — real simulation results, or a placeholder before the first run */}
+            {result ? (
+              <>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <div className="p-3 bg-white rounded-2xl shadow-xs border border-[#e5eeff] text-xs">
+                    <span className="text-[10px] text-[#76777d] uppercase font-bold">Affected Assets</span>
+                    <span className="text-xl font-extrabold text-[#ba1a1a] block mt-1">{result.summary.totalAffectedAssets}</span>
+                    <span className="text-[10px] text-[#76777d] font-semibold mt-0.5 block">across {result.results.length} zone(s)</span>
+                  </div>
 
-              <div className="p-3 bg-white rounded-2xl shadow-xs border border-[#e5eeff] text-xs">
-                <span className="text-[10px] text-[#76777d] uppercase font-bold">Transit Flow</span>
-                <span className="text-xl font-extrabold text-[#ea580c] block mt-1">-42% Flow</span>
-                <span className="text-[10px] text-[#ea580c] font-semibold mt-0.5 block">3 Arterials Severed</span>
-              </div>
+                  <div className="p-3 bg-white rounded-2xl shadow-xs border border-[#e5eeff] text-xs">
+                    <span className="text-[10px] text-[#76777d] uppercase font-bold">Roads Affected</span>
+                    <span className="text-xl font-extrabold text-[#ea580c] block mt-1">{result.summary.totalAffectedRoads}</span>
+                    <span className="text-[10px] text-[#76777d] font-semibold mt-0.5 block">non-operational/degraded</span>
+                  </div>
 
-              <div className="p-3 bg-white rounded-2xl shadow-xs border border-[#e5eeff] text-xs">
-                <span className="text-[10px] text-[#76777d] uppercase font-bold">Pop. Exposure</span>
-                <span className="text-xl font-extrabold text-[#0b1c30] block mt-1">24,800 Souls</span>
-                <span className="text-[10px] text-[#0051d5] font-semibold mt-0.5 block">Low ground basin</span>
-              </div>
+                  <div className="p-3 bg-white rounded-2xl shadow-xs border border-[#e5eeff] text-xs">
+                    <span className="text-[10px] text-[#76777d] uppercase font-bold">Pop. Exposure</span>
+                    <span className="text-xl font-extrabold text-[#0b1c30] block mt-1">{result.summary.totalPopulationExposed.toLocaleString()}</span>
+                    <span className="text-[10px] text-[#0051d5] font-semibold mt-0.5 block">{result.summary.worstZone ?? 'multiple zones'}</span>
+                  </div>
 
-              <div className="p-3 bg-white rounded-2xl shadow-xs border border-[#e5eeff] text-xs">
-                <span className="text-[10px] text-[#76777d] uppercase font-bold">Peak Water Level</span>
-                <span className="text-xl font-extrabold text-[#ba1a1a] block mt-1">+2.1m Depth</span>
-                <span className="text-[10px] text-[#ba1a1a] font-semibold mt-0.5 block">Underpass 4 culvert</span>
+                  <div className="p-3 bg-white rounded-2xl shadow-xs border border-[#e5eeff] text-xs">
+                    <span className="text-[10px] text-[#76777d] uppercase font-bold">Est. Damage</span>
+                    <span className="text-xl font-extrabold text-[#ba1a1a] block mt-1">{fmtUsd(result.summary.totalDamageUsd)}</span>
+                    <span className="text-[10px] text-[#ba1a1a] font-semibold mt-0.5 block">Max risk {result.summary.maxRiskScore}/100</span>
+                  </div>
+                </div>
+
+                {result.results[0]?.recommendedActions?.length > 0 && (
+                  <div className="p-4 bg-white rounded-2xl shadow-xs border border-[#e5eeff]">
+                    <span className="text-[10px] text-[#76777d] uppercase font-bold">Recommended Actions ({result.summary.worstZone ?? 'worst-hit zone'})</span>
+                    <ul className="mt-2 flex flex-col gap-1.5">
+                      {result.results[0].recommendedActions.map((action, i) => (
+                        <li key={i} className="text-xs text-[#0b1c30] flex items-start gap-2">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" />
+                          <span>{action}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="p-6 bg-white rounded-2xl shadow-xs border border-[#e5eeff] text-center text-xs text-[#76777d]">
+                Run a simulation to see real, deterministically-computed impact projections.
               </div>
-            </div>
+            )}
           </section>
         </div>
       </div>

@@ -375,3 +375,125 @@ export interface CreateTaskPayload {
 export async function createTask(payload: CreateTaskPayload): Promise<any> {
   return requestEnvelope<any>('/tasks', jsonInit('POST', payload));
 }
+
+// (f) Response Center — GET /api/response-center. Real, live-computed dispatch board.
+export interface ResponseIncidentCard {
+  id: string;
+  incidentCode: string;
+  title: string;
+  description: string | null;
+  severity: 'LOW' | 'MODERATE' | 'HIGH' | 'CRITICAL';
+  status: string;
+  type: string;
+  zoneId: string;
+  zoneName: string | null;
+  assetName: string | null;
+  reportedAt: string;
+  slaDeadline: string | null;
+  slaMinutesRemaining: number | null;
+  assignedUnits: string[];
+  taskCodes: string[];
+}
+
+export interface ResponseUnitCard {
+  id: string;
+  name: string;
+  callsign: string;
+  type: string;
+  status: string;
+  departmentId: string | null;
+  departmentName: string | null;
+  teamSize: number;
+  etaMinutes: number | null;
+  latitude: number | null;
+  longitude: number | null;
+  specialization: string | null;
+}
+
+export interface ResponseCenterData {
+  summary: {
+    activeIncidents: number;
+    critical: number;
+    high: number;
+    moderate: number;
+    unassignedIncidents: number;
+    assignedUnits: number;
+    readinessPercent: number;
+    avgResponseMinutes: number | null;
+    slaCompliancePercent: number | null;
+    targetResolutionHours: Record<string, number>;
+  };
+  severityGroups: Record<'CRITICAL' | 'HIGH' | 'MODERATE' | 'LOW', ResponseIncidentCard[]>;
+  activeIncidents: ResponseIncidentCard[];
+  unassignedIncidents: ResponseIncidentCard[];
+  availableUnits: ResponseUnitCard[];
+  telemetry: {
+    rainfallMmPerHour: number | null;
+    maxWaterDepthM: number | null;
+    maxTemperatureC: number | null;
+    maxPumpRuntimeHours: number | null;
+    maxPowerLoadPercent: number | null;
+    updatedAt: string | null;
+  };
+  hotspots: Array<{ id: string; name: string; zoneName: string | null; eventCount: number; recurrenceScore: number }>;
+}
+
+export async function fetchResponseCenter(): Promise<ResponseCenterData> {
+  return requestEnvelope<ResponseCenterData>('/response-center');
+}
+
+/** POST /api/incidents/:incidentId/dispatch { unitId } — real dispatch, transactional on the backend. */
+export async function dispatchUnitToIncident(incidentId: string, unitId: string): Promise<any> {
+  return requestEnvelope<any>(`/incidents/${encodeURIComponent(incidentId)}/dispatch`, jsonInit('POST', { unitId }));
+}
+
+// (g) Simulator — POST /api/simulations. Real deterministic scenario math (risk.service reused, no fake numbers).
+export type ScenarioType = 'ATMOSPHERIC_RIVER' | 'FLASH_FLOOD' | 'EXTREME_HEAT' | 'STORM' | 'CUSTOM';
+
+export interface CreateSimulationPayload {
+  name?: string;
+  scenarioType: ScenarioType;
+  rainfallRate?: number;
+  stormDuration?: number;
+  drainageThroughput?: number;
+  tidalSurge?: number;
+  temperature?: number;
+  zoneId?: string;
+}
+
+export interface SimulationResult {
+  id: string;
+  zoneId: string | null;
+  zoneName: string | null;
+  riskScore: number;
+  riskLevel: string;
+  affectedAssets: number;
+  affectedRoads: number;
+  estimatedPopulation: number;
+  estimatedDamage: { totalUsd: number; residentialUsd: number; infrastructureUsd: number } | null;
+  recommendedActions: string[];
+}
+
+export interface SimulationDto {
+  id: string;
+  name: string;
+  scenarioType: string;
+  status: string;
+  parameters: Record<string, unknown>;
+  createdBy: string | null;
+  createdAt: string;
+  completedAt: string | null;
+  results: SimulationResult[];
+  summary: {
+    worstZone: string | null;
+    maxRiskScore: number;
+    totalAffectedAssets: number;
+    totalAffectedRoads: number;
+    totalPopulationExposed: number;
+    totalDamageUsd: number;
+  };
+}
+
+export async function createSimulation(payload: CreateSimulationPayload): Promise<SimulationDto> {
+  return requestEnvelope<SimulationDto>('/simulations', jsonInit('POST', payload));
+}
