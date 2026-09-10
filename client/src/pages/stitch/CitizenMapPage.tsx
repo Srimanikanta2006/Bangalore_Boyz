@@ -67,6 +67,11 @@ export const CitizenMapPage: React.FC = () => {
   const safetyLabel = data ? SAFETY_LABEL[data.safety.level] : loading ? 'Assessing…' : '—';
   const corridorLabel = data ? CORRIDOR_LABEL[data.corridorStatus] : loading ? '…' : '—';
 
+  const river = data?.riverDischarge ?? null;
+  const riverLabel = river?.currentM3s != null
+    ? `River discharge ${river.currentM3s} m³/s${river.ratioToTrailingMean != null ? ` (${river.ratioToTrailingMean}x normal)` : ''}`
+    : null;
+
   const handleRecenter = () => {
     setRecenterActive(true);
     refetch();
@@ -313,6 +318,20 @@ export const CitizenMapPage: React.FC = () => {
                 <span>{aqiLabel}</span>
               </button>
             </div>
+
+            {/* Real GloFAS river-discharge signal (Open-Meteo Flood API), shown only when data exists */}
+            {riverLabel && (
+              <div className="absolute inset-x-space-md bottom-[76px] z-20 flex justify-center pointer-events-none">
+                <div
+                  className={`flex items-center gap-1.5 px-3 py-1 rounded-full backdrop-blur-xl shadow-md font-label-sm text-label-sm font-semibold ${
+                    river?.elevated ? 'bg-error-container/95 text-on-error-container' : 'bg-surface-container-lowest/90 text-on-surface-variant'
+                  }`}
+                >
+                  <span className="material-symbols-outlined text-[14px]">water</span>
+                  <span>{riverLabel}</span>
+                </div>
+              </div>
+            )}
 
             {/* FLOATING RISK-SUMMARY STRIP (Directly above Bottom Deck) */}
             <div className="absolute inset-x-space-md bottom-4 z-20 pointer-events-auto flex justify-center">

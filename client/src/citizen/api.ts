@@ -76,6 +76,17 @@ export interface CitizenInfrastructure {
   dataQuality: DataQuality;
 }
 
+export interface CitizenRiverDischarge {
+  provider: string;
+  dataQuality: DataQuality;
+  currentM3s: number | null;
+  trailingMeanM3s: number | null;
+  ratioToTrailingMean: number | null;
+  elevated: boolean;
+  sampleDays: number;
+  explanation: string;
+}
+
 export interface CitizenNearby {
   location: { latitude: number; longitude: number };
   radiusKm: number;
@@ -83,6 +94,7 @@ export interface CitizenNearby {
   ward: CitizenWard | null;
   weather: CitizenWeather;
   airQuality: CitizenAirQuality | null;
+  riverDischarge: CitizenRiverDischarge | null;
   safety: { level: SafetyLevel; score: number; riskCount: number };
   corridorStatus: CorridorStatus;
   hazards: CitizenHazard[];

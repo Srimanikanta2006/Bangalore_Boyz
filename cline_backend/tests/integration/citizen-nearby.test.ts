@@ -3,6 +3,7 @@ import request from 'supertest';
 import { app, auth, dbReady, login } from '../helpers';
 import { clearWeatherCache } from '../../src/services/weather.service';
 import { clearAirQualityCache } from '../../src/services/airQuality.service';
+import { clearFloodCache } from '../../src/services/flood.service';
 
 const ready = await dbReady();
 
@@ -33,12 +34,14 @@ function stubProviders() {
     },
   };
   const aqiPayload = { current: { time: now - 120, us_aqi: 64, pm2_5: 18.2, pm10: 40.1, nitrogen_dioxide: 12, ozone: 30 } };
+  // 29 days at 10 m3/s then a spike to 16 m3/s (1.6x trailing mean) -> elevated=true.
+  const floodPayload = { daily: { river_discharge: [...Array(29).fill(10), 16] } };
 
   vi.stubGlobal(
     'fetch',
     vi.fn(async (url: string) => {
       const u = String(url);
-      const body = u.includes('air-quality') ? aqiPayload : weatherPayload;
+      const body = u.includes('air-quality') ? aqiPayload : u.includes('flood-api') ? floodPayload : weatherPayload;
       return { ok: true, status: 200, json: async () => body };
     }),
   );
@@ -48,6 +51,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
   clearWeatherCache();
   clearAirQualityCache();
+  clearFloodCache();
 });
 
 describe.skipIf(!ready)('GET /api/citizen/nearby', () => {
@@ -74,6 +78,13 @@ describe.skipIf(!ready)('GET /api/citizen/nearby', () => {
     // Air quality from Open-Meteo.
     expect(d.airQuality?.usAqi).toBe(64);
     expect(d.airQuality?.category).toBe('Moderate');
+
+    // Real river discharge from Open-Meteo Flood API (GloFAS) - elevated per the stubbed spike.
+    expect(d.riverDischarge?.provider).toBe('Open-Meteo Flood (GloFAS)');
+    expect(d.riverDischarge?.currentM3s).toBe(16);
+    expect(d.riverDischarge?.elevated).toBe(true);
+    // Elevated discharge is factored into the safety risk count alongside the hazard/weather drivers.
+    expect(d.safety.riskCount).toBeGreaterThanOrEqual(3);
 
     // Active seed hazard surfaced with dataQuality.
     expect(Array.isArray(d.hazards)).toBe(true);

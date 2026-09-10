@@ -2,6 +2,7 @@ import type { Severity } from '@prisma/client';
 import { prisma } from '../db/prisma';
 import { getCurrentWeather, type NormalizedWeather, type WeatherFetcher } from './weather.service';
 import { getCurrentAirQuality, type AqiFetcher } from './airQuality.service';
+import { getRiverDischarge, type FloodFetcher } from './flood.service';
 import { getZoneCascade } from './cascade.service';
 import { Errors } from '../utils/errors';
 import { haversineKm } from '../utils/geo';
@@ -47,9 +48,16 @@ export function computeSafety(input: {
   hazardSeverities: Severity[];
   weatherOverall: Severity | null;
   zoneRiskLevel?: string | null;
+  /** Real GloFAS river-discharge signal: true when current discharge is >=1.3x its trailing 30-day average. */
+  floodElevated?: boolean;
 }): { level: SafetyLevel; score: number; riskCount: number } {
-  const rank = worstRank([...input.hazardSeverities, input.weatherOverall, asSeverity(input.zoneRiskLevel)]);
-  const riskCount = input.hazardSeverities.length + (input.weatherOverall ? 1 : 0);
+  const rank = worstRank([
+    ...input.hazardSeverities,
+    input.weatherOverall,
+    asSeverity(input.zoneRiskLevel),
+    input.floodElevated ? 'MODERATE' : null,
+  ]);
+  const riskCount = input.hazardSeverities.length + (input.weatherOverall ? 1 : 0) + (input.floodElevated ? 1 : 0);
   return { level: SAFETY_BY_RANK[rank], score: SCORE_BY_RANK[rank], riskCount };
 }
 
@@ -114,7 +122,7 @@ export interface CitizenNearbyQuery {
 
 export async function getCitizenNearby(
   input: CitizenNearbyQuery,
-  fetchers: { weather?: WeatherFetcher; airQuality?: AqiFetcher } = {},
+  fetchers: { weather?: WeatherFetcher; airQuality?: AqiFetcher; flood?: FloodFetcher } = {},
 ) {
   const latitude = input.latitude;
   const longitude = input.longitude;
@@ -122,10 +130,11 @@ export async function getCitizenNearby(
   const limit = Math.min(50, Math.max(1, input.limit ?? 15));
   const now = Date.now();
 
-  // Live environment (weather is authoritative; AQI is best-effort/nullable).
-  const [weather, airQuality] = await Promise.all([
+  // Live environment (weather is authoritative; AQI + river discharge are best-effort/nullable).
+  const [weather, airQuality, riverDischarge] = await Promise.all([
     getCurrentWeather({ latitude, longitude, forecastHours: 6 }, fetchers.weather),
     getCurrentAirQuality({ latitude, longitude }, fetchers.airQuality),
+    getRiverDischarge({ latitude, longitude }, fetchers.flood),
   ]);
 
   const zoneLite = weather.zone;
@@ -193,12 +202,14 @@ export async function getCitizenNearby(
 
   const floodActive =
     activeHazards.some((h) => FLOOD_HAZARD_TYPES.includes(h.type)) ||
-    weather.derivedAssessment.floodSeverity != null;
+    weather.derivedAssessment.floodSeverity != null ||
+    !!riverDischarge?.elevated;
 
   const safety = computeSafety({
     hazardSeverities: activeHazards.map((h) => h.severity),
     weatherOverall: weather.derivedAssessment.overallSeverity,
     zoneRiskLevel: zone?.riskLevel ?? null,
+    floodElevated: riverDischarge?.elevated ?? false,
   });
 
   return {
@@ -217,6 +228,7 @@ export async function getCitizenNearby(
       : null,
     weather: sanitizeWeather(weather),
     airQuality,
+    riverDischarge,
     safety,
     corridorStatus: computeCorridorStatus(roads, floodActive),
     hazards,
