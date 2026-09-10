@@ -1,18 +1,28 @@
 [
   {
-    "id": "HS-2024",
-    "name": "District 4 Low-Lying Basin",
-    "historicalIncidents": 42,
-    "vulnerabilityIndex": "9.2/10",
-    "primaryHazard": "Flash Flooding",
-    "lastMajorEvent": "August 2025"
+    "hotspotId": "HS-D07-heavy_rainfall",
+    "assetId": "D07",
+    "hazardType": "heavy_rainfall",
+    "incidentCount": 7,
+    "recurrenceScore": 86,
+    "severityScore": 82,
+    "lastIncidentAt": "2026-08-14T12:15:00Z",
+    "trend": "increasing",
+    "confidence": 0.91,
+    "explanation": "Drain D07 has experienced repeated heavy-rainfall incidents causing recurring downstream inundation along arterial Road R24.",
+    "recommendedLongTermAction": "drainage_capacity_upgrade"
   },
   {
-    "id": "HS-2025",
-    "name": "East Industrial Canal Bank",
-    "historicalIncidents": 28,
-    "vulnerabilityIndex": "8.1/10",
-    "primaryHazard": "Chemical Runoff & Surges",
-    "lastMajorEvent": "November 2025"
+    "hotspotId": "HS-R24-urban_flood",
+    "assetId": "R24",
+    "hazardType": "urban_flood",
+    "incidentCount": 5,
+    "recurrenceScore": 74,
+    "severityScore": 79,
+    "lastIncidentAt": "2026-07-20T08:30:00Z",
+    "trend": "stable",
+    "confidence": 0.88,
+    "explanation": "Low-lying underpass segment at Road R24 floods rapidly during intense precipitation events.",
+    "recommendedLongTermAction": "elevated_causeway_retrofitted"
   }
 ]

@@ -1,0 +1,60 @@
+{
+  "incidentId": "INC-001",
+  "situationSummary": "Heavy rainfall has exceeded local drainage threshold at Drain D07, causing high waterlogging risk that threatens Road R24 and ambulance access to Hospital A.",
+  "causalChains": [
+    {
+      "path": [
+        "D07",
+        "R24",
+        "Hospital-A"
+      ],
+      "explanation": "Drain D07 capacity surge overflows onto Road R24 arterial corridor, cutting off primary ambulance access to Hospital A within 25 minutes.",
+      "evidence": [
+        "Rainfall threshold exceeded (42mm/h)",
+        "Drain D07 capacity risk is high (94% saturation)",
+        "Road R24 is downstream of D07",
+        "Hospital A depends on R24 for emergency vehicle access"
+      ],
+      "impact": "Impaired emergency medical response for 3,400+ residents"
+    }
+  ],
+  "keyImpacts": [
+    {
+      "assetId": "D07",
+      "impact": "Inundation Overflow",
+      "severity": "high"
+    },
+    {
+      "assetId": "R24",
+      "impact": "Submerged Arterial Segment",
+      "severity": "high"
+    },
+    {
+      "assetId": "Hospital-A",
+      "impact": "Ambulance Access Compromised",
+      "severity": "critical"
+    }
+  ],
+  "recommendedActions": [
+    {
+      "actionId": "dispatch_drainage_team",
+      "targetAssetId": "D07",
+      "priority": "critical",
+      "reason": "Reduce the risk of waterlogging at Drain D07 before it affects Road R24."
+    }
+  ],
+  "uncertainties": [
+    "Secondary convective storm cell trajectory \u00b115 mins"
+  ],
+  "dataFreshness": {
+    "overall": "fresh"
+  },
+  "roleSpecificBriefings": {
+    "operator": "EOC Director Action Required: Approve dispatch of Tactical Unit Bravo-4 to Drain D07.",
+    "fieldTeam": "Tactical Unit Bravo-4: Deploy mobile pumps to Drain D07.",
+    "facilityManager": "Hospital A Ops: Prepare emergency access bypass via Gate 3."
+  },
+  "confidence": 0.88,
+  "explanation": "Rainfall intensity at 42mm/h exceeds Drain D07 design parameters, causing rapid cascade along Road R24 to Hospital A.",
+  "impactSummary": "3 critical infrastructure assets affected; 25-minute ETA to critical breach point."
+}

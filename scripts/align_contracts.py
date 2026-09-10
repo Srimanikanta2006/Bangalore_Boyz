@@ -1,4 +1,142 @@
-/**
+import os
+import json
+import re
+
+BASE_DIR = r"c:\Users\nidhi\OneDrive\Desktop\swarandra\Bangalore_Boyz"
+FRONTEND_DIR = os.path.join(BASE_DIR, "frontend")
+DATA_DIR = os.path.join(FRONTEND_DIR, "data")
+SHARED_DIR = os.path.join(FRONTEND_DIR, "shared")
+
+os.makedirs(DATA_DIR, exist_ok=True)
+
+# 1. Create data/explain-response.json (Contract 2)
+explain_payload = {
+  "incidentId": "INC-001",
+  "situationSummary": "Heavy rainfall has exceeded local drainage threshold at Drain D07, causing high waterlogging risk that threatens Road R24 and ambulance access to Hospital A.",
+  "causalChains": [
+    {
+      "path": ["D07", "R24", "Hospital-A"],
+      "explanation": "Drain D07 capacity surge overflows onto Road R24 arterial corridor, cutting off primary ambulance access to Hospital A within 25 minutes.",
+      "evidence": [
+        "Rainfall threshold exceeded (42mm/h)",
+        "Drain D07 capacity risk is high (94% saturation)",
+        "Road R24 is downstream of D07",
+        "Hospital A depends on R24 for emergency vehicle access"
+      ],
+      "impact": "Impaired emergency medical response for 3,400+ residents"
+    }
+  ],
+  "keyImpacts": [
+    { "assetId": "D07", "impact": "Inundation Overflow", "severity": "high" },
+    { "assetId": "R24", "impact": "Submerged Arterial Segment", "severity": "high" },
+    { "assetId": "Hospital-A", "impact": "Ambulance Access Compromised", "severity": "critical" }
+  ],
+  "recommendedActions": [
+    {
+      "actionId": "dispatch_drainage_team",
+      "targetAssetId": "D07",
+      "priority": "critical",
+      "reason": "Reduce the risk of waterlogging at Drain D07 before it affects Road R24."
+    }
+  ],
+  "uncertainties": [
+    "Secondary convective storm cell trajectory ±15 mins"
+  ],
+  "dataFreshness": { "overall": "fresh" },
+  "roleSpecificBriefings": {
+    "operator": "EOC Director Action Required: Approve dispatch of Tactical Unit Bravo-4 to Drain D07.",
+    "fieldTeam": "Tactical Unit Bravo-4: Deploy mobile pumps to Drain D07.",
+    "facilityManager": "Hospital A Ops: Prepare emergency access bypass via Gate 3."
+  },
+  "confidence": 0.88,
+  "explanation": "Rainfall intensity at 42mm/h exceeds Drain D07 design parameters, causing rapid cascade along Road R24 to Hospital A.",
+  "impactSummary": "3 critical infrastructure assets affected; 25-minute ETA to critical breach point."
+}
+
+with open(os.path.join(DATA_DIR, "explain-response.json"), 'w', encoding='utf-8') as f:
+    json.dump(explain_payload, f, indent=2)
+
+print("Saved frontend/data/explain-response.json")
+
+# 2. Create data/tasks-mock-response.json (Contract 3 Response)
+task_response = {
+  "taskId": "TSK-4091",
+  "incidentId": "INC-001",
+  "actionId": "dispatch_drainage_team",
+  "targetAssetId": "D07",
+  "priority": "critical",
+  "status": "created",
+  "assignedTeam": "Tactical Unit Bravo-4",
+  "timestamp": "2026-09-10T16:50:00Z",
+  "message": "Task successfully created and routed to P1 Task Dispatch engine."
+}
+
+with open(os.path.join(DATA_DIR, "tasks-mock-response.json"), 'w', encoding='utf-8') as f:
+    json.dump(task_response, f, indent=2)
+
+print("Saved frontend/data/tasks-mock-response.json")
+
+# 3. Update data/hotspots.json (Contract 4)
+hotspots_payload = [
+  {
+    "hotspotId": "HS-D07-heavy_rainfall",
+    "assetId": "D07",
+    "hazardType": "heavy_rainfall",
+    "incidentCount": 7,
+    "recurrenceScore": 86,
+    "severityScore": 82,
+    "lastIncidentAt": "2026-08-14T12:15:00Z",
+    "trend": "increasing",
+    "confidence": 0.91,
+    "explanation": "Drain D07 has experienced repeated heavy-rainfall incidents causing recurring downstream inundation along arterial Road R24.",
+    "recommendedLongTermAction": "drainage_capacity_upgrade"
+  },
+  {
+    "hotspotId": "HS-R24-urban_flood",
+    "assetId": "R24",
+    "hazardType": "urban_flood",
+    "incidentCount": 5,
+    "recurrenceScore": 74,
+    "severityScore": 79,
+    "lastIncidentAt": "2026-07-20T08:30:00Z",
+    "trend": "stable",
+    "confidence": 0.88,
+    "explanation": "Low-lying underpass segment at Road R24 floods rapidly during intense precipitation events.",
+    "recommendedLongTermAction": "elevated_causeway_retrofitted"
+  }
+]
+
+with open(os.path.join(DATA_DIR, "hotspots.json"), 'w', encoding='utf-8') as f:
+    json.dump(hotspots_payload, f, indent=2)
+
+print("Saved frontend/data/hotspots.json")
+
+# 4. Update shared/config.js
+config_js_content = """/**
+ * ClimateShield Application Configuration
+ *
+ * P1/P2/P4 Integration Contract Endpoint Specification.
+ * Switch DATA_MODE to "live" when real P1/P2/P4 APIs are online.
+ * Zero UI code changes required — only backend URL mappings change!
+ */
+window.CONFIG = {
+  DATA_MODE: "mock", // "mock" | "live"
+  API_BASE_URL: "https://api.climateshield.org/v1",
+  EXPLAIN_API_URL: "/api/explain",
+  TASK_API_URL: "/api/tasks",
+  HOTSPOTS_API_URL: "/api/hotspots",
+  GRAPH_API_URL: "/api/graph",
+  POLL_INTERVAL_MS: 15000
+};
+"""
+
+with open(os.path.join(SHARED_DIR, "config.js"), 'w', encoding='utf-8') as f:
+    f.write(config_js_content)
+
+print("Updated frontend/shared/config.js")
+
+# 5. Update shared/app.js to support Contract 2 rendering & Contract 3 Operator Approval Flow
+app_js_content = """/**
  * ClimateShield Application Core Engine
  * Handles navigation partial injection, sliding sidebar drawer toggle,
  * Contract 2 P4 AI explanation binding, Contract 3 Operator Approval,
@@ -15,7 +153,7 @@
   });
 
   function getBasePath() {
-    const path = window.location.pathname.replace(/\\/g, '/');
+    const path = window.location.pathname.replace(/\\\\/g, '/');
     if (path.includes('/citizen/') || path.includes('/government/') || path.includes('/rescue/')) {
       return '../';
     }
@@ -40,7 +178,7 @@
   }
 
   function activateCurrentRoleNav() {
-    const path = window.location.pathname.replace(/\\/g, '/');
+    const path = window.location.pathname.replace(/\\\\/g, '/');
 
     // Hide all role navs by default
     document.querySelectorAll(".role-nav").forEach(el => el.classList.add("hidden"));
@@ -247,3 +385,10 @@
     });
   }
 })();
+"""
+
+with open(os.path.join(SHARED_DIR, "app.js"), 'w', encoding='utf-8') as f:
+    f.write(app_js_content)
+
+print("Updated frontend/shared/app.js with Contract 2 & Contract 3 approval flow")
+

@@ -1,0 +1,11 @@
+{
+  "taskId": "TSK-4091",
+  "incidentId": "INC-001",
+  "actionId": "dispatch_drainage_team",
+  "targetAssetId": "D07",
+  "priority": "critical",
+  "status": "created",
+  "assignedTeam": "Tactical Unit Bravo-4",
+  "timestamp": "2026-09-10T16:50:00Z",
+  "message": "Task successfully created and routed to P1 Task Dispatch engine."
+}
