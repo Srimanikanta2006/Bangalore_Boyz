@@ -20,6 +20,10 @@ const envSchema = z.object({
   WEATHER_API_KEY: z.string().default(''),
   WEATHER_CACHE_SECONDS: z.coerce.number().int().min(0).max(86400).default(300),
   WEATHER_POLL_INTERVAL_MINUTES: z.coerce.number().int().min(0).max(1440).default(10),
+  // --- P4 AI explanation layer (Google Gemini) ---
+  // Leave GEMINI_API_KEY blank to run the deterministic fallback (no external call).
+  GEMINI_API_KEY: z.string().default(''),
+  GEMINI_MODEL: z.string().default('gemini-2.5-flash'),
 });
 
 const parsed = envSchema.safeParse(process.env);

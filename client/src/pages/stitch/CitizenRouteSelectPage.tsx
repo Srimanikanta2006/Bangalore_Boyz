@@ -6,7 +6,7 @@ import { Mock } from '../../components/stitch/Mock';
 
 type RouteId = 'A' | 'B' | 'C';
 
-export const RouteSelectPage: React.FC = () => {
+export const CitizenRouteSelectPage: React.FC = () => {
   const navigate = useNavigate();
   const { incidentId } = useParams<{ incidentId: string }>();
 
@@ -15,7 +15,7 @@ export const RouteSelectPage: React.FC = () => {
   const [isEndpointsSwapped, setIsEndpointsSwapped] = useState(false);
 
   const handleStartNav = () => {
-    navigate(`/rescue/navigate/route-${selectedRoute.toLowerCase()}`);
+    navigate('/citizen/navigate');
   };
 
   return (
@@ -23,9 +23,9 @@ export const RouteSelectPage: React.FC = () => {
       {/* Header with Back Button */}
       <Header
         title="Route Select"
-        subtitle="ClimateShield Rescue"
+        subtitle="ClimateShield Citizen"
         hasBack={true}
-        onBack={() => navigate(-1)}
+        onBack={() => navigate('/citizen/map')}
       />
 
       {/* Main Viewport */}

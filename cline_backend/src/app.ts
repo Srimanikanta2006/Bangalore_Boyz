@@ -24,6 +24,7 @@ import cascadeRoutes from './routes/cascade.routes';
 import auditRoutes from './routes/audit.routes';
 import weatherRoutes from './routes/weather.routes';
 import locationRoutes from './routes/location.routes';
+import explainRoutes from './routes/explain.routes';
 
 export function createApp() {
   const app = express();
@@ -63,6 +64,7 @@ export function createApp() {
   app.use('/api', auditRoutes);
   app.use('/api', weatherRoutes);
   app.use('/api', locationRoutes);
+  app.use('/api', explainRoutes);
 
   // --- 404 + central error handler (must be last) ---
   app.use(notFoundHandler);

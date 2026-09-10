@@ -5,7 +5,7 @@ import { BottomNav } from '../../components/stitch/BottomNav';
 import { SosFab } from '../../components/stitch/SosFab';
 import { Mock } from '../../components/stitch/Mock';
 
-type RoleType = 'citizen' | 'government' | 'rescue';
+type RoleType = 'citizen' | 'government' | 'gov-field' | 'rescue';
 
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
@@ -14,21 +14,26 @@ export const LoginPage: React.FC = () => {
   const [password, setPassword] = useState('••••••••••••');
   const [showPassword, setShowPassword] = useState(false);
 
-  const roleConfigs = {
+  const roleConfigs: Record<RoleType, { label: string; icon: string; target: string }> = {
     citizen: {
       label: 'Launch Citizen Experience',
       icon: 'shield',
       target: '/citizen/map',
     },
     government: {
-      label: 'Enter Command Center Preview',
+      label: 'Enter Government HQ Console',
       icon: 'dashboard',
-      target: '/console',
+      target: '/gov/overview',
+    },
+    'gov-field': {
+      label: 'Enter Government Mobile Field',
+      icon: 'near_me',
+      target: '/gov/mobile/map',
     },
     rescue: {
       label: 'Engage Tactical Rescue Mesh',
       icon: 'emergency_share',
-      target: '/rescue/incident/flood-1',
+      target: '/rescue/tactical',
     },
   };
 
@@ -39,7 +44,7 @@ export const LoginPage: React.FC = () => {
   return (
     <div className="bg-surface text-on-surface font-body-md text-body-md min-h-screen flex flex-col relative w-full max-w-[440px] mx-auto shadow-2xl border-x border-outline-variant/20">
       {/* Header */}
-      <Header title="Map" subtitle="ClimateShield Citizen" />
+      <Header title="Authentication" subtitle="ClimateShield Platform" />
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col relative w-full pt-16 pb-24 bg-surface">
@@ -253,7 +258,51 @@ export const LoginPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Role 3: Rescue Team */}
+              {/* Role 3: Government Mobile / Field Operations */}
+              <div
+                className={`role-card relative flex items-start gap-3 p-3 rounded-xl cursor-pointer transition-all shadow-sm ${
+                  selectedRole === 'gov-field'
+                    ? 'bg-surface-container-lowest'
+                    : 'bg-surface-container opacity-90'
+                }`}
+                data-role="gov-field"
+                onClick={() => setSelectedRole('gov-field')}
+              >
+                <div
+                  className={`role-icon-box w-10 h-10 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${
+                    selectedRole === 'gov-field'
+                      ? 'bg-secondary-container text-on-secondary-container'
+                      : 'bg-surface-container-highest text-on-surface'
+                  }`}
+                >
+                  <span
+                    className="material-symbols-outlined text-[20px]"
+                    style={selectedRole === 'gov-field' ? { fontVariationSettings: "'FILL' 1" } : undefined}
+                  >
+                    near_me
+                  </span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-1">
+                    <h4 className="font-title-lg text-title-lg text-on-surface font-bold truncate">
+                      Government Mobile / Field
+                    </h4>
+                    {selectedRole === 'gov-field' && (
+                      <span className="role-badge font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-semibold shrink-0">
+                        Selected
+                      </span>
+                    )}
+                  </div>
+                  <span className="font-code-sm text-code-sm text-on-surface-variant block font-semibold mb-0.5">
+                    Field Triage &amp; Deployment
+                  </span>
+                  <p className="font-body-sm text-body-sm text-on-surface-variant line-clamp-2">
+                    Rapid mobile incident response, asset telemetry, flood barrier deployment, and DPW tasks.
+                  </p>
+                </div>
+              </div>
+
+              {/* Role 4: Rescue Team */}
               <div
                 className={`role-card relative flex items-start gap-3 p-3 rounded-xl cursor-pointer transition-all shadow-sm ${
                   selectedRole === 'rescue'
