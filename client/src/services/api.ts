@@ -497,3 +497,57 @@ export interface SimulationDto {
 export async function createSimulation(payload: CreateSimulationPayload): Promise<SimulationDto> {
   return requestEnvelope<SimulationDto>('/simulations', jsonInit('POST', payload));
 }
+
+// (h) Tasks — real Task/Incident/ResponseUnit data (Rescue + Government Mobile pages).
+export type TaskStatusValue = 'ASSIGNED' | 'ACKNOWLEDGED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+
+export interface TaskDto {
+  id: string;
+  taskCode: string;
+  title: string;
+  description: string | null;
+  status: TaskStatusValue;
+  priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  incident: { id: string; incidentCode: string; title: string; severity: string; status: string } | null;
+  asset: { id: string; assetCode: string; name: string; type: string; operationalStatus: string } | null;
+  assignedUnit: { id: string; callsign: string; name: string; type: string; status: string; departmentName: string | null } | null;
+  assignedDepartment: { id: string; name: string } | null;
+  createdByName: string | null;
+  slaDeadline: string | null;
+  slaMinutesRemaining: number | null;
+  createdAt: string;
+  acknowledgedAt: string | null;
+  startedAt: string | null;
+  completedAt: string | null;
+  verifiedAt: string | null;
+}
+
+export interface TaskHistoryEntry {
+  id: string;
+  fromStatus: string | null;
+  toStatus: string;
+  note: string | null;
+  createdAt: string;
+  changedBy: { id: string; name: string; role: string } | null;
+}
+
+export async function fetchFieldTasks(query: { status?: TaskStatusValue; priority?: string; limit?: number } = {}): Promise<{ items: TaskDto[]; pagination: unknown }> {
+  const params = new URLSearchParams();
+  if (query.status) params.set('status', query.status);
+  if (query.priority) params.set('priority', query.priority);
+  params.set('limit', String(query.limit ?? 50));
+  return requestEnvelope<{ items: TaskDto[]; pagination: unknown }>(`/tasks?${params.toString()}`);
+}
+
+export async function fetchTaskDetail(idOrCode: string): Promise<TaskDto & { history: TaskHistoryEntry[] }> {
+  return requestEnvelope<TaskDto & { history: TaskHistoryEntry[] }>(`/tasks/${encodeURIComponent(idOrCode)}`);
+}
+
+export async function updateFieldTaskStatus(idOrCode: string, status: TaskStatusValue, note?: string): Promise<any> {
+  return requestEnvelope<any>(`/tasks/${encodeURIComponent(idOrCode)}/status`, jsonInit('PATCH', { status, note }));
+}
+
+// (i) Incident cascade (reused by Rescue Hazard Detail — real risk/cascade for the mission's incident).
+export async function fetchIncidentCascade(incidentId: string): Promise<any> {
+  return requestEnvelope<any>(`/incidents/${encodeURIComponent(incidentId)}/cascade`);
+}
