@@ -203,6 +203,7 @@ Integration suites auto-skip if no database is reachable. Run `npx prisma db see
 
 ## Frontend integration
 
+- **Postman**: import `postman/ClimateShield.postman_collection.json` — 54 ready-to-fire requests in 15 folders. The **Login** request auto-saves the JWT to `{{token}}` (used by every other request), and Dispatch/Create-task/List-simulations/List-hotspots auto-save ids (`{{taskCode}}`, `{{simulationId}}`, `{{hotspotId}}`) so the whole collection works in sequence.
 - Base URL: `http://localhost:<PORT>/api`
 - Attach `Authorization: Bearer <token>` from `POST /api/auth/login` to every call except `/api/health` and `/api/auth/login`
 - All success responses: `{ "success": true, "data": ... }`; lists use `{ items, pagination }`

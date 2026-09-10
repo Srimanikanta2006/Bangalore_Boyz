@@ -1,0 +1,631 @@
+{
+  "info": {
+    "_postman_id": "climateshield-gov-api",
+    "name": "ClimateShield Backend API (Government Command Center)",
+    "description": "ClimateShield REST API. DEMO DATA NOTICE: every seeded coordinate/measurement/event is SYNTHETIC_DEMO. HOW TO USE: 1) Set 'baseUrl' (default http://localhost:4000). 2) Run 'Login (government operator)' FIRST - it auto-saves the JWT to {{token}}; every other request uses it automatically. 3) 'Dispatch' auto-saves the created task code to {{taskCode}}; 'Create task', 'List simulations' and 'List hotspots' auto-save ids too. Full contracts: cline_backend/docs/API.md",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:4000" },
+    { "key": "email", "value": "government@climateshield.demo" },
+    { "key": "password", "value": "DemoGov@2024" },
+    { "key": "token", "value": "" },
+    { "key": "taskCode", "value": "TASK-001" },
+    { "key": "taskId", "value": "" },
+    { "key": "simulationId", "value": "" },
+    { "key": "hotspotId", "value": "" }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+  },
+  "item": [
+    {
+      "name": "01 Auth & Health",
+      "item": [
+        {
+          "name": "Login (government operator) - RUN FIRST",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('Login OK', () => pm.response.to.have.status(200));",
+                  "if (body.data && body.data.token) { pm.collectionVariables.set('token', body.data.token); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}" },
+            "url": "{{baseUrl}}/api/auth/login",
+            "description": "Public, rate-limited (20 per 15 min). Auto-saves JWT to {{token}}. Demo accounts (password in collection variables): government@ / dispatcher@ / admin@ / field@ / analyst@climateshield.demo"
+          }
+        },
+        {
+          "name": "Current session user",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/auth/me", "description": "Returns the SafeUser for the token (never passwordHash)." }
+        },
+        {
+          "name": "Health (real DB probe)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": "{{baseUrl}}/api/health",
+            "description": "Returns { status: ok, database: connected, timestamp }. 503 when PostgreSQL is down."
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 Overview",
+      "item": [
+        {
+          "name": "Government overview metrics",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/government/overview",
+            "description": "Overview dashboard: resilienceIndex/Level + trend, activeThreats, monitoredZones, criticalInfrastructure{total,compromised,degraded}, mobility{index,status,blockedRoads}, grid{status,loadPercent}, precipitation, heat, activeIncidents, criticalIncidents, resourceReadiness, recentCriticalIncidents[], activeHazards[]. All computed from PostgreSQL (dataQuality: SYNTHETIC_DEMO)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 Incidents",
+      "item": [
+        {
+          "name": "List incidents",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/incidents",
+            "description": "Query: page, limit, severity, status, type, zoneId, hazardId, search. Example: /api/incidents?severity=CRITICAL&status=NEW&page=1&limit=20"
+          }
+        },
+        {
+          "name": "Incident detail (INC-204)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/incidents/INC-204",
+            "description": "Accepts id or incidentCode. Returns incident (severity, zone, hazard, primaryAsset, SLA + slaMinutesRemaining, assignedUnits) + cascade{rootAsset, baseRisk, nodes[]} + availableUnits[]. Everything the detail drawer and Assign Team button need."
+          }
+        },
+        {
+          "name": "Incident cascade",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/incidents/INC-204/cascade",
+            "description": "Computed dependency-cascade: DRAIN-07 -> RD-24 -> GATE-B -> HOSP-01 with impactType + impactScore per depth."
+          }
+        },
+        {
+          "name": "Create incident",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"title\": \"Sinkhole reported on Riverside service lane\",\n  \"description\": \"Synthetic demo incident created from Postman.\",\n  \"type\": \"ROAD_BLOCKAGE\",\n  \"severity\": \"HIGH\",\n  \"zoneId\": \"zone_rc\",\n  \"primaryAssetId\": \"asset_pump_02\"\n}" },
+            "url": "{{baseUrl}}/api/incidents",
+            "description": "GOV roles (GOVERNMENT_OPERATOR/DISPATCHER/ADMIN). Backend assigns INC-### code, status NEW, SLA from severity (CRITICAL 2h / HIGH 4h / MODERATE 8h / LOW 24h), computes + persists cascade."
+          }
+        },
+        {
+          "name": "Update incident",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"description\": \"Updated from Postman (synthetic demo).\"\n}" },
+            "url": "{{baseUrl}}/api/incidents/INC-201",
+            "description": "GOV. Optional fields: title, description, severity, hazardId (nullable), primaryAssetId (nullable)."
+          }
+        },
+        {
+          "name": "Update incident status",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"ACKNOWLEDGED\",\n  \"note\": \"Acknowledged from Postman\"\n}" },
+            "url": "{{baseUrl}}/api/incidents/INC-201/status",
+            "description": "GOV. Valid transitions: NEW->ACKNOWLEDGED|IN_PROGRESS, ACKNOWLEDGED->IN_PROGRESS|RESOLVED, IN_PROGRESS->RESOLVED, RESOLVED->CLOSED. Invalid -> 422 INVALID_STATUS_TRANSITION."
+          }
+        },
+        {
+          "name": "DISPATCH unit to incident (core workflow)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('Dispatch created', () => pm.response.to.have.status(201));",
+                  "if (body.data && body.data.task) {",
+                  "  pm.collectionVariables.set('taskCode', body.data.task.taskCode);",
+                  "  pm.collectionVariables.set('taskId', body.data.task.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"unitId\": \"unit_pump_1\"\n}" },
+            "url": "{{baseUrl}}/api/incidents/INC-204/dispatch",
+            "description": "GOV roles only. Fully transactional: creates TASK-### (priority from incident severity), assigns unit, TaskStatusHistory + AuditLog, auto-acknowledges a NEW incident. Auto-saves the new task code to {{taskCode}}. Errors: 422 INCIDENT_NOT_ACTIVE, 409 DUPLICATE_DISPATCH (same unit+incident), 409 UNIT_NOT_AVAILABLE, 404s."
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 Response Center",
+      "item": [
+        {
+          "name": "Response Center board",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/response-center",
+            "description": "Dispatch board: summary{activeIncidents, critical/high/moderate, unassignedIncidents, assignedUnits, readinessPercent, avgResponseMinutes, slaCompliancePercent, targetResolutionHours}, severityGroups{CRITICAL,HIGH,MODERATE,LOW}, activeIncidents[], unassignedIncidents[], availableUnits[], telemetry summary, hotspots[]."
+          }
+        },
+        {
+          "name": "Create response plan (Zone Detail)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/zones/EB/response-plan",
+            "description": "GOV roles. No body needed. Deterministic PROPOSED-only plan (status: PROPOSED, nothing auto-executed): riskScore, priority, etaMinutes, affectedAssets, recommendedActions[], recommendedUnits[], cascadeSummary[]. Accepts zone id or code."
+          }
+        }
+      ]
+    },
+    {
+      "name": "05 Tasks",
+      "item": [
+        {
+          "name": "List tasks",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/tasks",
+            "description": "Query: page, limit, status, priority, incidentId, assignedUnitId, assetId, assignedDepartmentId. Example: /api/tasks?status=ASSIGNED"
+          }
+        },
+        {
+          "name": "Task detail + history",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/tasks/{{taskCode}}",
+            "description": "Accepts id or taskCode (TASK-001 seeded; {{taskCode}} is auto-set by Dispatch / Create task)."
+          }
+        },
+        {
+          "name": "Create task (manual / maintenance)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body.data && body.data.task && body.data.task.taskCode) {",
+                  "  pm.collectionVariables.set('taskCode', body.data.task.taskCode);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"title\": \"Postman demo task: inspect drainage grate\",\n  \"description\": \"Synthetic demo task created from Postman.\",\n  \"assetId\": \"DRAIN-07\",\n  \"assignedDepartmentId\": \"PW\",\n  \"priority\": \"MEDIUM\"\n}" },
+            "url": "{{baseUrl}}/api/tasks",
+            "description": "GOV. incidentId (must be active), assetId, assignedUnitId (must be AVAILABLE -> becomes ASSIGNED), assignedDepartmentId, priority, slaDeadline all optional. Auto-saves new taskCode to {{taskCode}}."
+          }
+        },
+        {
+          "name": "Task status transition",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"ACKNOWLEDGED\",\n  \"note\": \"Acknowledged from Postman\"\n}" },
+            "url": "{{baseUrl}}/api/tasks/{{taskCode}}/status",
+            "description": "FIELD_OPERATOR / DISPATCHER / GOV. Edit the status field between sends and run the full chain: ASSIGNED -> ACKNOWLEDGED -> IN_PROGRESS -> COMPLETED (any status -> CANCELLED). COMPLETED/CANCELLED release the unit back to AVAILABLE. Invalid skips -> 422 INVALID_STATUS_TRANSITION. Tip: run Dispatch first, then this request 3x with each status."
+          }
+        },
+        {
+          "name": "Assign unit to task",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"unitId\": \"unit_pump_2\"\n}" },
+            "url": "{{baseUrl}}/api/tasks/{{taskCode}}/assign",
+            "description": "GOV. Only for tasks WITHOUT a unit (409 TASK_ALREADY_ASSIGNED otherwise), unit must be AVAILABLE (409 UNIT_NOT_AVAILABLE)."
+          }
+        },
+        {
+          "name": "Verify completed task",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"note\": \"Verified from Postman\"\n}" },
+            "url": "{{baseUrl}}/api/tasks/{{taskCode}}/verify",
+            "description": "GOV. Only COMPLETED tasks (422 TASK_NOT_COMPLETED), only once (409 TASK_ALREADY_VERIFIED). Sets verifiedAt + TASK_VERIFIED audit."
+          }
+        },
+        {
+          "name": "Task history",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/tasks/{{taskCode}}/history",
+            "description": "Full transition chain with actor names/roles."
+          }
+        }
+      ]
+    },
+    {
+      "name": "06 Response Units",
+      "item": [
+        {
+          "name": "List units",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/units",
+            "description": "Query: status, type, departmentId, search, page, limit. Example: /api/units?status=AVAILABLE"
+          }
+        },
+        {
+          "name": "Unit detail",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/units/unit_pump_1",
+            "description": "Accepts id or callsign (e.g. PW-DRAIN-A1)."
+          }
+        },
+        {
+          "name": "Update unit status",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"AVAILABLE\",\n  \"note\": \"Back in service\"\n}" },
+            "url": "{{baseUrl}}/api/units/unit_pump_9/status",
+            "description": "Unit state machine: AVAILABLE<->ASSIGNED/EN_ROUTE/ON_SCENE/BUSY/OFFLINE. Example flips the OFFLINE maintenance unit back to AVAILABLE. Invalid -> 422."
+          }
+        }
+      ]
+    },
+    {
+      "name": "07 Infrastructure",
+      "item": [
+        {
+          "name": "List facilities",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/infrastructure",
+            "description": "Query: facilityType, zoneId, vulnerability (min 0-100), status, criticality, search, page, limit. Examples: ?facilityType=HOSPITAL | ?vulnerability=80 | ?search=Substation | ?status=COMPROMISED. Each item includes criticality, vulnerability, operationalStatus, failoverPower, backupPower, waterProximityM, evacuationStatus, beds, bedOccupancyPercent, telemetry{}, telemetryDelayMinutes, risk{score,level}, activeIncidents, activeTasks."
+          }
+        },
+        {
+          "name": "Facility detail (DRAIN-07)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/infrastructure/DRAIN-07",
+            "description": "Accepts id or assetCode. Returns asset + zone + telemetry + risk + hazard + cascade + upstream/downstream dependencies + active tasks/incidents."
+          }
+        },
+        {
+          "name": "Facility telemetry",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/infrastructure/DRAIN-07/telemetry",
+            "description": "Query: metric (rainfall, water_depth, temperature, thermal_load, pump_runtime, power_load, occupancy, water_reserve, wind_speed), limit."
+          }
+        },
+        {
+          "name": "Facility risk assessment",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/infrastructure/DRAIN-07/risk",
+            "description": "Deterministic risk: score, level, confidence, factors[{name, contribution}], explanation, components. Persists a snapshot."
+          }
+        },
+        {
+          "name": "Facility dependencies (graph)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/infrastructure/DRAIN-07/dependencies",
+            "description": "upstream[] (what this asset depends on) + downstream[] (what depends on this asset) + cascadePreview[]."
+          }
+        },
+        {
+          "name": "Facility logs",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/infrastructure/DRAIN-07/logs",
+            "description": "Audit logs + tasks (with status history) + incidents + telemetry + risk snapshots for the facility."
+          }
+        },
+        {
+          "name": "ACTION: Assign rapid team",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"note\": \"Rapid response requested from Postman\"\n}" },
+            "url": "{{baseUrl}}/api/infrastructure/PUMP-04/assign-team",
+            "description": "GOV. Without unitId the backend auto-picks the best AVAILABLE unit by asset type (DRAIN/PUMPING -> PUMP_CREW, SUBSTATION -> UTILITY, HOSPITAL -> EMS...). Optional: { \"unitId\": \"unit_pump_2\" }. Transactional + audited. 409 NO_UNITS_AVAILABLE if none free."
+          }
+        },
+        {
+          "name": "ACTION: Assign maintenance",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"description\": \"Calibration requested from Postman\",\n  \"priority\": \"MEDIUM\"\n}" },
+            "url": "{{baseUrl}}/api/infrastructure/PUMP-02/maintenance",
+            "description": "GOV. Creates a PUBLIC_WORKS maintenance task (unassigned - dispatch a unit later via /api/tasks/:id/assign)."
+          }
+        },
+        {
+          "name": "ACTION: Reroute traffic",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"reason\": \"Deck inspection from Postman\"\n}" },
+            "url": "{{baseUrl}}/api/infrastructure/BRG-02/reroute",
+            "description": "GOV. Audited advisory with alternative routes (operational roads/bridges in the same zone)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "08 Zones & Cascade",
+      "item": [
+        {
+          "name": "List zones",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/zones",
+            "description": "Query: riskLevel, page, limit. Zone summaries with asset/hotspot counts, active hazards and active incident counts."
+          }
+        },
+        {
+          "name": "Zone detail",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/zones/zone_eb",
+            "description": "Accepts id or code (zone_eb / EB). Zone + assets + activeHazards + activeIncidents + hotspots."
+          }
+        },
+        {
+          "name": "Zone cascade (Zone Detail screen)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/zones/EB/cascade",
+            "description": "riskScore/riskLevel, riskFactors, contributingFactors, impact{blockedRoads, affectedFacilities, residents}, cascade vector (asset -> impact), impactedInfrastructure, affectedRoads, affectedFacilities, recommendedResponseActions[]."
+          }
+        }
+      ]
+    },
+    {
+      "name": "09 Hazards",
+      "item": [
+        {
+          "name": "List hazards",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/hazards",
+            "description": "Query: type, severity, status, zoneId, activeOnly, page, limit. Example: /api/hazards?activeOnly=true"
+          }
+        },
+        {
+          "name": "Hazard detail",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/hazards/hz_ff_eb",
+            "description": "Hazard + zone + linked incidents + recent risk scores."
+          }
+        },
+        {
+          "name": "Create hazard",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"type\": \"FLOOD\",\n  \"severity\": \"MODERATE\",\n  \"zoneId\": \"zone_rc\",\n  \"rainfallRate\": 25,\n  \"waterDepth\": 0.3,\n  \"source\": \"OPERATOR\"\n}" },
+            "url": "{{baseUrl}}/api/hazards",
+            "description": "GOV. Types: FLOOD, FLASH_FLOOD, EXTREME_HEAT, STORM, HIGH_WIND, DRAINAGE_OVERFLOW, POWER_FAILURE, OTHER. Optional: flowVelocity, temperature, windSpeed, durationMinutes, startedAt."
+          }
+        }
+      ]
+    },
+    {
+      "name": "10 Live Map",
+      "item": [
+        {
+          "name": "Map: assets",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/map/assets",
+            "description": "GeoJSON FeatureCollection (MapLibre-ready). Query: zoneId, assetType, status, criticality."
+          }
+        },
+        {
+          "name": "Map: hazards",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/map/hazards",
+            "description": "Query: zoneId, severity, hazardType, status."
+          }
+        },
+        {
+          "name": "Map: incidents",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/map/incidents",
+            "description": "Query: zoneId, severity, status (default: active incidents only)."
+          }
+        },
+        {
+          "name": "Map: units",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/map/units",
+            "description": "Query: status, type, departmentId (default: non-OFFLINE units)."
+          }
+        },
+        {
+          "name": "Map: GIS overlays (all layers)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/map/overlays",
+            "description": "One call for all layer toggles: floodZones, heatZones, roadClosures, criticalInfrastructure, drainageTelemetry, evacuationCorridors, incidents, units - each a FeatureCollection."
+          }
+        }
+      ]
+    },
+    {
+      "name": "11 Simulator",
+      "item": [
+        {
+          "name": "Run simulation (spec example)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"scenarioType\": \"FLASH_FLOOD\",\n  \"rainfallRate\": 65,\n  \"stormDuration\": 4.5,\n  \"drainageThroughput\": 75,\n  \"tidalSurge\": 1.8,\n  \"temperature\": 28.4\n}" },
+            "url": "{{baseUrl}}/api/simulations",
+            "description": "GOV + ANALYST. Deterministic: derives severity from parameters (rainfall x drainage throughput + tidal surge; heat/wind thresholds), runs the real risk engine per asset, persists Simulation + per-zone SimulationResult. Returns results[] {riskScore, affectedAssets, affectedRoads, estimatedPopulation, estimatedDamage{totalUsd...}, recommendedActions[]} + summary. Optional: name, zoneId (single-zone run)."
+          }
+        },
+        {
+          "name": "List simulations",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body.data && body.data.items && body.data.items[0]) {",
+                  "  pm.collectionVariables.set('simulationId', body.data.items[0].id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/simulations",
+            "description": "Query: scenarioType, status, page, limit. Auto-saves the newest simulation id to {{simulationId}} - run this before 'Simulation detail'."
+          }
+        },
+        {
+          "name": "Simulation detail",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/simulations/{{simulationId}}",
+            "description": "Single simulation with all per-zone results + summary. Run 'List simulations' first."
+          }
+        }
+      ]
+    },
+    {
+      "name": "12 Analytics",
+      "item": [
+        {
+          "name": "Analytics overview",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/analytics/overview",
+            "description": "incidentTrends (14 daily buckets), responsePerformance{avgResponseMinutes, avgCompletionMinutes, slaCompliancePercent}, incidentsBySeverity, infrastructureFailures, hazardFrequency, hotspotRecurrence, departmentPerformance, resourceUtilization."
+          }
+        }
+      ]
+    },
+    {
+      "name": "13 Historical Hotspots",
+      "item": [
+        {
+          "name": "List hotspots",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body.data && body.data.items && body.data.items[0]) {",
+                  "  pm.collectionVariables.set('hotspotId', body.data.items[0].id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/hotspots",
+            "description": "Query: hazardType, zoneId, severity (LOW/MODERATE/HIGH/CRITICAL floors), minRecurrence (0-1). Ordered by recurrenceScore desc. Auto-saves first id to {{hotspotId}}."
+          }
+        },
+        {
+          "name": "Hotspot detail",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/hotspots/{{hotspotId}}",
+            "description": "Hotspot + zone + 10 most recent related SYNTHETIC_DEMO historical events. Run 'List hotspots' first."
+          }
+        }
+      ]
+    },
+    {
+      "name": "14 Departments",
+      "item": [
+        {
+          "name": "List departments",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/departments",
+            "description": "Query: type, page, limit. Includes unitCount + activeTaskCount per department."
+          }
+        },
+        {
+          "name": "Department detail",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/departments/PW",
+            "description": "Accepts id or code (PW / EMS / FR / PD / UTL / WTR / EM). Includes users (no passwordHash) + counts."
+          }
+        },
+        {
+          "name": "Department units",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/departments/PW/units",
+            "description": "Query: status, page, limit."
+          }
+        },
+        {
+          "name": "Department readiness",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/departments/PW/readiness",
+            "description": "fleet{totalUnits, available, deployed, busy, offline, utilizationPercent, readinessPercent}, workload{activeTasks, completedTasks30d, avgCompletionMinutes, slaCompliancePercent}, posture (READY / HIGH_DEMAND / SATURATED)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "15 Audit",
+      "item": [
+        {
+          "name": "Audit trail",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/audit",
+            "description": "ADMIN + GOVERNMENT_OPERATOR only (403 otherwise). Query: action, entityType, entityId, userId, page, limit. Example: /api/audit?entityType=TASK&limit=50"
+          }
+        }
+      ]
+    }
+  ]
+}
