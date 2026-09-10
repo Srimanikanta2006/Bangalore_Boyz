@@ -1,44 +1,82 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Header } from '../../components/stitch/Header';
 import { BottomNav } from '../../components/stitch/BottomNav';
 import { SosFab } from '../../components/stitch/SosFab';
 import { Mock } from '../../components/stitch/Mock';
+import { useAuth } from '../../auth/AuthContext';
+import { homeForRole } from '../../auth/types';
+import { ApiError } from '../../lib/api';
 
 type RoleType = 'citizen' | 'government' | 'gov-field' | 'rescue';
 
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { login } = useAuth();
   const [selectedRole, setSelectedRole] = useState<RoleType>('citizen');
-  const [email, setEmail] = useState('citizen.active@climateshield.org');
-  const [password, setPassword] = useState('••••••••••••');
+  const [email, setEmail] = useState('citizen@climateshield.demo');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const roleConfigs: Record<RoleType, { label: string; icon: string; target: string }> = {
+  const roleConfigs: Record<RoleType, { label: string; icon: string; demoEmail: string | null }> = {
     citizen: {
       label: 'Launch Citizen Experience',
       icon: 'shield',
-      target: '/citizen/map',
+      demoEmail: 'citizen@climateshield.demo',
     },
     government: {
       label: 'Enter Government HQ Console',
       icon: 'dashboard',
-      target: '/gov/overview',
+      demoEmail: 'government@climateshield.demo',
     },
     'gov-field': {
       label: 'Enter Government Mobile Field',
       icon: 'near_me',
-      target: '/gov/mobile/map',
+      demoEmail: 'field@climateshield.demo',
     },
     rescue: {
       label: 'Engage Tactical Rescue Mesh',
       icon: 'emergency_share',
-      target: '/rescue/tactical',
+      demoEmail: null, // no dedicated rescue account in the backend yet
     },
   };
 
-  const handleLaunch = () => {
-    navigate(roleConfigs[selectedRole].target);
+  // Selecting a role card prefills the matching demo account email (real login).
+  const handleSelectRole = (role: RoleType) => {
+    setSelectedRole(role);
+    setError(null);
+    const demoEmail = roleConfigs[role].demoEmail;
+    if (demoEmail) setEmail(demoEmail);
+  };
+
+  const handleLaunch = async () => {
+    if (submitting) return;
+    setError(null);
+    if (!email.trim() || !password) {
+      setError('Enter your email and password to sign in.');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const user = await login(email.trim(), password);
+      // Prefer the originally-requested location when it matches the user's role.
+      const from = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname;
+      const target = from && user.role === 'CITIZEN' && from.startsWith('/citizen') ? from : homeForRole(user.role);
+      navigate(target, { replace: true });
+    } catch (err) {
+      const message =
+        err instanceof ApiError
+          ? err.code === 'INVALID_CREDENTIALS'
+            ? 'Invalid email or password.'
+            : err.message
+          : 'Sign in failed. Please try again.';
+      setError(message);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -126,7 +164,13 @@ export const LoginPage: React.FC = () => {
                   placeholder="Enter operational passcode"
                   type={showPassword ? 'text' : 'password'}
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (error) setError(null);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleLaunch();
+                  }}
                 />
                 <button
                   className="absolute right-3 text-on-surface-variant flex items-center justify-center p-1"
@@ -140,14 +184,26 @@ export const LoginPage: React.FC = () => {
               </div>
             </div>
 
+            {/* Inline error */}
+            {error && (
+              <div
+                role="alert"
+                className="flex items-start gap-2 rounded-lg bg-error-container/60 text-on-error-container px-3 py-2 font-body-sm text-body-sm"
+              >
+                <span className="material-symbols-outlined text-[18px] mt-px">error</span>
+                <span>{error}</span>
+              </div>
+            )}
+
             {/* Secondary Outline Action */}
             <button
-              className="w-full h-10 mt-1 rounded-lg bg-surface-container text-on-surface font-body-md text-body-md font-semibold flex items-center justify-center gap-1.5 active:bg-surface-container-high transition-colors"
+              className="w-full h-10 mt-1 rounded-lg bg-surface-container text-on-surface font-body-md text-body-md font-semibold flex items-center justify-center gap-1.5 active:bg-surface-container-high transition-colors disabled:opacity-60"
               type="button"
               onClick={handleLaunch}
+              disabled={submitting}
             >
               <span className="material-symbols-outlined text-[18px]">login</span>
-              <span>Verify &amp; Sign In</span>
+              <span>{submitting ? 'Signing In…' : 'Verify & Sign In'}</span>
             </button>
           </div>
 
@@ -178,7 +234,7 @@ export const LoginPage: React.FC = () => {
                     : 'bg-surface-container opacity-90'
                 }`}
                 data-role="citizen"
-                onClick={() => setSelectedRole('citizen')}
+                onClick={() => handleSelectRole('citizen')}
               >
                 <div
                   className={`role-icon-box w-10 h-10 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${
@@ -222,7 +278,7 @@ export const LoginPage: React.FC = () => {
                     : 'bg-surface-container opacity-90'
                 }`}
                 data-role="government"
-                onClick={() => setSelectedRole('government')}
+                onClick={() => handleSelectRole('government')}
               >
                 <div
                   className={`role-icon-box w-10 h-10 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${
@@ -266,7 +322,7 @@ export const LoginPage: React.FC = () => {
                     : 'bg-surface-container opacity-90'
                 }`}
                 data-role="gov-field"
-                onClick={() => setSelectedRole('gov-field')}
+                onClick={() => handleSelectRole('gov-field')}
               >
                 <div
                   className={`role-icon-box w-10 h-10 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${
@@ -310,7 +366,7 @@ export const LoginPage: React.FC = () => {
                     : 'bg-surface-container opacity-90'
                 }`}
                 data-role="rescue"
-                onClick={() => setSelectedRole('rescue')}
+                onClick={() => handleSelectRole('rescue')}
               >
                 <div
                   className={`role-icon-box w-10 h-10 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${
@@ -369,10 +425,11 @@ export const LoginPage: React.FC = () => {
           {/* Exactly ONE primary solid operational CTA button */}
           <div className="sticky bottom-0 bg-surface/90 backdrop-blur-md pt-2 pb-1">
             <button
-              className="w-full h-12 rounded-xl bg-primary text-on-primary font-body-md text-body-md font-bold flex items-center justify-center gap-2 shadow-lg active:scale-[0.99] transition-transform"
+              className="w-full h-12 rounded-xl bg-primary text-on-primary font-body-md text-body-md font-bold flex items-center justify-center gap-2 shadow-lg active:scale-[0.99] transition-transform disabled:opacity-60"
               id="primary-launch-btn"
               type="button"
               onClick={handleLaunch}
+              disabled={submitting}
             >
               <span
                 className="material-symbols-outlined text-[20px]"
@@ -380,7 +437,7 @@ export const LoginPage: React.FC = () => {
               >
                 {roleConfigs[selectedRole].icon}
               </span>
-              <span id="btn-label-text">{roleConfigs[selectedRole].label}</span>
+              <span id="btn-label-text">{submitting ? 'Authenticating…' : roleConfigs[selectedRole].label}</span>
               <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
             </button>
             <div className="flex justify-center items-center gap-4 mt-2">
