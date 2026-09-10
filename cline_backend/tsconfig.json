@@ -14,7 +14,16 @@
     "resolveJsonModule": true,
     "declaration": false,
     "sourceMap": true,
-    "types": ["node"]
+    "types": ["node"],
+    "baseUrl": ".",
+    "paths": {
+      // Type-check against hand-written ambient declarations instead of the
+      // real (pure-ESM, no-build) package source — see the .d.ts files for
+      // why. Does NOT affect runtime resolution (only used via dynamic
+      // import() in orchestrate.service.ts, resolved by Node/tsx as normal).
+      "@climateshield/agents": ["src/types/climateshield-agents.d.ts"],
+      "@climateshield/orchestration": ["src/types/climateshield-orchestration.d.ts"]
+    }
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "tests", "prisma"]

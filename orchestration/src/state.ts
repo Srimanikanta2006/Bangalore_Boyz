@@ -14,8 +14,7 @@
  */
 
 import { mkdir, writeFile } from "node:fs/promises";
-import { dirname, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { resolve } from "node:path";
 import type { AgentName, ResponsePlan } from "@climateshield/agents";
 
 export type AgentStatus = "pending" | "running" | "succeeded" | "fell_back" | "failed";
@@ -53,8 +52,14 @@ const AGENT_ORDER: AgentName[] = [
   "validation",
 ];
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const RUNS_DIR = resolve(__dirname, "..", ".runs");
+// Resolved relative to the current working directory (not `import.meta.url`)
+// so this file compiles/runs identically under both the package's own ESM
+// source (tsx demo/tests, cwd = orchestration/) and a CommonJS build consumed
+// by another package (cline_backend) — `import.meta` is invalid syntax under
+// a `module: "commonjs"` TypeScript compilation. When run via
+// `npm --prefix orchestration run demo`/`test`, cwd is `orchestration/`, so
+// this resolves to the same `orchestration/.runs/` as before.
+const RUNS_DIR = resolve(process.cwd(), ".runs");
 
 export function createRunState(incidentId: string, llmModel: string | null): RunState {
   const now = new Date().toISOString();
