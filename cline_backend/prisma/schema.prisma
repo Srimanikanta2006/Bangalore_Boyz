@@ -452,6 +452,15 @@ model ReportEvidence {
   description String?
   createdAt   DateTime            @default(now())
 
+  // Optional, best-effort Gemini VISION triage (null until/unless it succeeds).
+  // Always non-authoritative - never overrides the citizen's own category or
+  // any deterministic engine value. See src/ai/photoTriageProvider.ts.
+  aiProvider           String?
+  aiWaterDepthEstimate String?
+  aiCaption            String?
+  aiConfidence         Float?
+  aiVisibleHazards     Json?
+
   @@index([reportId])
 }
 

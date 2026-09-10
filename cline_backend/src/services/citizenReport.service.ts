@@ -1,3 +1,5 @@
+import fs from 'node:fs/promises';
+import path from 'node:path';
 import type { Prisma } from '@prisma/client';
 import { prisma } from '../db/prisma';
 import { Errors } from '../utils/errors';
@@ -5,7 +7,8 @@ import { nextCitizenReportCode } from '../utils/ids';
 import { AuditActions, recordAudit } from './audit.service';
 import { createIncident } from './incident.service';
 import { resolveZoneForPoint } from './zoneLookup.service';
-import { evidenceUrl } from '../middleware/upload';
+import { evidenceUrl, EVIDENCE_DIR } from '../middleware/upload';
+import { triagePhotoWithGeminiOrNull } from '../ai/photoTriageProvider';
 import type { AuthUser } from '../types/auth';
 
 /**
@@ -72,6 +75,18 @@ function toReportDto(r: ReportWithRelations) {
       url: e.storageRef,
       byteSize: e.byteSize,
       createdAt: e.createdAt,
+      // Best-effort Gemini VISION triage - null unless it actually ran and succeeded.
+      // Always non-authoritative: an additional signal for the operator, never a
+      // final determination and never overrides the citizen's own category.
+      ai: e.aiProvider
+        ? {
+            provider: e.aiProvider,
+            waterDepthEstimate: e.aiWaterDepthEstimate,
+            caption: e.aiCaption,
+            confidence: e.aiConfidence,
+            visibleHazards: (e.aiVisibleHazards as string[] | null) ?? [],
+          }
+        : null,
     })),
     incident: r.incident ? { id: r.incident.id, incidentCode: r.incident.incidentCode, status: r.incident.status } : null,
   };
@@ -133,7 +148,49 @@ export async function createCitizenReport(
     metadata: { category: input.category, zone: zone.name, incidentId: incident.id, incidentCode: incident.incidentCode },
   });
 
+  // Best-effort Gemini VISION triage on the first photo only (bounds latency/cost;
+  // most reports have a single photo). Never blocks or fails the submission -
+  // if GEMINI_API_KEY is unset or the call fails for any reason, this is a no-op
+  // and the report is returned exactly as already created above.
+  const firstEvidence = created.evidence[0];
+  if (firstEvidence) {
+    const triaged = await triageEvidencePhoto(firstEvidence.id, firstEvidence.storageRef);
+    if (triaged) {
+      const refreshed = await prisma.citizenReport.findUnique({ where: { id: created.id }, include: reportInclude });
+      if (refreshed) return toReportDto(refreshed);
+    }
+  }
+
   return toReportDto(created);
+}
+
+/** Reads the stored file, calls Gemini vision, and persists the result. Returns true if it updated anything. */
+async function triageEvidencePhoto(evidenceId: string, storageRef: string): Promise<boolean> {
+  try {
+    const filename = path.basename(storageRef);
+    const filePath = path.join(EVIDENCE_DIR, filename);
+    const buffer = await fs.readFile(filePath);
+    const ext = path.extname(filename).toLowerCase();
+    const mimeType = ext === '.png' ? 'image/png' : ext === '.webp' ? 'image/webp' : 'image/jpeg';
+
+    const result = await triagePhotoWithGeminiOrNull(buffer.toString('base64'), mimeType);
+    if (!result) return false;
+
+    await prisma.reportEvidence.update({
+      where: { id: evidenceId },
+      data: {
+        aiProvider: 'gemini',
+        aiWaterDepthEstimate: result.response.waterDepthEstimate,
+        aiCaption: result.response.caption,
+        aiConfidence: result.response.confidence,
+        aiVisibleHazards: result.response.visibleHazards as never,
+      },
+    });
+    return true;
+  } catch {
+    // Never let a photo-triage failure affect report submission.
+    return false;
+  }
 }
 
 /** Own reports only - ownership-scoped, newest first. */

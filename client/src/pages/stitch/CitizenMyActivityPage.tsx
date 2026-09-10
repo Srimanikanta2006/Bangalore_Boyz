@@ -141,6 +141,19 @@ export const CitizenMyActivityPage: React.FC = () => {
                         {r.evidence.length} photo(s) attached
                       </span>
                     )}
+                    {(() => {
+                      const ai = r.evidence.find((e) => e.ai)?.ai;
+                      if (!ai) return null;
+                      return (
+                        <div className="mt-1 rounded-lg bg-surface-container-low px-2.5 py-1.5 flex flex-col gap-0.5">
+                          <span className="font-label-sm text-label-sm text-tertiary font-semibold flex items-center gap-1">
+                            <span className="material-symbols-outlined text-[13px]">auto_awesome</span>
+                            AI photo read (unverified)
+                          </span>
+                          {ai.caption && <span className="font-body-sm text-body-sm text-on-surface-variant">{ai.caption}</span>}
+                        </div>
+                      );
+                    })()}
                   </div>
                 );
               })}

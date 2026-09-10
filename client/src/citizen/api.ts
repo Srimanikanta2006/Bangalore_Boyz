@@ -219,12 +219,26 @@ export type CitizenReportCategory =
   | 'STORM_DAMAGE'
   | 'OTHER';
 
+export type PhotoWaterDepthEstimate = 'NONE' | 'ANKLE' | 'KNEE' | 'WAIST' | 'SUBMERGED' | 'UNKNOWN';
+
+/** Best-effort Gemini VISION triage of the evidence photo. Null unless it actually ran and
+ *  succeeded server-side. ALWAYS non-authoritative - a supplementary signal for operators,
+ *  never a replacement for the citizen's own report category or a human verification. */
+export interface CitizenReportEvidenceAi {
+  provider: string;
+  waterDepthEstimate: PhotoWaterDepthEstimate | null;
+  caption: string | null;
+  confidence: number | null;
+  visibleHazards: string[];
+}
+
 export interface CitizenReportEvidence {
   id: string;
   mediaType: string;
   url: string;
   byteSize: number | null;
   createdAt: string;
+  ai: CitizenReportEvidenceAi | null;
 }
 
 export interface CitizenReport {
