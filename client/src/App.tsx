@@ -1,501 +1,64 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { TopNav } from './components/layout/TopNav';
-import { Sidebar } from './components/layout/Sidebar';
-import { DashboardPage } from './pages/DashboardPage';
-import { RiskMapPage } from './pages/RiskMapPage';
-import { AssetsPage } from './pages/AssetsPage';
-import { AlertsPage } from './pages/AlertsPage';
-import { IncidentsPage } from './pages/IncidentsPage';
-import { TasksPage } from './pages/TasksPage';
-import { AnalyticsPage } from './pages/AnalyticsPage';
-import { HistoryPage } from './pages/HistoryPage';
-import { TeamPage } from './pages/TeamPage';
-import { SettingsPage } from './pages/SettingsPage';
+import React from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 
-import { CreatePlanModal } from './components/incidents/CreatePlanModal';
-import { NewAssetModal } from './components/NewAssetModal';
-import { RiskExplainModal } from './components/RiskExplainModal';
+// 8 Stitch Screens (Lossless Consolidated Migration)
+import { LoginPage } from './pages/stitch/LoginPage';
+import { CitizenMapPage } from './pages/stitch/CitizenMapPage';
+import { AlertsFeedPage } from './pages/stitch/AlertsFeedPage';
+import { FloodDetailPage } from './pages/stitch/FloodDetailPage';
+import { RouteSelectPage } from './pages/stitch/RouteSelectPage';
+import { ActiveNavPage } from './pages/stitch/ActiveNavPage';
+import { SosEmergencyPage } from './pages/stitch/SosEmergencyPage';
+import { HazardReportPage } from './pages/stitch/HazardReportPage';
 
-import {
-  Ward,
-  Asset,
-  WeatherReading,
-  AssetRiskAssessment,
-  Alert,
-  Incident,
-  ResponseTask,
-  HistoricalRepeatLocation,
-  SimulationScenario,
-  CitySummaryStats,
-  DataQualityStatus,
-} from './types';
+// Operations Console (Desktop GIS Management Hub)
+import { OperationsConsole } from './pages/OperationsConsole';
 
-import {
-  fetchStats,
-  fetchWards,
-  fetchAssets,
-  createAsset,
-  fetchWeather,
-  refreshLiveWeather,
-  applyScenario,
-  applyCustomWeather,
-  fetchScenarios,
-  fetchRisks,
-  fetchAlerts,
-  updateAlertStatus,
-  fetchIncidents,
-  createIncident,
-  fetchTasks,
-  updateTaskStatus,
-  escalateTask,
-  fetchHistory,
-  fetchDataQuality,
-  toggleStaleData,
-} from './services/api';
+// Fast Preview HUD
+import { ScreenSwitcher } from './components/stitch/ScreenSwitcher';
 
 export const App: React.FC = () => {
-  // Navigation
-  const [currentRoute, setCurrentRoute] = useState<string>('risk-map'); // Start on the flagship Risk Map!
-  const [searchQuery, setSearchQuery] = useState('');
-
-  // Domain State
-  const [stats, setStats] = useState<CitySummaryStats | null>(null);
-  const [weather, setWeather] = useState<WeatherReading | null>(null);
-  const [dataQuality, setDataQuality] = useState<DataQualityStatus | null>(null);
-  const [activeScenarioId, setActiveScenarioId] = useState<string | null>(null);
-  const [wards, setWards] = useState<Ward[]>([]);
-  const [assets, setAssets] = useState<Asset[]>([]);
-  const [risks, setRisks] = useState<AssetRiskAssessment[]>([]);
-  const [alerts, setAlerts] = useState<Alert[]>([]);
-  const [incidents, setIncidents] = useState<Incident[]>([]);
-  const [tasks, setTasks] = useState<ResponseTask[]>([]);
-  const [history, setHistory] = useState<HistoricalRepeatLocation[]>([]);
-  const [scenarios, setScenarios] = useState<SimulationScenario[]>([]);
-
-  // Modals & Drawers
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [isNewAssetModalOpen, setIsNewAssetModalOpen] = useState(false);
-  const [planModalAsset, setPlanModalAsset] = useState<Asset | null>(null);
-  const [planModalRisk, setPlanModalRisk] = useState<AssetRiskAssessment | null>(null);
-  const [explainAsset, setExplainAsset] = useState<Asset | null>(null);
-  const [explainRisk, setExplainRisk] = useState<AssetRiskAssessment | null>(null);
-
-  // Load all initial data
-  const loadData = useCallback(async () => {
-    try {
-      const [
-        wardsData,
-        assetsData,
-        scenariosData,
-        weatherData,
-        risksData,
-        alertsData,
-        incidentsData,
-        tasksData,
-        historyData,
-        statsData,
-        qualityData,
-      ] = await Promise.all([
-        fetchWards(),
-        fetchAssets(),
-        fetchScenarios(),
-        fetchWeather(),
-        fetchRisks(),
-        fetchAlerts(),
-        fetchIncidents(),
-        fetchTasks(),
-        fetchHistory(),
-        fetchStats(),
-        fetchDataQuality(),
-      ]);
-
-      setWards(wardsData);
-      setAssets(assetsData);
-      setScenarios(scenariosData);
-      setWeather(weatherData.reading);
-      setDataQuality(qualityData);
-      setActiveScenarioId(weatherData.activeScenarioId);
-      setRisks(risksData);
-      setAlerts(alertsData);
-      setIncidents(incidentsData);
-      setTasks(tasksData);
-      setHistory(historyData);
-      setStats(statsData);
-    } catch (err) {
-      console.error('[App] Failed to load data:', err);
-    }
-  }, []);
-
-  useEffect(() => {
-    loadData();
-
-    // WebSocket telemetry subscription
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/ws`;
-    let ws: WebSocket | null = null;
-
-    try {
-      ws = new WebSocket(wsUrl);
-      ws.onmessage = (event) => {
-        try {
-          const message = JSON.parse(event.data);
-          if (message.type === 'INIT_SNAPSHOT' || message.type === 'WEATHER_AND_RISK_UPDATE') {
-            const data = message.data || message;
-            if (data.weather) setWeather(data.weather);
-            if (data.risks) setRisks(data.risks);
-            if (data.alerts) setAlerts(data.alerts);
-            if (data.stats) setStats(data.stats);
-          }
-        } catch (e) {
-          // ignore parse error
-        }
-      };
-    } catch (e) {
-      // ignore
-    }
-
-    // Periodic polling (15s)
-    const interval = setInterval(async () => {
-      try {
-        const [weatherData, risksData, alertsData, incidentsData, tasksData, statsData, qualityData] =
-          await Promise.all([
-            fetchWeather(),
-            fetchRisks(),
-            fetchAlerts(),
-            fetchIncidents(),
-            fetchTasks(),
-            fetchStats(),
-            fetchDataQuality(),
-          ]);
-
-        setWeather(weatherData.reading);
-        setDataQuality(qualityData);
-        setActiveScenarioId(weatherData.activeScenarioId);
-        setRisks(risksData);
-        setAlerts(alertsData);
-        setIncidents(incidentsData);
-        setTasks(tasksData);
-        setStats(statsData);
-      } catch (err) {
-        // silent
-      }
-    }, 15000);
-
-    return () => {
-      clearInterval(interval);
-      if (ws) ws.close();
-    };
-  }, [loadData]);
-
-  // Operational Handlers
-  const handleRefreshLive = async () => {
-    setIsRefreshing(true);
-    try {
-      const res = await refreshLiveWeather();
-      setWeather(res.reading);
-      setActiveScenarioId('scenario-live');
-      const [risksData, alertsData, statsData] = await Promise.all([
-        fetchRisks(),
-        fetchAlerts(),
-        fetchStats(),
-      ]);
-      setRisks(risksData);
-      setAlerts(alertsData);
-      setStats(statsData);
-    } catch (err) {
-      alert((err as Error).message);
-    } finally {
-      setIsRefreshing(false);
-    }
-  };
-
-  const handleApplyScenario = async (scenarioId: string) => {
-    try {
-      const res = await applyScenario(scenarioId);
-      setWeather(res.reading);
-      setActiveScenarioId(scenarioId);
-      const [risksData, alertsData, statsData] = await Promise.all([
-        fetchRisks(),
-        fetchAlerts(),
-        fetchStats(),
-      ]);
-      setRisks(risksData);
-      setAlerts(alertsData);
-      setStats(statsData);
-    } catch (err) {
-      alert((err as Error).message);
-    }
-  };
-
-  const handleToggleStale = async () => {
-    try {
-      const res = await toggleStaleData();
-      setDataQuality(res.quality);
-      const [risksData, statsData] = await Promise.all([fetchRisks(), fetchStats()]);
-      setRisks(risksData);
-      setStats(statsData);
-    } catch (err) {
-      alert((err as Error).message);
-    }
-  };
-
-  const handleOpenCreatePlan = (asset: Asset, risk: AssetRiskAssessment) => {
-    setPlanModalAsset(asset);
-    setPlanModalRisk(risk);
-  };
-
-  const handleCloseCreatePlan = () => {
-    setPlanModalAsset(null);
-    setPlanModalRisk(null);
-  };
-
-  const handleConfirmPlan = async (planData: {
-    assetId: string;
-    hazardType: 'FLOOD' | 'HEAT' | 'COMPOUND';
-    title: string;
-    assignedTeam: string;
-    leadResponder: string;
-    notes?: string;
-    taskTitles: string[];
-  }) => {
-    const res = await createIncident(planData);
-    const [incidentsData, tasksData, alertsData, statsData] = await Promise.all([
-      fetchIncidents(),
-      fetchTasks(),
-      fetchAlerts(),
-      fetchStats(),
-    ]);
-    setIncidents(incidentsData);
-    setTasks(tasksData);
-    setAlerts(alertsData);
-    setStats(statsData);
-
-    // Switch to incidents page so operator immediately sees the created incident!
-    setCurrentRoute('incidents');
-  };
-
-  const handleUpdateTaskStatus = async (
-    taskId: string,
-    status: ResponseTask['status'],
-    notes?: string
-  ) => {
-    await updateTaskStatus(taskId, status, notes);
-    const [incidentsData, tasksData, statsData] = await Promise.all([
-      fetchIncidents(),
-      fetchTasks(),
-      fetchStats(),
-    ]);
-    setIncidents(incidentsData);
-    setTasks(tasksData);
-    setStats(statsData);
-  };
-
-  const handleEscalateTask = async (taskId: string) => {
-    await escalateTask(taskId, 'Incident Supervisor');
-    const [incidentsData, tasksData, statsData] = await Promise.all([
-      fetchIncidents(),
-      fetchTasks(),
-      fetchStats(),
-    ]);
-    setIncidents(incidentsData);
-    setTasks(tasksData);
-    setStats(statsData);
-  };
-
-  const handleUpdateAlertStatus = async (
-    alertId: string,
-    status: Alert['status'],
-    actorName: string,
-    notes?: string
-  ) => {
-    await updateAlertStatus(alertId, status, actorName, notes);
-    const [alertsData, statsData] = await Promise.all([fetchAlerts(), fetchStats()]);
-    setAlerts(alertsData);
-    setStats(statsData);
-  };
-
-  const handleAddAsset = async (newAsset: Omit<Asset, 'id'>) => {
-    const created = await createAsset(newAsset);
-    setAssets((prev) => [...prev, created]);
-    const [risksData, alertsData, statsData] = await Promise.all([
-      fetchRisks(),
-      fetchAlerts(),
-      fetchStats(),
-    ]);
-    setRisks(risksData);
-    setAlerts(alertsData);
-    setStats(statsData);
-  };
-
-  const activeAlertsCount = alerts.filter((a) => a.status !== 'RESOLVED').length;
-  const activeIncidentsCount = incidents.filter((i) => i.status === 'RESPONDING').length;
-  const pendingTasksCount = tasks.filter((t) => t.status === 'PENDING' || t.status === 'IN_PROGRESS' || t.status === 'ESCALATED').length;
-
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans antialiased">
-      {/* Top Navigation */}
-      <TopNav
-        weather={weather}
-        dataQuality={dataQuality}
-        activeAlertsCount={activeAlertsCount}
-        onNavigate={setCurrentRoute}
-        onRefreshLive={handleRefreshLive}
-        onToggleStale={handleToggleStale}
-        onApplyScenario={handleApplyScenario}
-        scenarios={scenarios}
-        activeScenarioId={activeScenarioId}
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        isRefreshing={isRefreshing}
-      />
+    <BrowserRouter>
+      {/* Floating Screen Switcher HUD for Instant Navigation Across All 8 Screens */}
+      <ScreenSwitcher />
 
-      {/* Main Shell: Sidebar + Content */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* Operational Sidebar */}
-        <Sidebar
-          currentRoute={currentRoute}
-          onNavigate={setCurrentRoute}
-          activeAlertsCount={activeAlertsCount}
-          activeIncidentsCount={activeIncidentsCount}
-          pendingTasksCount={pendingTasksCount}
-        />
+      <Routes>
+        {/* 1. Login / Instant Role Preview */}
+        <Route path="/login" element={<LoginPage />} />
 
-        {/* Dynamic Route Content */}
-        <main
-          className={`flex-1 ${
-            currentRoute === 'risk-map' ? 'overflow-hidden flex flex-col' : 'overflow-y-auto'
-          } bg-slate-50`}
-        >
-          {currentRoute === 'risk-map' && (
-            <RiskMapPage
-              wards={wards}
-              assets={assets}
-              risks={risks}
-              weather={weather}
-              incidents={incidents}
-              onOpenCreatePlan={handleOpenCreatePlan}
-              onNavigate={setCurrentRoute}
-            />
-          )}
+        {/* 2. Citizen Live Map */}
+        <Route path="/citizen/map" element={<CitizenMapPage />} />
 
-          {currentRoute === 'dashboard' && (
-            <DashboardPage
-              wards={wards}
-              assets={assets}
-              risks={risks}
-              weather={weather}
-              incidents={incidents}
-              dataQuality={dataQuality}
-              onNavigate={setCurrentRoute}
-              onSelectAssetForExplain={(a, r) => {
-                setExplainAsset(a);
-                setExplainRisk(r);
-              }}
-            />
-          )}
+        {/* 3. Citizen Alerts Feed */}
+        <Route path="/citizen/alerts" element={<AlertsFeedPage />} />
 
-          {currentRoute === 'assets' && (
-            <AssetsPage
-              assets={assets}
-              wards={wards}
-              risks={risks}
-              onOpenNewAssetModal={() => setIsNewAssetModalOpen(true)}
-              onOpenCreatePlan={handleOpenCreatePlan}
-              onSelectAssetForExplain={(a, r) => {
-                setExplainAsset(a);
-                setExplainRisk(r);
-              }}
-            />
-          )}
+        {/* 4. Rescue Incident / Sector Flood Detail */}
+        <Route path="/rescue/incident/:id" element={<FloodDetailPage />} />
 
-          {currentRoute === 'alerts' && (
-            <AlertsPage
-              alerts={alerts}
-              assets={assets}
-              risks={risks}
-              onUpdateAlertStatus={handleUpdateAlertStatus}
-              onOpenCreatePlan={handleOpenCreatePlan}
-              onNavigate={setCurrentRoute}
-            />
-          )}
+        {/* 5. Safe Route Selection (3-Corridor Comparison) */}
+        <Route path="/rescue/route/:incidentId" element={<RouteSelectPage />} />
 
-          {currentRoute === 'incidents' && (
-            <IncidentsPage
-              incidents={incidents}
-              onUpdateTaskStatus={handleUpdateTaskStatus}
-              onEscalateTask={handleEscalateTask}
-              onNavigate={setCurrentRoute}
-            />
-          )}
+        {/* 6. Active Mission Navigation (Turn-by-Turn Waypoints) */}
+        <Route path="/rescue/navigate/:routeId" element={<ActiveNavPage />} />
 
-          {currentRoute === 'tasks' && (
-            <TasksPage
-              tasks={tasks}
-              onUpdateTaskStatus={handleUpdateTaskStatus}
-              onEscalateTask={handleEscalateTask}
-              onNavigate={setCurrentRoute}
-            />
-          )}
+        {/* 7. Emergency SOS Assistance */}
+        <Route path="/rescue/sos" element={<SosEmergencyPage />} />
+        <Route path="/citizen/sos" element={<SosEmergencyPage />} />
 
-          {currentRoute === 'analytics' && (
-            <AnalyticsPage
-              wards={wards}
-              assets={assets}
-              risks={risks}
-              weather={weather}
-            />
-          )}
+        {/* 8. Field Hazard Report */}
+        <Route path="/rescue/report" element={<HazardReportPage />} />
+        <Route path="/citizen/report" element={<HazardReportPage />} />
 
-          {currentRoute === 'history' && (
-            <HistoryPage
-              history={history}
-              onNavigate={setCurrentRoute}
-            />
-          )}
+        {/* Operations Console */}
+        <Route path="/console/*" element={<OperationsConsole />} />
+        <Route path="/gov/*" element={<OperationsConsole />} />
 
-          {currentRoute === 'team' && <TeamPage />}
-
-          {currentRoute === 'settings' && (
-            <SettingsPage
-              dataQuality={dataQuality}
-              onToggleStale={handleToggleStale}
-            />
-          )}
-        </main>
-      </div>
-
-      {/* Plan Creation Modal (Triggered from Map, Asset, or Alert) */}
-      <CreatePlanModal
-        asset={planModalAsset}
-        risk={planModalRisk}
-        isOpen={Boolean(planModalAsset && planModalRisk)}
-        onClose={handleCloseCreatePlan}
-        onSubmitPlan={handleConfirmPlan}
-      />
-
-      {/* Explainability Factor Weights Modal */}
-      <RiskExplainModal
-        asset={explainAsset}
-        risk={explainRisk}
-        onClose={() => {
-          setExplainAsset(null);
-          setExplainRisk(null);
-        }}
-        onOpenSOP={(id) => {
-          setExplainAsset(null);
-          setExplainRisk(null);
-          setCurrentRoute('alerts');
-        }}
-      />
-
-      {/* Register New Asset Context Modal */}
-      <NewAssetModal
-        wards={wards}
-        isOpen={isNewAssetModalOpen}
-        onClose={() => setIsNewAssetModalOpen(false)}
-        onAddAsset={handleAddAsset}
-      />
-    </div>
+        {/* Default Entry Point -> Login / Role Preview */}
+        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route path="*" element={<Navigate to="/login" replace />} />
+      </Routes>
+    </BrowserRouter>
   );
 };
 
