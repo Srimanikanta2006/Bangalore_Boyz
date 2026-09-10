@@ -19,10 +19,11 @@ export interface ExplanationResult {
   response: ExplainResponse;
   usedFallback: boolean;
   fallbackReason?: "missing_api_key" | "provider_error" | "invalid_model_response";
+  errorDetails?: string;
 }
 
-const DEFAULT_MODEL = "gemini-2.0-flash";
-const DEFAULT_TIMEOUT_MS = 8_000;
+const DEFAULT_MODEL = "gemini-1.5-flash";
+const DEFAULT_TIMEOUT_MS = 12_000;
 
 function createPrompt(request: ExplainRequest): string {
   return `You are ClimateShield's compound cascade explanation and operator-assistance layer.
@@ -96,7 +97,7 @@ export async function explainWithGeminiOrFallback(
   request: ExplainRequest,
   options: GeminiProviderOptions = {},
 ): Promise<ExplanationResult> {
-  const apiKey = options.apiKey ?? process.env.GEMINI_API_KEY;
+  const apiKey = (options.apiKey ?? process.env.GEMINI_API_KEY ?? "").trim();
   if (!apiKey) {
     return {
       response: buildFallbackExplanation(request),
@@ -105,11 +106,12 @@ export async function explainWithGeminiOrFallback(
     };
   }
 
+  const model = options.model ?? DEFAULT_MODEL;
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), options.timeoutMs ?? DEFAULT_TIMEOUT_MS);
   try {
     const response = await (options.fetchFn ?? fetch)(
-      `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(options.model ?? DEFAULT_MODEL)}:generateContent`,
+      `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,
       {
         method: "POST",
         headers: { "content-type": "application/json", "x-goog-api-key": apiKey },
@@ -123,7 +125,10 @@ export async function explainWithGeminiOrFallback(
         }),
       },
     );
-    if (!response.ok) throw new Error(`Gemini returned HTTP ${response.status}.`);
+    if (!response.ok) {
+      const errBody = await response.text().catch(() => "");
+      throw new Error(`HTTP ${response.status}: ${errBody}`);
+    }
 
     const text = extractText(await response.json());
     if (!text) {
@@ -131,6 +136,7 @@ export async function explainWithGeminiOrFallback(
         response: buildFallbackExplanation(request),
         usedFallback: true,
         fallbackReason: "invalid_model_response",
+        errorDetails: "Empty text candidate returned from Gemini.",
       };
     }
 
@@ -142,27 +148,46 @@ export async function explainWithGeminiOrFallback(
         response: buildFallbackExplanation(request),
         usedFallback: true,
         fallbackReason: "invalid_model_response",
+        errorDetails: `JSON parse failed on output: ${text.slice(0, 200)}`,
       };
     }
 
     const validation = validateExplainResponse(parsed);
-    if (
-      !validation.success ||
-      validation.data.incidentId !== request.incidentId ||
-      validation.data.confidence > request.risk.confidence
-    ) {
+    if (!validation.success) {
       return {
         response: buildFallbackExplanation(request),
         usedFallback: true,
         fallbackReason: "invalid_model_response",
+        errorDetails: `Schema validation failed: ${validation.errors.join("; ")}`,
       };
     }
+
+    if (validation.data.incidentId !== request.incidentId) {
+      return {
+        response: buildFallbackExplanation(request),
+        usedFallback: true,
+        fallbackReason: "invalid_model_response",
+        errorDetails: `Incident ID mismatch: expected ${request.incidentId}, got ${validation.data.incidentId}`,
+      };
+    }
+
+    if (validation.data.confidence > request.risk.confidence) {
+      return {
+        response: buildFallbackExplanation(request),
+        usedFallback: true,
+        fallbackReason: "invalid_model_response",
+        errorDetails: `Confidence ${validation.data.confidence} exceeds risk confidence ${request.risk.confidence}`,
+      };
+    }
+
     return { response: validation.data, usedFallback: false };
-  } catch {
+  } catch (err: unknown) {
+    const errorDetails = err instanceof Error ? err.message : String(err);
     return {
       response: buildFallbackExplanation(request),
       usedFallback: true,
       fallbackReason: "provider_error",
+      errorDetails,
     };
   } finally {
     clearTimeout(timeout);
