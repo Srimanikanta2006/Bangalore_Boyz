@@ -20,6 +20,11 @@ interface GeoJsonPolygon {
   coordinates: number[][][];
 }
 
+interface GeoJsonMultiPolygon {
+  type: 'MultiPolygon';
+  coordinates: number[][][][];
+}
+
 function isPolygon(value: unknown): value is GeoJsonPolygon {
   return (
     !!value &&
@@ -27,6 +32,16 @@ function isPolygon(value: unknown): value is GeoJsonPolygon {
     (value as { type?: string }).type === 'Polygon' &&
     Array.isArray((value as { coordinates?: unknown }).coordinates) &&
     ((value as { coordinates: number[][][][] }).coordinates.length ?? 0) > 0
+  );
+}
+
+function isMultiPolygon(value: unknown): value is GeoJsonMultiPolygon {
+  return (
+    !!value &&
+    typeof value === 'object' &&
+    (value as { type?: string }).type === 'MultiPolygon' &&
+    Array.isArray((value as { coordinates?: unknown }).coordinates) &&
+    ((value as { coordinates: number[][][][][] }).coordinates.length ?? 0) > 0
   );
 }
 
@@ -44,8 +59,11 @@ export function pointInPolygon(latitude: number, longitude: number, ring: number
   return inside;
 }
 
-/** Point-in-zone test against a Zone.boundaryGeoJson value. Returns false when the boundary is absent/malformed. */
+/** Point-in-zone test against a Zone.boundaryGeoJson value (Polygon or MultiPolygon). Returns false when the boundary is absent/malformed. */
 export function pointInZoneGeoJson(latitude: number, longitude: number, boundary: unknown): boolean {
-  if (!isPolygon(boundary)) return false;
-  return pointInPolygon(latitude, longitude, boundary.coordinates[0]);
+  if (isPolygon(boundary)) return pointInPolygon(latitude, longitude, boundary.coordinates[0]);
+  if (isMultiPolygon(boundary)) {
+    return boundary.coordinates.some((poly) => poly.length > 0 && pointInPolygon(latitude, longitude, poly[0]));
+  }
+  return false;
 }

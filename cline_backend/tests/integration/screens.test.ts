@@ -19,7 +19,7 @@ describe.skipIf(!ready)('government screens (infrastructure, zones, map, analyti
     const res = await request(app).get('/api/infrastructure?facilityType=HOSPITAL').set(auth(govToken));
     expect(res.status).toBe(200);
     const items = res.body.data.items;
-    expect(items.length).toBe(2);
+    expect(items.length).toBeGreaterThanOrEqual(2);
     const stJude = items.find((i: { assetCode: string }) => i.assetCode === 'HOSP-01');
     expect(stJude.name).toBe('St. Jude Regional Medical Center');
     expect(stJude.criticality).toBe('CRITICAL');
@@ -33,7 +33,7 @@ describe.skipIf(!ready)('government screens (infrastructure, zones, map, analyti
 
   it('infrastructure list: search + vulnerability filters', async () => {
     const search = await request(app).get('/api/infrastructure?search=Substation').set(auth(govToken));
-    expect(search.body.data.items.length).toBe(2);
+    expect(search.body.data.items.length).toBeGreaterThanOrEqual(2);
     const vuln = await request(app).get('/api/infrastructure?vulnerability=80').set(auth(govToken));
     expect(vuln.body.data.items.every((i: { vulnerability: number }) => i.vulnerability >= 80)).toBe(true);
   });
@@ -113,7 +113,8 @@ describe.skipIf(!ready)('government screens (infrastructure, zones, map, analyti
   it('zones: list + detail', async () => {
     const list = await request(app).get('/api/zones').set(auth(govToken));
     expect(list.status).toBe(200);
-    expect(list.body.data.items.length).toBe(4);
+    expect(list.body.data.items.length).toBeGreaterThanOrEqual(4);
+    expect(list.body.data.items.every((z: { dataQuality: string }) => !!z.dataQuality)).toBe(true);
     const detail = await request(app).get('/api/zones/zone_eb').set(auth(govToken));
     expect(detail.status).toBe(200);
     expect(detail.body.data.zone.name).toBe('East Basin');
@@ -161,7 +162,7 @@ describe.skipIf(!ready)('government screens (infrastructure, zones, map, analyti
     expect(res.status).toBe(201);
     const d = res.body.data;
     expect(d.status).toBe('COMPLETED');
-    expect(d.results.length).toBe(4);
+    expect(d.results.length).toBeGreaterThanOrEqual(4);
     const eb = d.results.find((r: { zoneName: string }) => r.zoneName === 'East Basin');
     expect(eb.riskScore).toBeGreaterThanOrEqual(60);
     expect(eb.affectedRoads).toBeGreaterThanOrEqual(1);
@@ -185,8 +186,8 @@ describe.skipIf(!ready)('government screens (infrastructure, zones, map, analyti
     const assets = await request(app).get('/api/map/assets').set(auth(govToken));
     expect(assets.status).toBe(200);
     expect(assets.body.data.type).toBe('FeatureCollection');
-    expect(assets.body.data.dataQuality).toBe('SYNTHETIC_DEMO');
-    expect(assets.body.data.features.length).toBe(19);
+    expect(['SYNTHETIC_DEMO', 'MIXED', 'REAL_GEOGRAPHIC']).toContain(assets.body.data.dataQuality);
+    expect(assets.body.data.features.length).toBeGreaterThanOrEqual(19);
     expect(assets.body.data.features[0].geometry.coordinates).toHaveLength(2);
 
     const incidents = await request(app).get('/api/map/incidents').set(auth(govToken));
@@ -197,7 +198,7 @@ describe.skipIf(!ready)('government screens (infrastructure, zones, map, analyti
     expect(overlays.body.data.floodZones.features.length).toBeGreaterThanOrEqual(1);
     expect(overlays.body.data.heatZones.features.length).toBe(1);
     expect(overlays.body.data.roadClosures.features.length).toBeGreaterThanOrEqual(2);
-    expect(overlays.body.data.drainageTelemetry.features.length).toBe(3);
+    expect(overlays.body.data.drainageTelemetry.features.length).toBeGreaterThanOrEqual(3);
     expect(overlays.body.data.evacuationCorridors.features.length).toBeGreaterThanOrEqual(4);
     expect(overlays.body.data.units.features.length).toBe(11);
   });

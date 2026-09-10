@@ -53,7 +53,7 @@ export interface NormalizedWeather {
     overallSeverity: Severity | null;
     explanation: string;
   };
-  zone: { id: string; name: string; code: string; boundaryDataQuality: 'SYNTHETIC_DEMO' } | null;
+  zone: { id: string; name: string; code: string; boundaryDataQuality: 'REAL_GEOGRAPHIC' | 'SYNTHETIC_DEMO' } | null;
   waterDepthM: null;
   notes: string[];
 }
@@ -221,13 +221,23 @@ export function clearWeatherCache(): void {
   cache.clear();
 }
 
-// ---------- zone resolution (seeded boundaries are explicitly SYNTHETIC_DEMO) ----------
+// ---------- zone resolution (real GCC zones preferred over synthetic demo zones) ----------
 
 async function resolveZone(latitude: number, longitude: number) {
-  const zones = await prisma.zone.findMany({ select: { id: true, name: true, code: true, boundaryGeoJson: true } });
-  for (const zone of zones) {
+  const zones = await prisma.zone.findMany({
+    select: { id: true, name: true, code: true, dataQuality: true, boundaryGeoJson: true },
+  });
+  const ordered = [...zones].sort(
+    (a, b) => Number(b.dataQuality === 'REAL_GEOGRAPHIC') - Number(a.dataQuality === 'REAL_GEOGRAPHIC'),
+  );
+  for (const zone of ordered) {
     if (pointInZoneGeoJson(latitude, longitude, zone.boundaryGeoJson)) {
-      return { id: zone.id, name: zone.name, code: zone.code, boundaryDataQuality: 'SYNTHETIC_DEMO' as const };
+      return {
+        id: zone.id,
+        name: zone.name,
+        code: zone.code,
+        boundaryDataQuality: zone.dataQuality === 'REAL_GEOGRAPHIC' ? ('REAL_GEOGRAPHIC' as const) : ('SYNTHETIC_DEMO' as const),
+      };
     }
   }
   return null;
