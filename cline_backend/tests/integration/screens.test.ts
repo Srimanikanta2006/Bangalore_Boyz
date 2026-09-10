@@ -225,6 +225,23 @@ describe.skipIf(!ready)('government screens (infrastructure, zones, map, analyti
     expect(flood.body.data.items[0].recurrenceScore).toBeGreaterThan(0.5);
   });
 
+  it('hotspots: derived (clustering over real HistoricalEvent rows)', async () => {
+    const res = await request(app).get('/api/hotspots/derived').set(auth(govToken));
+    expect(res.status).toBe(200);
+    expect(res.body.data.items.length).toBeGreaterThan(0);
+    for (const h of res.body.data.items) {
+      expect(h.dataQuality).toBe('DERIVED_FROM_HISTORY');
+      expect(h.eventCount).toBeGreaterThan(0);
+    }
+  });
+
+  it('zones: risk-forecast (real linear regression over WeatherSnapshot history)', async () => {
+    const res = await request(app).get('/api/zones/zone_eb/risk-forecast?hoursAhead=3').set(auth(govToken));
+    expect(res.status).toBe(200);
+    expect(['FORECAST', 'INSUFFICIENT_DATA']).toContain(res.body.data.dataQuality);
+    expect(res.body.data.method).toBe('ordinary_least_squares_linear_regression');
+  });
+
   it('departments: list, units, readiness', async () => {
     const list = await request(app).get('/api/departments').set(auth(govToken));
     expect(list.body.data.items.length).toBe(7);

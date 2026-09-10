@@ -2,6 +2,7 @@ import { Prisma } from '@prisma/client';
 import { prisma } from '../db/prisma';
 import { Errors } from '../utils/errors';
 import { buildPaginated, resolvePagination } from '../utils/pagination';
+import { clusterHistoricalEvents, type ClusterableEvent } from './hotspotClustering.service';
 
 export interface HotspotQuery {
   hazardType?: string;
@@ -56,4 +57,35 @@ export async function getHotspot(id: string) {
     take: 10,
   });
   return { ...hotspot, relatedHistoricalEvents: relatedEvents };
+}
+
+/**
+ * Real hotspot DERIVATION via clustering over HistoricalEvent rows (see
+ * hotspotClustering.service.ts) - a second, additive, clearly-labeled view
+ * alongside the hand-seeded `/api/hotspots` list. Computed live on every
+ * request (nothing stored/cached) so it always reflects the current DB state.
+ */
+export async function listDerivedHotspots() {
+  const events = await prisma.historicalEvent.findMany({
+    include: {
+      zone: { select: { id: true, name: true, latitude: true, longitude: true } },
+      asset: { select: { latitude: true, longitude: true } },
+    },
+    orderBy: { occurredAt: 'desc' },
+  });
+
+  const clusterable: ClusterableEvent[] = events.map((e) => ({
+    id: e.id,
+    // Prefer the linked asset's real coordinates; fall back to the zone centroid
+    // when an event has no linked asset (both are real DB coordinates, never fabricated).
+    latitude: e.asset?.latitude ?? e.zone.latitude,
+    longitude: e.asset?.longitude ?? e.zone.longitude,
+    hazardType: e.hazardType,
+    severity: e.severity,
+    occurredAt: e.occurredAt,
+    zoneId: e.zone.id,
+    zoneName: e.zone.name,
+  }));
+
+  return clusterHistoricalEvents(clusterable);
 }

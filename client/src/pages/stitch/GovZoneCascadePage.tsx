@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { GovHqLayout } from '../../components/stitch/GovHqLayout';
-import { fetchZoneCascade, explainIncident, createTask } from '../../services/api';
+import { fetchZoneCascade, explainIncident, createTask, fetchZoneRiskForecast, type ZoneRiskForecast } from '../../services/api';
 import { 
   Waves, AlertTriangle, Hospital, Zap, ArrowRight, 
   Layers, Users, Shield, Radio, CheckCircle2, ChevronRight, Sparkles
@@ -24,6 +24,9 @@ export const GovZoneCascadePage: React.FC = () => {
   // (c) Live zone cascade from GET /api/zones/:zoneId/cascade (15s poll).
   const [cascadeData, setCascadeData] = useState<any | null>(null);
 
+  // Statistical risk-trend forecast (real linear regression over WeatherSnapshot history).
+  const [forecast, setForecast] = useState<ZoneRiskForecast | null>(null);
+
   // (d) Grounded AI explanation from POST /api/incidents/:id/explain.
   const [explain, setExplain] = useState<any | null>(null);
   const [explainLoading, setExplainLoading] = useState(false);
@@ -44,6 +47,7 @@ export const GovZoneCascadePage: React.FC = () => {
     };
     load();
     const timer = setInterval(load, POLL_INTERVAL_MS);
+    fetchZoneRiskForecast(zoneId).then((f) => { if (active) setForecast(f); }).catch(() => {});
     return () => {
       active = false;
       clearInterval(timer);
@@ -273,6 +277,31 @@ export const GovZoneCascadePage: React.FC = () => {
                 </div>
               </div>
             </div>
+
+            {/* Statistical Risk-Trend Forecast (real OLS linear regression over stored
+                WeatherSnapshot history - dataQuality: FORECAST, honestly reports
+                INSUFFICIENT_DATA rather than fabricating a trend when data is sparse). */}
+            {forecast && (
+              <div className="rounded-xl border border-[#e5eeff] bg-white p-3 space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-xs text-[#0b1c30] uppercase tracking-wider">Risk Trend Forecast</span>
+                  <span className="px-1.5 py-0.5 rounded bg-[#eff4ff] text-[#0051d5] text-[9px] font-bold">{forecast.dataQuality}</span>
+                </div>
+                {forecast.dataQuality === 'FORECAST' ? (
+                  <div className="text-[11px] text-[#45464d] space-y-1">
+                    <div className="flex justify-between"><span>Now</span><span className="font-bold text-[#0b1c30]">{forecast.currentRainfallMmPerHour} mm/h</span></div>
+                    <div className="flex justify-between"><span>+{forecast.hoursAhead}h forecast</span><span className="font-bold text-[#0b1c30]">{forecast.forecastedRainfallMmPerHour} mm/h</span></div>
+                    <div className="flex justify-between"><span>Trend</span>
+                      <span className={`font-bold ${forecast.trendDirection === 'INCREASING' ? 'text-[#dc2626]' : forecast.trendDirection === 'DECREASING' ? 'text-emerald-600' : 'text-[#76777d]'}`}>
+                        {forecast.trendDirection} ({forecast.sampleSize} samples)
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <span className="text-[11px] text-[#76777d]">Not enough weather history yet for this zone ({forecast.sampleSize} sample(s)) — needs at least 3.</span>
+                )}
+              </div>
+            )}
 
             {/* Cascade Failure Chain */}
             <div className="space-y-2">

@@ -15,6 +15,7 @@ const hotspotQuerySchema = paginationQuerySchema.extend({
 });
 
 router.get('/hotspots', authenticate, validate(hotspotQuerySchema, 'query'), hotspotController.list);
+router.get('/hotspots/derived', authenticate, hotspotController.derived);
 router.get('/hotspots/:id', authenticate, hotspotController.get);
 
 export default router;

@@ -295,6 +295,20 @@ export async function fetchActiveHazards(): Promise<{ items: ActiveHazard[] }> {
 /** Downloads a Hazard as a valid CAP 1.2 XML file (protocol-compatibility export, see
  *  cline_backend/src/services/capExport.service.ts). Uses fetch (not a plain <a href>)
  *  because auth is a Bearer header, not a cookie. */
+/** Statistical (real linear regression) rainfall/risk trend forecast for a zone. */
+export interface ZoneRiskForecast {
+  dataQuality: 'FORECAST' | 'INSUFFICIENT_DATA';
+  hoursAhead: number;
+  sampleSize: number;
+  currentRainfallMmPerHour: number | null;
+  forecastedRainfallMmPerHour: number | null;
+  trendDirection: 'INCREASING' | 'STABLE' | 'DECREASING' | null;
+  method: string;
+}
+export async function fetchZoneRiskForecast(zoneId: string, hoursAhead = 6): Promise<ZoneRiskForecast> {
+  return requestEnvelope<ZoneRiskForecast>(`/zones/${zoneId}/risk-forecast?hoursAhead=${hoursAhead}`);
+}
+
 export async function downloadHazardCapXml(hazardId: string): Promise<void> {
   const res = await apiFetch(`${API_BASE}/hazards/${hazardId}/cap.xml`);
   if (!res.ok) throw new Error(`Failed to export CAP XML (${res.status})`);

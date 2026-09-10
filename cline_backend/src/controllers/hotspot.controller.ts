@@ -12,3 +12,9 @@ export const get = wrap(async (req: Request, res: Response) => {
   const data = await hotspotService.getHotspot(req.params.id);
   res.json({ success: true, data });
 });
+
+/** GET /api/hotspots/derived - clustering-derived hotspots computed live from HistoricalEvent rows. */
+export const derived = wrap(async (_req: Request, res: Response) => {
+  const data = await hotspotService.listDerivedHotspots();
+  res.json({ success: true, data: { items: data } });
+});
