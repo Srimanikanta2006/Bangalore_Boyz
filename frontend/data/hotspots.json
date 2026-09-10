@@ -1,0 +1,18 @@
+[
+  {
+    "id": "HS-2024",
+    "name": "District 4 Low-Lying Basin",
+    "historicalIncidents": 42,
+    "vulnerabilityIndex": "9.2/10",
+    "primaryHazard": "Flash Flooding",
+    "lastMajorEvent": "August 2025"
+  },
+  {
+    "id": "HS-2025",
+    "name": "East Industrial Canal Bank",
+    "historicalIncidents": 28,
+    "vulnerabilityIndex": "8.1/10",
+    "primaryHazard": "Chemical Runoff & Surges",
+    "lastMajorEvent": "November 2025"
+  }
+]

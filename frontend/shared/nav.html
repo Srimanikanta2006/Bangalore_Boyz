@@ -1,0 +1,79 @@
+<!-- ClimateShield Shared Navigation Partial -->
+
+<!-- Citizen Navigation (Mobile Bottom Navigation Bar) -->
+<nav id="nav-citizen" class="role-nav hidden fixed bottom-0 left-0 right-0 z-50 bg-surface/95 backdrop-blur-xl border-t border-outline-variant/30 px-4 py-2 pb-safe">
+  <div class="max-w-md mx-auto flex items-center justify-around relative">
+    <a href="home.html" data-nav="citizen-home" class="nav-item flex flex-col items-center gap-1 text-on-surface-variant hover:text-primary transition-colors">
+      <span class="material-symbols-outlined text-[24px]">map</span>
+      <span class="font-label-sm text-[10px]">Map</span>
+    </a>
+    <a href="alerts.html" data-nav="citizen-alerts" class="nav-item flex flex-col items-center gap-1 text-on-surface-variant hover:text-primary transition-colors">
+      <span class="material-symbols-outlined text-[24px]">notifications_active</span>
+      <span class="font-label-sm text-[10px]">Alerts</span>
+    </a>
+    <!-- SOS Center FAB -->
+    <a href="sos.html" data-nav="citizen-sos" class="flex flex-col items-center justify-center -mt-6 bg-error text-on-error w-14 h-14 rounded-full shadow-lg hover:scale-105 transition-transform border-2 border-surface">
+      <span class="material-symbols-outlined text-[28px] animate-pulse">sos</span>
+    </a>
+    <a href="report.html" data-nav="citizen-report" class="nav-item flex flex-col items-center gap-1 text-on-surface-variant hover:text-primary transition-colors">
+      <span class="material-symbols-outlined text-[24px]">add_alert</span>
+      <span class="font-label-sm text-[10px]">Report</span>
+    </a>
+    <a href="route_selection.html" data-nav="citizen-routes" class="nav-item flex flex-col items-center gap-1 text-on-surface-variant hover:text-primary transition-colors">
+      <span class="material-symbols-outlined text-[24px]">alt_route</span>
+      <span class="font-label-sm text-[10px]">Routes</span>
+    </a>
+  </div>
+</nav>
+
+<!-- Government Navigation (Mobile Bottom Bar for Mobile Government Views) -->
+<nav id="nav-government" class="role-nav hidden fixed bottom-0 left-0 right-0 z-50 bg-surface-container-lowest/95 backdrop-blur-xl border-t border-outline-variant/30 px-4 py-2 pb-safe md:hidden">
+  <div class="max-w-md mx-auto flex items-center justify-around">
+    <a href="overview.html" data-nav="gov-overview" class="nav-item flex flex-col items-center gap-1 text-on-surface-variant hover:text-primary transition-colors">
+      <span class="material-symbols-outlined text-[22px]">dashboard</span>
+      <span class="font-label-sm text-[10px]">Overview</span>
+    </a>
+    <a href="response_center.html" data-nav="gov-response" class="nav-item flex flex-col items-center gap-1 text-on-surface-variant hover:text-primary transition-colors">
+      <span class="material-symbols-outlined text-[22px]">emergency</span>
+      <span class="font-label-sm text-[10px]">Response</span>
+    </a>
+    <a href="mobile_map.html" data-nav="gov-mobile-map" class="nav-item flex flex-col items-center gap-1 text-on-surface-variant hover:text-primary transition-colors">
+      <span class="material-symbols-outlined text-[22px]">map</span>
+      <span class="font-label-sm text-[10px]">Live Map</span>
+    </a>
+    <a href="mobile_triage.html" data-nav="gov-triage" class="nav-item flex flex-col items-center gap-1 text-on-surface-variant hover:text-primary transition-colors">
+      <span class="material-symbols-outlined text-[22px]">assignment_late</span>
+      <span class="font-label-sm text-[10px]">Triage</span>
+    </a>
+    <a href="../login.html" class="flex flex-col items-center gap-1 text-on-surface-variant hover:text-error transition-colors">
+      <span class="material-symbols-outlined text-[22px]">logout</span>
+      <span class="font-label-sm text-[10px]">Logout</span>
+    </a>
+  </div>
+</nav>
+
+<!-- Rescue Navigation (Mobile Bottom Navigation Bar) -->
+<nav id="nav-rescue" class="role-nav hidden fixed bottom-0 left-0 right-0 z-50 bg-surface-container-lowest/95 backdrop-blur-xl border-t border-outline-variant/30 px-4 py-2 pb-safe">
+  <div class="max-w-md mx-auto flex items-center justify-around">
+    <a href="home.html" data-nav="rescue-home" class="nav-item flex flex-col items-center gap-1 text-on-surface-variant hover:text-secondary transition-colors">
+      <span class="material-symbols-outlined text-[24px]">radar</span>
+      <span class="font-label-sm text-[10px]">Tactical Map</span>
+    </a>
+    <a href="mission_detail.html" data-nav="rescue-mission" class="nav-item flex flex-col items-center gap-1 text-on-surface-variant hover:text-secondary transition-colors">
+      <span class="material-symbols-outlined text-[24px]">assignment_turned_in</span>
+      <span class="font-label-sm text-[10px]">Missions</span>
+    </a>
+    <a href="active_nav.html" data-nav="rescue-nav" class="nav-item flex flex-col items-center gap-1 text-on-surface-variant hover:text-secondary transition-colors">
+      <span class="material-symbols-outlined text-[24px]">navigation</span>
+      <span class="font-label-sm text-[10px]">Active Nav</span>
+    </a>
+    <a href="status_report.html" data-nav="rescue-status" class="nav-item flex flex-col items-center gap-1 text-on-surface-variant hover:text-secondary transition-colors">
+      <span class="material-symbols-outlined text-[24px]">fact_check</span>
+      <span class="font-label-sm text-[10px]">Status Report</span>
+    </a>
+    <a href="command_console.html" data-nav="rescue-console" class="nav-item flex flex-col items-center gap-1 text-on-surface-variant hover:text-secondary transition-colors">
+      <span class="material-symbols-outlined text-[24px]">terminal</span>
+      <span class="font-label-sm text-[10px]">Console</span>
+    </a>
+  </div>
+</nav>

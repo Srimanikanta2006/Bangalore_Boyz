@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{"colors":{"secondary-fixed-dim":"#b4c5ff","on-error-container":"#93000a","surface-container-lowest":"#ffffff","on-primary-fixed":"#131b2e","background":"#f8f9ff","primary-container":"#131b2e","secondary-container":"#316bf3","inverse-surface":"#213145","on-error":"#ffffff","primary":"#000000","on-tertiary-fixed-variant":"#004e5c","surface-container-low":"#eff4ff","on-tertiary-container":"#0090a9","on-primary-container":"#7c839b","tertiary-fixed":"#acedff","on-tertiary":"#ffffff","surface-container-high":"#dce9ff","secondary":"#0051d5","on-secondary-container":"#fefcff","on-surface":"#0b1c30","error":"#ba1a1a","outline":"#76777d","inverse-on-surface":"#eaf1ff","surface-container":"#e5eeff","primary-fixed":"#dae2fd","surface-dim":"#cbdbf5","on-primary-fixed-variant":"#3f465c","on-secondary-fixed-variant":"#003ea8","inverse-primary":"#bec6e0","surface-tint":"#565e74","tertiary-container":"#001f26","on-secondary-fixed":"#00174b","error-container":"#ffdad6","primary-fixed-dim":"#bec6e0","on-surface-variant":"#45464d","secondary-fixed":"#dbe1ff","tertiary":"#000000","surface-variant":"#d3e4fe","on-primary":"#ffffff","surface":"#f8f9ff","surface-container-highest":"#d3e4fe","on-secondary":"#ffffff","outline-variant":"#c6c6cd","tertiary-fixed-dim":"#4cd7f6","surface-bright":"#f8f9ff","on-tertiary-fixed":"#001f26","on-background":"#0b1c30"},"borderRadius":{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},"spacing":{"panel-width-md":"26rem","space-xs":"0.5rem","space-md":"1rem","edge-margin-desktop":"1.5rem","space-sm":"0.75rem","space-2xs":"0.25rem","panel-width-sm":"20rem","space-lg":"1.5rem","panel-width-lg":"32rem","space-2xl":"3rem","space-xl":"2rem","edge-margin-mobile":"1rem"},"fontFamily":{"headline-lg":["Plus Jakarta Sans"],"headline-md":["Plus Jakarta Sans"],"data-metric-lg":["Manrope"],"body-sm":["Manrope"],"data-metric-md":["Manrope"],"headline-lg-mobile":["Plus Jakarta Sans"],"label-md":["Manrope"],"code-sm":["Manrope"],"label-sm":["Manrope"],"headline-xl-mobile":["Plus Jakarta Sans"],"body-md":["Manrope"],"headline-xl":["Plus Jakarta Sans"],"body-lg":["Manrope"],"title-lg":["Plus Jakarta Sans"]},"fontSize":{"headline-lg":["28px",{"lineHeight":"36px","letterSpacing":"-0.02em","fontWeight":"700"}],"headline-md":["20px",{"lineHeight":"28px","letterSpacing":"-0.015em","fontWeight":"600"}],"data-metric-lg":["32px",{"lineHeight":"36px","letterSpacing":"-0.03em","fontWeight":"700"}],"body-sm":["13px",{"lineHeight":"18px","letterSpacing":"0em","fontWeight":"400"}],"data-metric-md":["20px",{"lineHeight":"24px","letterSpacing":"-0.02em","fontWeight":"700"}],"headline-lg-mobile":["22px",{"lineHeight":"30px","letterSpacing":"-0.015em","fontWeight":"700"}],"label-md":["12px",{"lineHeight":"16px","letterSpacing":"0.02em","fontWeight":"600"}],"code-sm":["12px",{"lineHeight":"16px","letterSpacing":"0.01em","fontWeight":"500"}],"label-sm":["11px",{"lineHeight":"14px","letterSpacing":"0.04em","fontWeight":"600"}],"headline-xl-mobile":["28px",{"lineHeight":"36px","letterSpacing":"-0.02em","fontWeight":"700"}],"body-md":["14px",{"lineHeight":"20px","letterSpacing":"0em","fontWeight":"400"}],"headline-xl":["36px",{"lineHeight":"44px","letterSpacing":"-0.025em","fontWeight":"700"}],"body-lg":["15px",{"lineHeight":"24px","letterSpacing":"-0.005em","fontWeight":"400"}],"title-lg":["16px",{"lineHeight":"24px","letterSpacing":"-0.01em","fontWeight":"600"}]}}}}</script>
+<script src="/shared/config.js"></script>
+<link rel="stylesheet" href="/shared/app.css" />
+<script src="/shared/app.js" defer></script>
+</head><body class="bg-surface font-body-md text-on-surface"><header class="fixed top-0 left-0 right-0 z-50 h-14 bg-surface-container-lowest shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="w-full h-14 px-space-md flex items-center justify-between gap-space-md"><div class="flex items-center gap-space-md"><img alt="Brand logo. - Primary color: #0f172a
+- Font: plusJakartaSans
+- Mode: light
+- Roundness: rounded-md
+" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1WZa1gNvntWWeiT4QhM-l_fIhJeTNPgwhOocSm5zkFiyeUn3CdWKg2P6QBAp2739f4ineyLsZACoh0wcEewdNPLn7dJp1NR4H3lnvVimUYZHBtoiKTEcHeUelauAMp_CGDEiOGu2-Yqz4_Vqk5IejETJ6u1R9tsOCq5DwbAv411fFrUovtU623EzW2rGPgJX0iZQ2U-lv-rR-wRns1wPkTfcV5BBGcpGIRxWJQowEeXYjkRRS5BZt3IWUg"/><div class="flex items-center gap-space-xs"><span class="font-headline-md text-title-lg text-on-surface tracking-tight">ClimateShield</span><span class="font-code-sm text-code-sm text-outline px-space-2xs py-0.5 rounded bg-surface-container text-on-surface-variant font-medium">EOC OPS</span></div><div class="hidden xl:flex items-center gap-space-xs text-outline pl-space-xs"><span class="material-symbols-outlined text-[16px]">chevron_right</span><span class="font-label-md text-label-md text-on-surface-variant">Operations Suite</span><span class="material-symbols-outlined text-[16px]">chevron_right</span><span class="font-label-md text-label-md text-secondary font-semibold">HQ Tactical Feed</span></div></div><div class="flex-1 max-w-xl hidden md:flex items-center"><div class="w-full flex items-center justify-between px-space-sm py-1.5 rounded-lg bg-surface-container-low text-on-surface-variant hover:bg-surface-container cursor-pointer transition-colors shadow-none"><div class="flex items-center gap-space-xs"><span class="material-symbols-outlined text-[18px] text-outline">search</span><span class="font-body-sm text-body-sm text-on-surface-variant">Search incidents, sectors, telemetry, or dispatch units...</span></div><div class="flex items-center gap-1 font-code-sm text-code-sm px-1.5 py-0.5 bg-surface-container-lowest rounded text-on-surface-variant shadow-none"><span class="text-[11px]">⌘K</span></div></div></div><div class="flex items-center gap-space-sm"><div class="hidden lg:flex items-center gap-space-xs px-space-sm py-1 rounded-full bg-surface-container-low text-on-surface"><span class="w-2 h-2 rounded-full bg-secondary animate-pulse"></span><span class="font-label-sm text-label-sm text-on-surface-variant">City Sensor Grid:</span><span class="font-label-sm text-label-sm font-bold text-secondary">Active • 99.8%</span></div><div class="hidden sm:flex items-center gap-space-2xs px-space-sm py-1 rounded-full bg-surface-container text-on-surface font-label-sm text-label-sm"><span class="material-symbols-outlined text-[16px] text-secondary">shield</span><span class="font-semibold">Gov Operations • HQ EOC-9</span></div><button class="relative p-1.5 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" type="button"><span class="material-symbols-outlined text-[20px]">notifications</span><span class="absolute top-1 right-1 w-2 h-2 rounded-full bg-error ring-2 ring-surface-container-lowest"></span></button><button class="p-1.5 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" type="button"><span class="material-symbols-outlined text-[20px]">tune</span></button><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><aside class="fixed left-0 top-14 bottom-0 w-64 bg-surface-container-lowest z-40 flex flex-col justify-between shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="flex flex-col flex-1 py-space-sm overflow-y-auto"><div class="px-space-md py-space-2xs font-label-sm text-label-sm text-outline uppercase tracking-wider">Command Center</div><nav class="px-space-xs space-y-1 mt-space-2xs" data-active-classes="bg-primary-container text-on-primary font-bold rounded-lg"><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-md text-body-md" data-path="overview" href="#"><span class="material-symbols-outlined text-[20px]">space_dashboard</span><span>Overview</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-md text-body-md" data-path="live-map" href="#"><span class="material-symbols-outlined text-[20px]">map</span><span>Live Map</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-md text-body-md" data-path="incidents" href="#"><span class="material-symbols-outlined text-[20px]">crisis_alert</span><span>Incidents</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-md text-body-md" data-path="response-center" href="#"><span class="material-symbols-outlined text-[20px]">emergency_share</span><span>Response Center</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-md text-body-md" data-path="simulator" href="#"><span class="material-symbols-outlined text-[20px]">model_training</span><span>Simulator</span></a><a aria-current="page" class="flex items-center gap-space-sm px-space-sm py-2 transition-colors bg-primary-container text-on-primary font-bold rounded-lg" data-path="infrastructure" href="#"><span class="material-symbols-outlined text-[20px]">domain</span><span>Infrastructure</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-md text-body-md" data-path="analytics" href="#"><span class="material-symbols-outlined text-[20px]">insights</span><span>Analytics</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-md text-body-md" data-path="historical-hotspots" href="#"><span class="material-symbols-outlined text-[20px]">history</span><span>Historical Hotspots</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-md text-body-md" data-path="departments" href="#"><span class="material-symbols-outlined text-[20px]">corporate_fare</span><span>Departments</span></a></nav></div><div class="p-space-sm bg-surface-container-low mx-space-xs mb-space-sm rounded-lg flex flex-col gap-space-2xs"><div class="flex items-center justify-between"><span class="font-label-sm text-label-sm text-outline font-semibold">DISPATCH ENGINE</span><span class="font-code-sm text-code-sm text-secondary font-bold">ONLINE</span></div><div class="flex items-center gap-space-2xs font-body-sm text-body-sm text-on-surface"><span class="material-symbols-outlined text-[16px] text-secondary">satellite_alt</span><span class="truncate">LEO Sat-Link 04 Synced</span></div></div></aside><div class="pl-64"><main class="relative w-full pt-14 bg-surface min-h-screen"><div class="flex flex-col w-full">
+<div class="p-space-lg max-w-7xl mx-auto w-full flex flex-col gap-space-lg">
+<!-- Top Operations Header & Global Action -->
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-space-md">
+<div class="flex flex-col gap-space-2xs">
+<div class="flex items-center gap-space-xs">
+<span class="px-2 py-0.5 rounded-full bg-surface-container-high text-secondary font-label-sm text-label-sm font-bold uppercase tracking-wider">Sector Telemetry Active</span>
+<span class="font-code-sm text-code-sm text-outline">LATENCY: 42ms • GRID-SYNC</span>
+</div>
+<h1 class="font-headline-lg text-headline-lg text-on-surface">Critical Asset &amp; Infrastructure Readiness</h1>
+<p class="font-body-md text-body-md text-on-surface-variant">Real-time municipal vulnerability scoring, flood inundation proximity, and power failover status.</p>
+</div>
+<div class="flex items-center gap-space-xs">
+<button class="flex items-center gap-space-2xs px-space-md py-2.5 rounded-lg bg-surface-container-low text-on-surface hover:bg-surface-container font-body-md text-body-md transition-colors shadow-sm" type="button">
+<span class="material-symbols-outlined text-[18px] text-secondary">sync</span>
+<span>Refresh Feeds</span>
+</button>
+<button class="flex items-center gap-space-2xs px-space-md py-2.5 rounded-lg bg-primary text-on-primary font-body-md text-body-md hover:bg-primary-container transition-colors shadow-sm" type="button">
+<span class="material-symbols-outlined text-[18px]">assessment</span>
+<span>Generate Vulnerability Report</span>
+</button>
+</div>
+</div>
+<!-- Summary Bento Cards -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-space-md">
+<!-- Metric 1 -->
+<div class="p-space-md rounded-xl bg-surface-container-lowest shadow-sm flex flex-col justify-between relative overflow-hidden">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Monitored Facilities</span>
+<span class="p-1.5 rounded-lg bg-surface-container-low text-secondary flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">domain</span>
+</span>
+</div>
+<div class="mt-space-md flex items-baseline gap-space-xs">
+<span class="font-data-metric-lg text-data-metric-lg text-on-surface font-bold tracking-tight">84</span>
+<span class="font-label-md text-label-md text-on-surface-variant">Sector EOC-9</span>
+</div>
+<div class="mt-space-xs flex items-center gap-space-2xs">
+<span class="font-code-sm text-code-sm text-secondary font-semibold">100% In-System</span>
+<span class="font-body-sm text-body-sm text-outline">• All precincts reporting</span>
+</div>
+</div>
+<!-- Metric 2 -->
+<div class="p-space-md rounded-xl bg-surface-container-lowest shadow-sm flex flex-col justify-between relative overflow-hidden">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-error uppercase tracking-wider font-semibold">Vulnerable Assets</span>
+<span class="p-1.5 rounded-lg bg-error-container text-on-error-container flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">warning</span>
+</span>
+</div>
+<div class="mt-space-md flex items-baseline gap-space-xs">
+<span class="font-data-metric-lg text-data-metric-lg text-error font-bold tracking-tight">05</span>
+<span class="font-label-md text-label-md text-on-error-container font-semibold">Requiring Action</span>
+</div>
+<div class="mt-space-xs flex items-center gap-space-2xs">
+<span class="inline-block w-2 h-2 rounded-full bg-error animate-pulse"></span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">1 Critical Escalation Active</span>
+</div>
+</div>
+<!-- Metric 3 -->
+<div class="p-space-md rounded-xl bg-surface-container-lowest shadow-sm flex flex-col justify-between relative overflow-hidden">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Drainage Backup</span>
+<span class="p-1.5 rounded-lg bg-surface-container-low text-secondary flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">water</span>
+</span>
+</div>
+<div class="mt-space-md flex items-baseline gap-space-xs">
+<span class="font-data-metric-lg text-data-metric-lg text-on-surface font-bold tracking-tight">96.2%</span>
+<span class="font-label-md text-label-md text-secondary font-semibold">High Ready</span>
+</div>
+<div class="mt-space-xs w-full bg-surface-container rounded-full h-1.5 overflow-hidden">
+<div class="bg-secondary h-1.5 rounded-full" style="width: 96.2%"></div>
+</div>
+</div>
+<!-- Metric 4 -->
+<div class="p-space-md rounded-xl bg-surface-container-lowest shadow-sm flex flex-col justify-between relative overflow-hidden">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Generator Reserves</span>
+<span class="p-1.5 rounded-lg bg-surface-container-low text-secondary flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">bolt</span>
+</span>
+</div>
+<div class="mt-space-md flex items-baseline gap-space-xs">
+<span class="font-data-metric-lg text-data-metric-lg text-on-surface font-bold tracking-tight">100%</span>
+<span class="font-label-md text-label-md text-secondary font-semibold">Full Redundancy</span>
+</div>
+<div class="mt-space-xs flex items-center gap-space-2xs font-code-sm text-code-sm text-outline">
+<span>RUN-TIME SECURED &gt; 72H</span>
+</div>
+</div>
+</div>
+<!-- Filters, Tabs & Search Strip -->
+<div class="p-space-md rounded-xl bg-surface-container-lowest shadow-sm flex flex-col gap-space-md">
+<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-space-sm">
+<!-- Category Filters -->
+<div class="flex items-center gap-1.5 overflow-x-auto pb-1 lg:pb-0" id="categoryFilterContainer">
+<button class="category-btn active px-3 py-1.5 rounded-lg bg-primary-container text-on-primary font-body-sm text-body-sm font-semibold transition-colors" data-category="all" type="button">
+            All Facilities (84)
+          </button>
+<button class="category-btn px-3 py-1.5 rounded-lg bg-surface-container-low text-on-surface-variant hover:bg-surface-container font-body-sm text-body-sm transition-colors" data-category="healthcare" type="button">
+            Healthcare &amp; Hospitals (14)
+          </button>
+<button class="category-btn px-3 py-1.5 rounded-lg bg-surface-container-low text-on-surface-variant hover:bg-surface-container font-body-sm text-body-sm transition-colors" data-category="power" type="button">
+            Power &amp; Grid (18)
+          </button>
+<button class="category-btn px-3 py-1.5 rounded-lg bg-surface-container-low text-on-surface-variant hover:bg-surface-container font-body-sm text-body-sm transition-colors" data-category="water" type="button">
+            Water Treatment (12)
+          </button>
+<button class="category-btn px-3 py-1.5 rounded-lg bg-surface-container-low text-on-surface-variant hover:bg-surface-container font-body-sm text-body-sm transition-colors" data-category="transit" type="button">
+            Transit &amp; Bridges (22)
+          </button>
+<button class="category-btn px-3 py-1.5 rounded-lg bg-surface-container-low text-on-surface-variant hover:bg-surface-container font-body-sm text-body-sm transition-colors" data-category="shelters" type="button">
+            Emergency Shelters (18)
+          </button>
+</div>
+<!-- Search and Sort Controls -->
+<div class="flex items-center gap-space-xs shrink-0">
+<div class="relative flex items-center w-64">
+<span class="material-symbols-outlined text-[18px] text-outline absolute left-2.5">search</span>
+<input class="w-full h-9 pl-8 pr-3 rounded-lg bg-surface-container-low text-on-surface font-body-sm text-body-sm focus:outline-none placeholder-outline" id="assetSearchInput" placeholder="Search asset or sector..." type="text"/>
+</div>
+<div class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-container-low text-on-surface font-body-sm text-body-sm">
+<span class="text-outline font-label-sm text-label-sm">Sort:</span>
+<select class="bg-transparent font-label-md text-label-md text-on-surface font-semibold focus:outline-none cursor-pointer" id="sortSelector">
+<option selected="" value="vulnerability">Vulnerability Index (High → Low)</option>
+<option value="latency">Telemetry Latency</option>
+<option value="capacity">Capacity Stress</option>
+</select>
+</div>
+</div>
+</div>
+</div>
+<!-- Active Incident Inventory Stream -->
+<div class="flex flex-col gap-space-sm" id="assetInventoryList">
+<!-- Asset 1: St. Jude Regional Medical Center -->
+<div class="asset-card p-space-md rounded-xl bg-surface-container-lowest shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-space-md relative overflow-hidden transition-all" data-category="healthcare" data-vulnerability="98">
+<!-- 4px Severity Accent Bar -->
+<div class="absolute top-0 left-0 bottom-0 w-1 bg-[#dc2626]"></div>
+<div class="flex flex-col gap-space-2xs pl-2.5 flex-1 min-w-0">
+<div class="flex flex-wrap items-center gap-space-xs">
+<span class="font-headline-md text-title-lg text-on-surface">St. Jude Regional Medical Center</span>
+<span class="px-2 py-0.5 rounded-full bg-[#fee2e2] text-[#b91c1c] font-label-sm text-label-sm font-bold flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-[#dc2626] animate-ping"></span>
+              CRITICAL VULNERABILITY
+            </span>
+<span class="px-2 py-0.5 rounded-full bg-surface-container font-label-sm text-label-sm text-on-surface-variant font-medium">Healthcare Facility</span>
+</div>
+<div class="flex flex-wrap items-center gap-space-md mt-1">
+<div class="flex items-center gap-1.5 text-on-surface">
+<span class="material-symbols-outlined text-[16px] text-error">emergency_share</span>
+<span class="font-body-sm text-body-sm font-semibold">Access: Egress Blocked by Flash Flood (Gate B &amp; C)</span>
+</div>
+<div class="flex items-center gap-1.5 text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px] text-outline">schedule</span>
+<span class="font-body-sm text-body-sm"><span class="font-code-sm text-code-sm font-bold text-error">+14m</span> ambulance diversion delay</span>
+</div>
+</div>
+</div>
+<!-- Telemetry Figures -->
+<div class="flex items-center gap-space-lg px-space-md py-space-xs rounded-lg bg-surface-container-low shrink-0">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-outline">FAILOVER POWER</span>
+<span class="font-data-metric-md text-data-metric-md text-on-surface font-bold">100%</span>
+<span class="font-code-sm text-code-sm text-secondary font-medium">Nominal Gen-Set</span>
+</div>
+<div class="w-px h-8 bg-surface-container"></div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-outline">TELEMETRY DELAY</span>
+<span class="font-data-metric-md text-data-metric-md text-on-surface font-bold">0.8s</span>
+<span class="font-code-sm text-code-sm text-outline">Fiber Link #1</span>
+</div>
+<div class="w-px h-8 bg-surface-container"></div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-outline">BED OCCUPANCY</span>
+<span class="font-data-metric-md text-data-metric-md text-on-surface font-bold">94%</span>
+<span class="font-code-sm text-code-sm text-error font-medium">412 / 440 Units</span>
+</div>
+</div>
+<!-- Action Button (Primary) -->
+<div class="flex items-center justify-end shrink-0">
+<button class="w-full lg:w-auto flex items-center justify-center gap-1.5 px-space-md py-2 rounded-lg bg-primary text-on-primary hover:bg-primary-container font-body-md text-body-md font-semibold transition-colors shadow-sm" type="button">
+<span class="material-symbols-outlined text-[18px]">group_add</span>
+<span>Assign Rapid Team</span>
+</button>
+</div>
+</div>
+<!-- Asset 2: Midtown Electric Substation #09 -->
+<div class="asset-card p-space-md rounded-xl bg-surface-container-lowest shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-space-md relative overflow-hidden transition-all" data-category="power" data-vulnerability="84">
+<!-- 4px Severity Accent Bar -->
+<div class="absolute top-0 left-0 bottom-0 w-1 bg-[#ea580c]"></div>
+<div class="flex flex-col gap-space-2xs pl-2.5 flex-1 min-w-0">
+<div class="flex flex-wrap items-center gap-space-xs">
+<span class="font-headline-md text-title-lg text-on-surface">Midtown Electric Substation #09</span>
+<span class="px-2 py-0.5 rounded-full bg-[#ffedd5] text-[#c2410c] font-label-sm text-label-sm font-bold flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-[#ea580c]"></span>
+              HIGH VULNERABILITY
+            </span>
+<span class="px-2 py-0.5 rounded-full bg-surface-container font-label-sm text-label-sm text-on-surface-variant font-medium">Power Grid</span>
+</div>
+<div class="flex flex-wrap items-center gap-space-md mt-1">
+<div class="flex items-center gap-1.5 text-on-surface">
+<span class="material-symbols-outlined text-[16px] text-[#ea580c]">device_thermostat</span>
+<span class="font-body-sm text-body-sm font-semibold">Hazard: Thermal Overload Risk (41°C ambient + flood proximity)</span>
+</div>
+<div class="flex items-center gap-1.5 text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px] text-outline">location_on</span>
+<span class="font-body-sm text-body-sm">Sector 4-B Drainage Corridor</span>
+</div>
+</div>
+</div>
+<!-- Telemetry Figures -->
+<div class="flex items-center gap-space-lg px-space-md py-space-xs rounded-lg bg-surface-container-low shrink-0">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-outline">THERMAL LOAD</span>
+<span class="font-data-metric-md text-data-metric-md text-[#c2410c] font-bold">88%</span>
+<span class="font-code-sm text-code-sm text-outline">Ceiling: 92% Limit</span>
+</div>
+<div class="w-px h-8 bg-surface-container"></div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-outline">WATER PROXIMITY</span>
+<span class="font-data-metric-md text-data-metric-md text-on-surface font-bold">1.4m</span>
+<span class="font-code-sm text-code-sm text-[#c2410c] font-medium">+0.3m Inflow</span>
+</div>
+<div class="w-px h-8 bg-surface-container"></div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-outline">SWITCHGEAR LINK</span>
+<span class="font-data-metric-md text-data-metric-md text-on-surface font-bold">ACTIVE</span>
+<span class="font-code-sm text-code-sm text-secondary font-medium">Remote Trip Ready</span>
+</div>
+</div>
+<!-- Secondary Action Button -->
+<div class="flex items-center justify-end shrink-0">
+<button class="w-full lg:w-auto flex items-center justify-center gap-1.5 px-space-md py-2 rounded-lg bg-surface-container-low text-on-surface hover:bg-surface-container font-body-md text-body-md font-semibold transition-colors" type="button">
+<span class="material-symbols-outlined text-[18px]">query_stats</span>
+<span>Monitor Telemetry</span>
+</button>
+</div>
+</div>
+<!-- Asset 3: East Basin Pumping Station #4 -->
+<div class="asset-card p-space-md rounded-xl bg-surface-container-lowest shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-space-md relative overflow-hidden transition-all" data-category="water" data-vulnerability="68">
+<!-- 4px Severity Accent Bar -->
+<div class="absolute top-0 left-0 bottom-0 w-1 bg-[#d97706]"></div>
+<div class="flex flex-col gap-space-2xs pl-2.5 flex-1 min-w-0">
+<div class="flex flex-wrap items-center gap-space-xs">
+<span class="font-headline-md text-title-lg text-on-surface">East Basin Pumping Station #4</span>
+<span class="px-2 py-0.5 rounded-full bg-[#fef3c7] text-[#b45309] font-label-sm text-label-sm font-bold flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-[#d97706]"></span>
+              MODERATE LOAD
+            </span>
+<span class="px-2 py-0.5 rounded-full bg-surface-container font-label-sm text-label-sm text-on-surface-variant font-medium">Water / Drainage</span>
+</div>
+<div class="flex flex-wrap items-center gap-space-md mt-1">
+<div class="flex items-center gap-1.5 text-on-surface">
+<span class="material-symbols-outlined text-[16px] text-[#b45309]">waterfall_chart</span>
+<span class="font-body-sm text-body-sm font-semibold">Status: 92% Peak Drainage Velocity</span>
+</div>
+<div class="flex items-center gap-1.5 text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px] text-outline">trending_up</span>
+<span class="font-body-sm text-body-sm">Water Inflow: <span class="font-code-sm text-code-sm font-bold text-on-surface">+1.2m/hr</span></span>
+</div>
+</div>
+</div>
+<!-- Telemetry Figures -->
+<div class="flex items-center gap-space-lg px-space-md py-space-xs rounded-lg bg-surface-container-low shrink-0">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-outline">TURBINE FLOW</span>
+<span class="font-data-metric-md text-data-metric-md text-on-surface font-bold">14,200</span>
+<span class="font-code-sm text-code-sm text-outline">m³/min nominal</span>
+</div>
+<div class="w-px h-8 bg-surface-container"></div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-outline">PUMP RUNTIME</span>
+<span class="font-data-metric-md text-data-metric-md text-on-surface font-bold">18.4h</span>
+<span class="font-code-sm text-code-sm text-secondary font-medium">Aux Pump 2 Idle</span>
+</div>
+<div class="w-px h-8 bg-surface-container"></div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-outline">BACKUP POWER</span>
+<span class="font-data-metric-md text-data-metric-md text-on-surface font-bold">100%</span>
+<span class="font-code-sm text-code-sm text-secondary font-medium">Diesel Gen Stable</span>
+</div>
+</div>
+<!-- Secondary Action Button -->
+<div class="flex items-center justify-end shrink-0">
+<button class="w-full lg:w-auto flex items-center justify-center gap-1.5 px-space-md py-2 rounded-lg bg-surface-container-low text-on-surface hover:bg-surface-container font-body-md text-body-md font-semibold transition-colors" type="button">
+<span class="material-symbols-outlined text-[18px]">build</span>
+<span>Assign Maintenance</span>
+</button>
+</div>
+</div>
+<!-- Asset 4: Metro Coastal Causeway Bridge -->
+<div class="asset-card p-space-md rounded-xl bg-surface-container-lowest shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-space-md relative overflow-hidden transition-all" data-category="transit" data-vulnerability="79">
+<!-- 4px Severity Accent Bar -->
+<div class="absolute top-0 left-0 bottom-0 w-1 bg-[#ea580c]"></div>
+<div class="flex flex-col gap-space-2xs pl-2.5 flex-1 min-w-0">
+<div class="flex flex-wrap items-center gap-space-xs">
+<span class="font-headline-md text-title-lg text-on-surface">Metro Coastal Causeway Bridge</span>
+<span class="px-2 py-0.5 rounded-full bg-[#ffedd5] text-[#c2410c] font-label-sm text-label-sm font-bold flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-[#ea580c]"></span>
+              HIGH VULNERABILITY
+            </span>
+<span class="px-2 py-0.5 rounded-full bg-surface-container font-label-sm text-label-sm text-on-surface-variant font-medium">Transit &amp; Bridges</span>
+</div>
+<div class="flex flex-wrap items-center gap-space-md mt-1">
+<div class="flex items-center gap-1.5 text-on-surface">
+<span class="material-symbols-outlined text-[16px] text-[#ea580c]">air</span>
+<span class="font-body-sm text-body-sm font-semibold">Hazard: High Crosswind &amp; Storm Surge (+0.8m MSL)</span>
+</div>
+<div class="flex items-center gap-1.5 text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px] text-outline">traffic</span>
+<span class="font-body-sm text-body-sm">Restrictions: Commercial Heavy Traffic Diverted</span>
+</div>
+</div>
+</div>
+<!-- Telemetry Figures -->
+<div class="flex items-center gap-space-lg px-space-md py-space-xs rounded-lg bg-surface-container-low shrink-0">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-outline">GUST VELOCITY</span>
+<span class="font-data-metric-md text-data-metric-md text-[#c2410c] font-bold">58 kt</span>
+<span class="font-code-sm text-code-sm text-outline">Threshold: 62 kt</span>
+</div>
+<div class="w-px h-8 bg-surface-container"></div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-outline">WAVE SURGE</span>
+<span class="font-data-metric-md text-data-metric-md text-on-surface font-bold">+0.8m</span>
+<span class="font-code-sm text-code-sm text-[#c2410c] font-medium">Tide Peak +2h</span>
+</div>
+<div class="w-px h-8 bg-surface-container"></div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-outline">DECK TENSION</span>
+<span class="font-data-metric-md text-data-metric-md text-on-surface font-bold">NORMAL</span>
+<span class="font-code-sm text-code-sm text-secondary font-medium">Piezo Array OK</span>
+</div>
+</div>
+<!-- Secondary Action Button -->
+<div class="flex items-center justify-end shrink-0">
+<button class="w-full lg:w-auto flex items-center justify-center gap-1.5 px-space-md py-2 rounded-lg bg-surface-container-low text-on-surface hover:bg-surface-container font-body-md text-body-md font-semibold transition-colors" type="button">
+<span class="material-symbols-outlined text-[18px]">alt_route</span>
+<span>Reroute Traffic</span>
+</button>
+</div>
+</div>
+<!-- Asset 5: North Harbor Evacuation Shelter #12 -->
+<div class="asset-card p-space-md rounded-xl bg-surface-container-lowest shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-space-md relative overflow-hidden transition-all" data-category="shelters" data-vulnerability="22">
+<!-- 4px Severity Accent Bar -->
+<div class="absolute top-0 left-0 bottom-0 w-1 bg-[#16a34a]"></div>
+<div class="flex flex-col gap-space-2xs pl-2.5 flex-1 min-w-0">
+<div class="flex flex-wrap items-center gap-space-xs">
+<span class="font-headline-md text-title-lg text-on-surface">North Harbor Evacuation Shelter #12</span>
+<span class="px-2 py-0.5 rounded-full bg-[#dcfce7] text-[#15803d] font-label-sm text-label-sm font-bold flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-[#16a34a]"></span>
+              SAFE &amp; NOMINAL
+            </span>
+<span class="px-2 py-0.5 rounded-full bg-surface-container font-label-sm text-label-sm text-on-surface-variant font-medium">Emergency Shelters</span>
+</div>
+<div class="flex flex-wrap items-center gap-space-md mt-1">
+<div class="flex items-center gap-1.5 text-on-surface">
+<span class="material-symbols-outlined text-[16px] text-secondary">check_circle</span>
+<span class="font-body-sm text-body-sm font-semibold">Accessibility: Clear (Route 12 completely open)</span>
+</div>
+<div class="flex items-center gap-1.5 text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px] text-outline">verified_user</span>
+<span class="font-body-sm text-body-sm">Red Cross Team #4 On-Site</span>
+</div>
+</div>
+</div>
+<!-- Telemetry Figures -->
+<div class="flex items-center gap-space-lg px-space-md py-space-xs rounded-lg bg-surface-container-low shrink-0">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-outline">OCCUPANCY</span>
+<span class="font-data-metric-md text-data-metric-md text-on-surface font-bold">40%</span>
+<span class="font-code-sm text-code-sm text-secondary font-medium">320 / 800 Filled</span>
+</div>
+<div class="w-px h-8 bg-surface-container"></div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-outline">WATER RESERVE</span>
+<span class="font-data-metric-md text-data-metric-md text-on-surface font-bold">96h</span>
+<span class="font-code-sm text-code-sm text-secondary font-medium">Filtered Storage</span>
+</div>
+<div class="w-px h-8 bg-surface-container"></div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-outline">HVAC / AIR QUALITY</span>
+<span class="font-data-metric-md text-data-metric-md text-on-surface font-bold">AQI 18</span>
+<span class="font-code-sm text-code-sm text-secondary font-medium">HEPA Filters Active</span>
+</div>
+</div>
+<!-- Secondary Action Button -->
+<div class="flex items-center justify-end shrink-0">
+<button class="w-full lg:w-auto flex items-center justify-center gap-1.5 px-space-md py-2 rounded-lg bg-surface-container-low text-on-surface hover:bg-surface-container font-body-md text-body-md font-semibold transition-colors" type="button">
+<span class="material-symbols-outlined text-[18px]">visibility</span>
+<span>View Facility Logs</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Micro Geographic Overlay / Station Context -->
+<div class="p-space-md rounded-xl bg-surface-container-lowest shadow-sm flex flex-col md:flex-row items-center justify-between gap-space-md">
+<div class="flex items-center gap-space-md">
+<div class="p-2 rounded-lg bg-surface-container-low text-secondary">
+<span class="material-symbols-outlined text-[24px]">satellite_alt</span>
+</div>
+<div class="flex flex-col">
+<span class="font-headline-md text-title-lg text-on-surface">GIS Spatial Hydrology Model v4.2</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Calibrated with municipal LIDAR elevation maps and coastal NOAA tidal buoys.</span>
+</div>
+</div>
+<div class="flex items-center gap-space-md font-code-sm text-code-sm text-outline">
+<span>NEXT PREDICTIVE RUN: <strong class="text-on-surface">00:08:42</strong></span>
+<span class="hidden sm:inline">•</span>
+<span class="text-secondary font-bold">AUTOMATED DISPATCH LINK READY</span>
+</div>
+</div>
+</div>
+</div>
+<script>
+  (function initAssetMonitor() {
+    const filterButtons = document.querySelectorAll('.category-btn');
+    const assetCards = document.querySelectorAll('.asset-card');
+    const searchInput = document.getElementById('assetSearchInput');
+    const sortSelect = document.getElementById('sortSelector');
+    const container = document.getElementById('assetInventoryList');
+
+    let currentCategory = 'all';
+    let searchQuery = '';
+
+    function filterAndRender() {
+      assetCards.forEach(card => {
+        const category = card.dataset.category;
+        const textContent = card.innerText.toLowerCase();
+        
+        const matchesCategory = (currentCategory === 'all' || category === currentCategory);
+        const matchesSearch = textContent.includes(searchQuery);
+
+        if (matchesCategory && matchesSearch) {
+          card.style.display = 'flex';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    }
+
+    filterButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        filterButtons.forEach(btn => {
+          btn.classList.remove('bg-primary-container', 'text-on-primary', 'font-semibold');
+          btn.classList.add('bg-surface-container-low', 'text-on-surface-variant');
+        });
+        button.classList.add('bg-primary-container', 'text-on-primary', 'font-semibold');
+        button.classList.remove('bg-surface-container-low', 'text-on-surface-variant');
+
+        currentCategory = button.dataset.category;
+        filterAndRender();
+      });
+    });
+
+    searchInput.addEventListener('input', (e) => {
+      searchQuery = e.target.value.toLowerCase().trim();
+      filterAndRender();
+    });
+
+    sortSelect.addEventListener('change', (e) => {
+      const criteria = e.target.value;
+      const cardsArray = Array.from(assetCards);
+
+      if (criteria === 'vulnerability') {
+        cardsArray.sort((a, b) => {
+          const valA = parseInt(a.dataset.vulnerability || '0', 10);
+          const valB = parseInt(b.dataset.vulnerability || '0', 10);
+          return valB - valA;
+        });
+        cardsArray.forEach(card => container.appendChild(card));
+      }
+    });
+  })();
+</script></main></div>
+<div id="app-nav"></div>
+</body></html>

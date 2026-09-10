@@ -1,0 +1,29 @@
+[
+  {
+    "id": "HZ-104",
+    "name": "River Basin Delta Surge",
+    "type": "Hazard Flood",
+    "severity": "Critical",
+    "waterLevel": "4.2m (+0.8m/hr)",
+    "affectedZones": ["Zone 4-A", "Zone 4-B"],
+    "coordinate": [12.9716, 77.5946]
+  },
+  {
+    "id": "HZ-105",
+    "name": "Urban Thermal Wet-Bulb Spike",
+    "type": "Hazard Heat",
+    "severity": "Moderate",
+    "temperature": "41°C",
+    "affectedZones": ["Central Commercial Core"],
+    "coordinate": [12.9812, 77.6012]
+  },
+  {
+    "id": "HZ-108",
+    "name": "North Slope Debris Failure",
+    "type": "Hazard Landslide",
+    "severity": "High",
+    "soilSaturation": "94%",
+    "affectedZones": ["North Ridge Sector"],
+    "coordinate": [12.9650, 77.5820]
+  }
+]

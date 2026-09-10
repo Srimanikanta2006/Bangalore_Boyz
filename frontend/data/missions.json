@@ -1,0 +1,26 @@
+[
+  {
+    "id": "MIS-8801",
+    "unit": "Tactical Unit Bravo-4",
+    "target": "Substation 4B Containment",
+    "priority": "HIGH",
+    "status": "EN_ROUTE",
+    "eta": "08 mins",
+    "distance": "2.4 km",
+    "personnel": 6,
+    "vehicle": "Waterproof All-Terrain Rescue Unit",
+    "coordinates": "12.9716° N, 77.5946° E"
+  },
+  {
+    "id": "MIS-8802",
+    "unit": "Rescue Alpha-1",
+    "target": "District 4 Shelter Evacuation",
+    "priority": "CRITICAL",
+    "status": "ON_SCENE",
+    "eta": "03 mins",
+    "distance": "0.6 km",
+    "personnel": 8,
+    "vehicle": "Hovercraft Unit 2",
+    "coordinates": "12.9812° N, 77.6012° E"
+  }
+]

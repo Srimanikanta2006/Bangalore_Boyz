@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{"colors":{"secondary-fixed-dim":"#b4c5ff","on-error-container":"#93000a","surface-container-lowest":"#ffffff","on-primary-fixed":"#131b2e","background":"#f8f9ff","primary-container":"#131b2e","secondary-container":"#316bf3","inverse-surface":"#213145","on-error":"#ffffff","primary":"#000000","on-tertiary-fixed-variant":"#004e5c","surface-container-low":"#eff4ff","on-tertiary-container":"#0090a9","on-primary-container":"#7c839b","tertiary-fixed":"#acedff","on-tertiary":"#ffffff","surface-container-high":"#dce9ff","secondary":"#0051d5","on-secondary-container":"#fefcff","on-surface":"#0b1c30","error":"#ba1a1a","outline":"#76777d","inverse-on-surface":"#eaf1ff","surface-container":"#e5eeff","primary-fixed":"#dae2fd","surface-dim":"#cbdbf5","on-primary-fixed-variant":"#3f465c","on-secondary-fixed-variant":"#003ea8","inverse-primary":"#bec6e0","surface-tint":"#565e74","tertiary-container":"#001f26","on-secondary-fixed":"#00174b","error-container":"#ffdad6","primary-fixed-dim":"#bec6e0","on-surface-variant":"#45464d","secondary-fixed":"#dbe1ff","tertiary":"#000000","surface-variant":"#d3e4fe","on-primary":"#ffffff","surface":"#f8f9ff","surface-container-highest":"#d3e4fe","on-secondary":"#ffffff","outline-variant":"#c6c6cd","tertiary-fixed-dim":"#4cd7f6","surface-bright":"#f8f9ff","on-tertiary-fixed":"#001f26","on-background":"#0b1c30"},"borderRadius":{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},"spacing":{"panel-width-md":"26rem","space-xs":"0.5rem","space-md":"1rem","edge-margin-desktop":"1.5rem","space-sm":"0.75rem","space-2xs":"0.25rem","panel-width-sm":"20rem","space-lg":"1.5rem","panel-width-lg":"32rem","space-2xl":"3rem","space-xl":"2rem","edge-margin-mobile":"1rem"},"fontFamily":{"headline-lg":["Plus Jakarta Sans"],"headline-md":["Plus Jakarta Sans"],"data-metric-lg":["Manrope"],"body-sm":["Manrope"],"data-metric-md":["Manrope"],"headline-lg-mobile":["Plus Jakarta Sans"],"label-md":["Manrope"],"code-sm":["Manrope"],"label-sm":["Manrope"],"headline-xl-mobile":["Plus Jakarta Sans"],"body-md":["Manrope"],"headline-xl":["Plus Jakarta Sans"],"body-lg":["Manrope"],"title-lg":["Plus Jakarta Sans"]},"fontSize":{"headline-lg":["28px",{"lineHeight":"36px","letterSpacing":"-0.02em","fontWeight":"700"}],"headline-md":["20px",{"lineHeight":"28px","letterSpacing":"-0.015em","fontWeight":"600"}],"data-metric-lg":["32px",{"lineHeight":"36px","letterSpacing":"-0.03em","fontWeight":"700"}],"body-sm":["13px",{"lineHeight":"18px","letterSpacing":"0em","fontWeight":"400"}],"data-metric-md":["20px",{"lineHeight":"24px","letterSpacing":"-0.02em","fontWeight":"700"}],"headline-lg-mobile":["22px",{"lineHeight":"30px","letterSpacing":"-0.015em","fontWeight":"700"}],"label-md":["12px",{"lineHeight":"16px","letterSpacing":"0.02em","fontWeight":"600"}],"code-sm":["12px",{"lineHeight":"16px","letterSpacing":"0.01em","fontWeight":"500"}],"label-sm":["11px",{"lineHeight":"14px","letterSpacing":"0.04em","fontWeight":"600"}],"headline-xl-mobile":["28px",{"lineHeight":"36px","letterSpacing":"-0.02em","fontWeight":"700"}],"body-md":["14px",{"lineHeight":"20px","letterSpacing":"0em","fontWeight":"400"}],"headline-xl":["36px",{"lineHeight":"44px","letterSpacing":"-0.025em","fontWeight":"700"}],"body-lg":["15px",{"lineHeight":"24px","letterSpacing":"-0.005em","fontWeight":"400"}],"title-lg":["16px",{"lineHeight":"24px","letterSpacing":"-0.01em","fontWeight":"600"}]}}}}</script>
+<script src="../shared/config.js"></script>
+<link rel="stylesheet" href="../shared/app.css" />
+<script src="../shared/app.js" defer></script>
+</head><body class="bg-surface font-body-md text-on-surface"><header class="fixed top-0 left-0 right-0 z-50 h-14 bg-surface-container-lowest shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="w-full h-14 px-space-md flex items-center justify-between gap-space-md"><div class="flex items-center gap-space-md"><button data-action="toggle-sidebar" class="p-1.5 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors flex items-center justify-center mr-1" type="button" title="Toggle Command Sidebar"><span class="material-symbols-outlined text-[22px]">menu</span></button><img alt="Brand logo. - Primary color: #0f172a
+- Font: plusJakartaSans
+- Mode: light
+- Roundness: rounded-md
+" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1WZa1gNvntWWeiT4QhM-l_fIhJeTNPgwhOocSm5zkFiyeUn3CdWKg2P6QBAp2739f4ineyLsZACoh0wcEewdNPLn7dJp1NR4H3lnvVimUYZHBtoiKTEcHeUelauAMp_CGDEiOGu2-Yqz4_Vqk5IejETJ6u1R9tsOCq5DwbAv411fFrUovtU623EzW2rGPgJX0iZQ2U-lv-rR-wRns1wPkTfcV5BBGcpGIRxWJQowEeXYjkRRS5BZt3IWUg"/><div class="flex items-center gap-space-xs"><span class="font-headline-md text-title-lg text-on-surface tracking-tight">ClimateShield</span><span class="font-code-sm text-code-sm text-outline px-space-2xs py-0.5 rounded bg-surface-container text-on-surface-variant font-medium">EOC OPS</span></div><div class="hidden xl:flex items-center gap-space-xs text-outline pl-space-xs"><span class="material-symbols-outlined text-[16px]">chevron_right</span><span class="font-label-md text-label-md text-on-surface-variant">Operations Suite</span><span class="material-symbols-outlined text-[16px]">chevron_right</span><span class="font-label-md text-label-md text-secondary font-semibold">HQ Tactical Feed</span></div></div><div class="flex-1 max-w-xl hidden md:flex items-center"><div class="w-full flex items-center justify-between px-space-sm py-1.5 rounded-lg bg-surface-container-low text-on-surface-variant hover:bg-surface-container cursor-pointer transition-colors shadow-none"><div class="flex items-center gap-space-xs"><span class="material-symbols-outlined text-[18px] text-outline">search</span><span class="font-body-sm text-body-sm text-on-surface-variant">Search incidents, sectors, telemetry, or dispatch units...</span></div><div class="flex items-center gap-1 font-code-sm text-code-sm px-1.5 py-0.5 bg-surface-container-lowest rounded text-on-surface-variant shadow-none"><span class="text-[11px]">⌘K</span></div></div></div><div class="flex items-center gap-space-sm"><div class="hidden lg:flex items-center gap-space-xs px-space-sm py-1 rounded-full bg-surface-container-low text-on-surface"><span class="w-2 h-2 rounded-full bg-secondary animate-pulse"></span><span class="font-label-sm text-label-sm text-on-surface-variant">City Sensor Grid:</span><span class="font-label-sm text-label-sm font-bold text-secondary">Active • 99.8%</span></div><div class="hidden sm:flex items-center gap-space-2xs px-space-sm py-1 rounded-full bg-surface-container text-on-surface font-label-sm text-label-sm"><span class="material-symbols-outlined text-[16px] text-secondary">shield</span><span class="font-semibold">Gov Operations • HQ EOC-9</span></div><button class="relative p-1.5 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" type="button"><span class="material-symbols-outlined text-[20px]">notifications</span><span class="absolute top-1 right-1 w-2 h-2 rounded-full bg-error ring-2 ring-surface-container-lowest"></span></button><button class="p-1.5 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" type="button"><span class="material-symbols-outlined text-[20px]">tune</span></button><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><aside class="gov-sidebar fixed left-0 top-14 bottom-0 w-64 bg-surface-container-lowest z-40 flex flex-col justify-between shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="flex flex-col flex-1 py-space-sm overflow-y-auto"><div class="px-space-md py-space-2xs font-label-sm text-label-sm text-outline uppercase tracking-wider">Command Center</div><nav class="px-space-xs space-y-1 mt-space-2xs" data-active-classes="bg-primary-container text-on-primary font-bold rounded-lg"><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-md text-body-md" data-path="overview" href="overview.html"><span class="material-symbols-outlined text-[20px]">space_dashboard</span><span>Overview</span></a><a aria-current="page" class="flex items-center gap-space-sm px-space-sm py-2 transition-colors bg-primary-container text-on-primary font-bold rounded-lg" data-path="live-map" href="mobile_map.html"><span class="material-symbols-outlined text-[20px]">map</span><span>Live Map</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-md text-body-md" data-path="incidents" href="response_center.html"><span class="material-symbols-outlined text-[20px]">crisis_alert</span><span>Incidents</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-md text-body-md" data-path="response-center" href="response_center.html"><span class="material-symbols-outlined text-[20px]">emergency_share</span><span>Response Center</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-md text-body-md" data-path="simulator" href="simulator.html"><span class="material-symbols-outlined text-[20px]">model_training</span><span>Simulator</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-md text-body-md" data-path="infrastructure" href="critical_assets.html"><span class="material-symbols-outlined text-[20px]">domain</span><span>Infrastructure</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-md text-body-md" data-path="analytics" href="critical_assets.html"><span class="material-symbols-outlined text-[20px]">insights</span><span>Analytics</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-md text-body-md" data-path="historical-hotspots" href="critical_assets.html"><span class="material-symbols-outlined text-[20px]">history</span><span>Historical Hotspots</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-md text-body-md" data-path="departments" href="overview.html"><span class="material-symbols-outlined text-[20px]">corporate_fare</span><span>Departments</span></a></nav></div><div class="p-space-sm bg-surface-container-low mx-space-xs mb-space-sm rounded-lg flex flex-col gap-space-2xs"><div class="flex items-center justify-between"><span class="font-label-sm text-label-sm text-outline font-semibold">DISPATCH ENGINE</span><span class="font-code-sm text-code-sm text-secondary font-bold">ONLINE</span></div><div class="flex items-center gap-space-2xs font-body-sm text-body-sm text-on-surface"><span class="material-symbols-outlined text-[16px] text-secondary">satellite_alt</span><span class="truncate">LEO Sat-Link 04 Synced</span></div></div></aside><div class="gov-main-container pl-64"><main class="relative w-full pt-14 bg-surface min-h-screen"><div class="flex flex-col w-full">
+<!-- Dynamic Operational Grid: Map Canvas (Left Flex-1) pushed beside Fixed Right Inspector (420px) -->
+<div class="flex flex-col xl:flex-row w-full h-[calc(100vh-3.5rem)] overflow-hidden bg-surface">
+<!-- LEFT & CENTER CANVAS: Map Engine & Geospatial Telemetry HUD -->
+<section class="relative flex-1 h-full min-w-0 flex flex-col bg-surface-container-low overflow-hidden">
+<!-- Cartographic Map Viewport Canvas with Static API Pipeline -->
+<div class="absolute inset-0 w-full h-full bg-cover bg-center" data-location="Bayou St. John &amp; South Waterfront District, New Orleans, LA" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBRR0648yuD2UDYjtRjcRfU52aC0Qy-8N7dqD9ZAvxwZtVJDWqE-jbB81OR8slEfOd9JrjvA6a_3N6yKR8xpzDtz7vxOLhMdXZCFZ0vR9RHwjSAnvTiaw2IXm9Cg-ThE9hybPob9YjmxPHceio7usAItywg9ywwund-oU6RkYAzN9GfzFZeh1i2d4ZVherPx9NREVuG-z52nLbKIDlebT68UTAAcIPSjLSVhaRen2zeKbog1pcYRCiD')">
+</div>
+<!-- Tactical SVG Overlays: Simulated Hydrological Isobars, Inundated Road Polylines & Hospital Egress -->
+<svg class="absolute inset-0 w-full h-full pointer-events-none z-10" preserveaspectratio="none" viewbox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<lineargradient id="floodGlow" x1="0" x2="1" y1="0" y2="1">
+<stop offset="0%" stop-color="#0051d5" stop-opacity="0.35"></stop>
+<stop offset="100%" stop-color="#ba1a1a" stop-opacity="0.15"></stop>
+</lineargradient>
+<filter height="120%" id="vectorBlur" width="120%" x="-10%" y="-10%">
+<fegaussianblur stddeviation="3"></fegaussianblur>
+</filter>
+</defs>
+<!-- Flood Contour Inundation Basin (Zone 04-B Perimeter) -->
+<polygon class="animate-pulse" fill="url(#floodGlow)" points="340,180 580,210 720,380 610,590 380,560 270,390" stroke="#ba1a1a" stroke-dasharray="6,4" stroke-width="2"></polygon>
+<!-- Severe Road Flooding - Sector Main Arterials (Red) -->
+<path d="M 290 410 L 460 390 L 610 430 L 680 520" fill="none" stroke="#ba1a1a" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"></path>
+<path d="M 460 390 L 490 280 L 590 230" fill="none" stroke="#ba1a1a" stroke-linecap="round" stroke-width="5"></path>
+<!-- Impassable / Warning Road Segments (Amber) -->
+<path d="M 680 520 L 790 560 L 890 540" fill="none" stroke="#ea580c" stroke-dasharray="4,4" stroke-linecap="round" stroke-width="4"></path>
+<path d="M 380 560 L 430 670" fill="none" stroke="#ea580c" stroke-linecap="round" stroke-width="4"></path>
+<!-- Hospital Critical Arterial Corridors (Cyan Highlight / St. Jude Route) -->
+<path d="M 310 240 L 490 280 L 730 310 L 820 280" fill="none" stroke="#0090a9" stroke-dasharray="8,6" stroke-width="4"></path>
+<!-- Sensor Station Ping Rings -->
+<circle class="animate-ping" cx="460" cy="390" fill="#ba1a1a" fill-opacity="0.25" r="18"></circle>
+<circle cx="460" cy="390" fill="#ba1a1a" r="7"></circle>
+<circle class="animate-ping" cx="610" cy="430" fill="#ba1a1a" fill-opacity="0.2" r="14"></circle>
+<circle cx="610" cy="430" fill="#ba1a1a" r="6"></circle>
+<circle cx="730" cy="310" fill="#0051d5" r="6"></circle>
+</svg>
+<!-- Top Overlay: Live Telemetry Status Strip -->
+<div class="relative z-20 flex items-center justify-between p-space-md pointer-events-none">
+<div class="flex items-center gap-space-xs pointer-events-auto bg-surface-container-lowest/95 backdrop-blur-md px-space-md py-space-xs rounded-xl shadow-sm">
+<div class="flex items-center gap-space-2xs">
+<span class="w-2.5 h-2.5 rounded-full bg-error animate-pulse"></span>
+<span class="font-headline-md text-title-lg text-on-surface">Bayou Crossing &amp; Waterfront</span>
+</div>
+<span class="text-outline text-body-sm font-body-sm">|</span>
+<span class="font-code-sm text-code-sm text-on-surface-variant">GRID #US-LA-EOC-04B</span>
+<div class="flex items-center gap-space-2xs bg-surface-container px-2 py-0.5 rounded-md font-label-sm text-label-sm text-on-surface">
+<span class="material-symbols-outlined text-[14px] text-secondary">waves</span>
+<span>Hydro-Sensors: 14/14 Online</span>
+</div>
+</div>
+<!-- GIS Layer Quick Switches -->
+<div class="flex items-center gap-space-2xs pointer-events-auto bg-surface-container-lowest/95 backdrop-blur-md p-1 rounded-xl shadow-sm">
+<button class="px-space-sm py-1.5 rounded-lg bg-surface-container text-secondary font-label-md text-label-md flex items-center gap-1.5 shadow-none transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px]">water</span>
+            Hydrology
+          </button>
+<button class="px-space-sm py-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container-low font-label-md text-label-md flex items-center gap-1.5 transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px]">alt_route</span>
+            Arterials
+          </button>
+<button class="px-space-sm py-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container-low font-label-md text-label-md flex items-center gap-1.5 transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px]">local_hospital</span>
+            Egress
+          </button>
+<button class="p-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors" type="button">
+<span class="material-symbols-outlined text-[18px]">layers</span>
+</button>
+</div>
+</div>
+<!-- Floating Map Legends & Telemetry Pin Outliers -->
+<div class="absolute bottom-6 left-6 z-20 flex flex-col gap-space-xs max-w-sm pointer-events-auto">
+<!-- Critical Landmark Flag: St. Jude Hospital -->
+<div class="bg-surface-container-lowest/95 backdrop-blur-md p-space-sm rounded-xl shadow-md flex items-start gap-space-sm">
+<div class="w-8 h-8 rounded-lg bg-error-container text-on-error-container flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[18px]">emergency</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between">
+<span class="font-headline-md text-title-lg text-on-surface truncate">St. Jude Gate B</span>
+<span class="font-label-sm text-label-sm px-1.5 py-0.5 rounded-full bg-error-container text-on-error-container font-bold">COMPROMISED</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Water ingress +18in across access ramp. Ambulance divert active.</p>
+</div>
+</div>
+<!-- Sensor Station Telemetry Badge -->
+<div class="bg-surface-container-lowest/95 backdrop-blur-md px-space-md py-space-xs rounded-xl shadow-sm flex items-center justify-between text-body-sm font-body-sm">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-error"></span>
+<span class="font-semibold text-on-surface">Sensor #4B-09 (Bayshore &amp; 4th)</span>
+</div>
+<span class="font-code-sm text-code-sm font-bold text-error">+48.2 cm/hr Peak</span>
+</div>
+</div>
+<!-- Map Zoom / Bearing Floating Utility Stack -->
+<div class="absolute right-6 bottom-6 z-20 flex flex-col gap-1.5 bg-surface-container-lowest/95 backdrop-blur-md p-1 rounded-xl shadow-sm">
+<button class="w-8 h-8 flex items-center justify-center rounded-lg text-on-surface hover:bg-surface-container transition-colors" type="button">
+<span class="material-symbols-outlined text-[18px]">add</span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg text-on-surface hover:bg-surface-container transition-colors" type="button">
+<span class="material-symbols-outlined text-[18px]">remove</span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg text-on-surface hover:bg-surface-container transition-colors" type="button">
+<span class="material-symbols-outlined text-[18px]">explore</span>
+</button>
+</div>
+</section>
+<!-- RIGHT CONTEXTUAL PANEL: Pushing Panel (~420px Fixed Width) -->
+<aside class="w-full xl:w-[420px] xl:min-w-[420px] xl:max-w-[420px] h-full bg-surface-container-lowest flex flex-col justify-between shadow-xl z-30 overflow-hidden">
+<!-- Panel Header & Primary Zone Identification -->
+<div class="px-space-lg pt-space-md pb-space-sm bg-surface-container-lowest">
+<div class="flex items-center justify-between mb-space-2xs">
+<div class="flex items-center gap-space-2xs">
+<span class="font-code-sm text-code-sm uppercase tracking-wider text-outline">Zone Detail &amp; Cascade Impact</span>
+</div>
+<button class="w-7 h-7 flex items-center justify-center rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors" type="button">
+<span class="material-symbols-outlined text-[18px]">close_fullscreen</span>
+</button>
+</div>
+<h1 class="font-headline-md text-headline-md text-on-surface tracking-tight leading-snug">
+          Sector 04-B: Bayou Crossing Corridor
+        </h1>
+<!-- Severity Badge, Hazard Pill & Numeric Metric -->
+<div class="flex items-center justify-between mt-space-sm pt-space-xs">
+<div class="flex items-center gap-space-xs">
+<!-- Severity Badge 'CRITICAL' -->
+<span class="inline-flex items-center gap-1.5 h-6 px-2.5 rounded-full bg-error-container text-on-error-container font-label-sm text-label-sm font-bold">
+<span class="w-1.5 h-1.5 rounded-full bg-error"></span>
+              CRITICAL
+            </span>
+<!-- Hazard Type Pill -->
+<span class="inline-flex items-center gap-1.5 h-6 px-2.5 rounded-full bg-surface-container-low text-on-tertiary-container font-label-sm text-label-sm font-semibold">
+<span class="w-2 h-2 rounded-sm bg-secondary"></span>
+              Flood Inundation
+            </span>
+</div>
+<!-- Risk Score -->
+<div class="flex items-baseline gap-0.5 font-headline-md text-title-lg">
+<span class="text-error font-extrabold text-data-metric-md">88</span>
+<span class="text-outline font-label-md text-label-md font-medium">/100</span>
+</div>
+</div>
+</div>
+<!-- Scrollable Analytical Content Body -->
+<div class="flex-1 px-space-lg py-space-sm overflow-y-auto space-y-space-md">
+<!-- SECTION 1: Contributing Factors Breakdown -->
+<div class="p-space-md bg-surface-container-low rounded-xl">
+<div class="flex items-center justify-between mb-space-xs">
+<span class="font-headline-md text-title-lg text-on-surface">Contributing Factors</span>
+<span class="font-code-sm text-code-sm text-secondary font-semibold">Bayou Basin Telemetry</span>
+</div>
+<!-- Horizontal Stacked Bar -->
+<div class="w-full h-3 rounded-full overflow-hidden flex bg-surface-container-high my-space-xs">
+<div class="bg-error h-full" style="width: 38%;" title="Rainfall Influx: 38%"></div>
+<div class="bg-secondary h-full" style="width: 26%;" title="Sump Capacity Deficit: 26%"></div>
+<div class="bg-surface-tint h-full" style="width: 18%;" title="Historical Flood Factor: 18%"></div>
+<div class="bg-secondary-fixed-dim h-full" style="width: 12%;" title="Low Elevation Gradient: 12%"></div>
+<div class="bg-outline h-full" style="width: 6%;" title="Population Exposure: 6%"></div>
+</div>
+<!-- Factor Breakdown Grid & Percentages -->
+<div class="space-y-1.5 mt-space-sm font-body-sm text-body-sm">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-error"></span>
+<span class="text-on-surface">Rainfall Influx (Intense Surge)</span>
+</div>
+<span class="font-code-sm text-code-sm font-bold text-on-surface">38%</span>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+<span class="text-on-surface">Sump Capacity Deficit (Station 4B)</span>
+</div>
+<span class="font-code-sm text-code-sm font-bold text-on-surface">26%</span>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-surface-tint"></span>
+<span class="text-on-surface">Historical Flood Frequency Factor</span>
+</div>
+<span class="font-code-sm text-code-sm font-bold text-on-surface">18%</span>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-secondary-fixed-dim"></span>
+<span class="text-on-surface">Low Elevation Gradient Sink</span>
+</div>
+<span class="font-code-sm text-code-sm font-bold text-on-surface">12%</span>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-outline"></span>
+<span class="text-on-surface">Population Exposure Density</span>
+</div>
+<span class="font-code-sm text-code-sm font-bold text-on-surface">6%</span>
+</div>
+</div>
+</div>
+<!-- SECTION 2: Impact Metrics Grid (Compact 3-box) -->
+<div>
+<div class="font-label-sm text-label-sm uppercase tracking-wider text-outline mb-space-xs font-semibold">Impact Assessment</div>
+<div class="grid grid-cols-3 gap-space-2xs">
+<!-- Box 1: Blocked Roads -->
+<div class="p-space-sm bg-surface-container rounded-xl flex flex-col justify-between">
+<div class="flex items-center justify-between text-error">
+<span class="material-symbols-outlined text-[20px]">do_not_disturb_on</span>
+<span class="font-label-sm text-label-sm font-bold">L-3</span>
+</div>
+<div class="mt-2">
+<div class="font-data-metric-md text-data-metric-md text-on-surface leading-tight font-extrabold">3</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant font-semibold">Blocked Roads</div>
+<div class="font-code-sm text-[11px] text-outline mt-0.5">2.4 km closed</div>
+</div>
+</div>
+<!-- Box 2: Critical Hospital Access -->
+<div class="p-space-sm bg-surface-container rounded-xl flex flex-col justify-between">
+<div class="flex items-center justify-between text-error">
+<span class="material-symbols-outlined text-[20px]">local_hospital</span>
+<span class="font-label-sm text-label-sm font-bold">ALERT</span>
+</div>
+<div class="mt-2">
+<div class="font-data-metric-md text-data-metric-md text-on-surface leading-tight font-extrabold">1 Gate</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant font-semibold">Hospital Egress</div>
+<div class="font-code-sm text-[11px] text-outline mt-0.5">St. Jude Gate B</div>
+</div>
+</div>
+<!-- Box 3: Population Exposure -->
+<div class="p-space-sm bg-surface-container rounded-xl flex flex-col justify-between">
+<div class="flex items-center justify-between text-secondary">
+<span class="material-symbols-outlined text-[20px]">group</span>
+<span class="font-label-sm text-label-sm font-bold">GEO</span>
+</div>
+<div class="mt-2">
+<div class="font-data-metric-md text-data-metric-md text-on-surface leading-tight font-extrabold">14.2k</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant font-semibold">Residents</div>
+<div class="font-code-sm text-[11px] text-outline mt-0.5">Under Advisory</div>
+</div>
+</div>
+</div>
+</div>
+<!-- SECTION 3: Compact Cascade Diagram (Horizontal visual flow) -->
+<div class="p-space-md bg-surface-container-low rounded-xl">
+<div class="flex items-center justify-between mb-space-sm">
+<span class="font-headline-md text-title-lg text-on-surface">Cascade Impact Vector</span>
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-surface-container font-semibold text-on-surface-variant">Deterministic Model</span>
+</div>
+<div class="space-y-2">
+<!-- Node 1: Runoff -->
+<div class="p-space-xs bg-surface-container-lowest rounded-lg flex items-center justify-between shadow-sm">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-[18px] text-secondary">cloud</span>
+<div>
+<div class="font-title-lg text-body-sm font-bold text-on-surface">Intense Runoff</div>
+<div class="font-code-sm text-[11px] text-outline">Precipitation telemetry</div>
+</div>
+</div>
+<span class="font-code-sm text-code-sm font-bold text-secondary">+45 mm/h</span>
+</div>
+<!-- Flow Indicator 1 -->
+<div class="flex justify-center -my-1 text-outline">
+<span class="material-symbols-outlined text-[16px]">arrow_downward</span>
+</div>
+<!-- Node 2: Storm Drainage -->
+<div class="p-space-xs bg-surface-container-lowest rounded-lg flex items-center justify-between shadow-sm">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-[18px] text-error">water_damage</span>
+<div>
+<div class="font-title-lg text-body-sm font-bold text-on-surface">Storm Drainage Overwhelmed</div>
+<div class="font-code-sm text-[11px] text-outline">Basin sump failure point</div>
+</div>
+</div>
+<span class="font-code-sm text-code-sm font-bold text-error">112% Cap</span>
+</div>
+<!-- Flow Indicator 2 -->
+<div class="flex justify-center -my-1 text-outline">
+<span class="material-symbols-outlined text-[16px]">arrow_downward</span>
+</div>
+<!-- Node 3: Arterial Inundation -->
+<div class="p-space-xs bg-surface-container-lowest rounded-lg flex items-center justify-between shadow-sm">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-[18px] text-error">traffic</span>
+<div>
+<div class="font-title-lg text-body-sm font-bold text-on-surface">Arterial Inundation</div>
+<div class="font-code-sm text-[11px] text-outline">4th &amp; Bayshore Roadway</div>
+</div>
+</div>
+<span class="font-code-sm text-code-sm font-bold text-error">+18 in Water</span>
+</div>
+<!-- Flow Indicator 3 -->
+<div class="flex justify-center -my-1 text-outline">
+<span class="material-symbols-outlined text-[16px]">arrow_downward</span>
+</div>
+<!-- Node 4: Critical Delay -->
+<div class="p-space-xs bg-error-container text-on-error-container rounded-lg flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-[18px]">warning</span>
+<div>
+<div class="font-title-lg text-body-sm font-bold">Ambulance Route Delayed</div>
+<div class="font-code-sm text-[11px] opacity-80">Trauma Unit Diversion</div>
+</div>
+</div>
+<span class="font-code-sm text-code-sm font-extrabold">+14 min</span>
+</div>
+</div>
+</div>
+<!-- SECTION 4: Recommended Preventive Actions (Interactive Checklist) -->
+<div class="p-space-md bg-surface-container-lowest rounded-xl">
+<div class="flex items-center justify-between mb-space-sm">
+<span class="font-headline-md text-title-lg text-on-surface">Recommended Actions</span>
+<span class="font-label-sm text-label-sm text-outline font-semibold">2 of 4 Executed</span>
+</div>
+<div class="space-y-space-xs">
+<!-- Action Item 1: Auto-triggered -->
+<label class="flex items-start gap-space-sm p-space-xs rounded-lg hover:bg-surface-container-low cursor-pointer transition-colors">
+<input checked="" class="mt-1 w-4 h-4 rounded accent-primary text-on-primary cursor-pointer" type="checkbox"/>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between">
+<span class="font-body-sm text-body-sm font-semibold text-on-surface">Activate Auxiliary Sump Pump 4B</span>
+<span class="font-code-sm text-[10px] uppercase font-bold text-secondary bg-surface-container px-1.5 py-0.5 rounded">Auto</span>
+</div>
+<p class="font-body-sm text-[12px] text-outline mt-0.5">Automated telemetry initiated at 08:14 EST</p>
+</div>
+</label>
+<!-- Action Item 2: Dispatched -->
+<label class="flex items-start gap-space-sm p-space-xs rounded-lg hover:bg-surface-container-low cursor-pointer transition-colors">
+<input checked="" class="mt-1 w-4 h-4 rounded accent-primary text-on-primary cursor-pointer" type="checkbox"/>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between">
+<span class="font-body-sm text-body-sm font-semibold text-on-surface">Dispatch Traffic Barriers</span>
+<span class="font-code-sm text-[10px] uppercase font-bold text-on-surface-variant bg-surface-container px-1.5 py-0.5 rounded">Unit 12</span>
+</div>
+<p class="font-body-sm text-[12px] text-outline mt-0.5">En route to 4th &amp; Bayshore intersection</p>
+</div>
+</label>
+<!-- Action Item 3: Pending Deploy -->
+<label class="flex items-start gap-space-sm p-space-xs rounded-lg hover:bg-surface-container-low cursor-pointer transition-colors">
+<input class="mt-1 w-4 h-4 rounded accent-primary text-on-primary cursor-pointer" type="checkbox"/>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between">
+<span class="font-body-sm text-body-sm font-semibold text-on-surface">Deploy High-Volume Mobile Barrier</span>
+<span class="font-code-sm text-[10px] uppercase font-bold text-error bg-error-container text-on-error-container px-1.5 py-0.5 rounded">Urgent</span>
+</div>
+<p class="font-body-sm text-[12px] text-outline mt-0.5">Position at St. Jude South Gate B ramp</p>
+</div>
+</label>
+<!-- Action Item 4: Hyperlocal warning -->
+<label class="flex items-start gap-space-sm p-space-xs rounded-lg hover:bg-surface-container-low cursor-pointer transition-colors">
+<input class="mt-1 w-4 h-4 rounded accent-primary text-on-primary cursor-pointer" type="checkbox"/>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between">
+<span class="font-body-sm text-body-sm font-semibold text-on-surface">Issue Hyperlocal Evacuation Warning</span>
+<span class="font-code-sm text-[10px] uppercase font-bold text-outline bg-surface-container px-1.5 py-0.5 rounded">Geofence</span>
+</div>
+<p class="font-body-sm text-[12px] text-outline mt-0.5">Push WEA mobile alert to Sector 04-B residents</p>
+</div>
+</label>
+</div>
+</div>
+</div>
+<!-- STICKY DOCKED ACTIONS: Primary CTA and Ghost Secondary -->
+<div class="p-space-md bg-surface-container-lowest shadow-lg space-y-space-xs">
+<!-- Ghost Action: Export GIS Data -->
+<button class="w-full h-10 px-space-md rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface font-body-md text-body-md font-semibold flex items-center justify-center gap-space-xs transition-colors" onclick="handleExportGIS()" type="button">
+<span class="material-symbols-outlined text-[18px]">download_for_offline</span>
+          Export GIS Data &amp; Shapefile
+        </button>
+<!-- Primary Operational Action: Exactly ONE solid filled primary button -->
+<button class="w-full h-11 px-space-md rounded-lg bg-primary hover:bg-inverse-surface text-on-primary font-headline-md text-title-lg font-bold flex items-center justify-center gap-space-xs transition-colors shadow-md" onclick="handleCreatePlan()" type="button">
+<span class="material-symbols-outlined text-[20px]">assignment_turned_in</span>
+          Create Response Plan
+        </button>
+</div>
+</aside>
+</div>
+</div>
+<script>
+  function handleExportGIS() {
+    const btn = event.currentTarget;
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<span class="material-symbols-outlined text-[18px] animate-spin">refresh</span> Generating GeoJSON...';
+    setTimeout(() => {
+      btn.innerHTML = '<span class="material-symbols-outlined text-[18px] text-secondary">check_circle</span> Vector Package Downloaded';
+      setTimeout(() => {
+        btn.innerHTML = originalText;
+      }, 2000);
+    }, 1000);
+  }
+
+  function handleCreatePlan() {
+    const btn = event.currentTarget;
+    btn.classList.add('opacity-90');
+    btn.innerHTML = '<span class="material-symbols-outlined text-[20px] animate-pulse">sync</span> Initiating Dispatch Protocol...';
+    setTimeout(() => {
+      btn.innerHTML = '<span class="material-symbols-outlined text-[20px]">done_all</span> Response Plan Drafted (#RP-04B-91)';
+    }, 1200);
+  }
+</script></main></div>
+<div id="app-nav"></div>
+</body></html>

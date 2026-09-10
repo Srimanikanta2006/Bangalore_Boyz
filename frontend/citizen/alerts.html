@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@600;700;800&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { colors: { "surface-container-highest": "#d3e4fe", "secondary-container": "#316bf3", "on-secondary-container": "#fefcff", "on-primary-fixed-variant": "#3f465c", "primary-fixed": "#dae2fd", "on-secondary": "#ffffff", "on-secondary-fixed-variant": "#003ea8", "on-tertiary-fixed-variant": "#004e5c", "inverse-surface": "#213145", "on-background": "#0b1c30", "on-surface": "#0b1c30", "secondary-fixed-dim": "#b4c5ff", "on-tertiary": "#ffffff", "error": "#ba1a1a", "on-tertiary-fixed": "#001f26", "surface-bright": "#f8f9ff", "tertiary": "#000000", "surface-tint": "#565e74", "outline-variant": "#c6c6cd", "surface-container": "#e5eeff", "surface-container-lowest": "#ffffff", "error-container": "#ffdad6", "surface-container-low": "#eff4ff", "outline": "#76777d", "on-error-container": "#93000a", "surface": "#f8f9ff", "on-primary-fixed": "#131b2e", "inverse-on-surface": "#eaf1ff", "primary-container": "#131b2e", "on-surface-variant": "#45464d", "inverse-primary": "#bec6e0", "surface-container-high": "#dce9ff", "tertiary-fixed": "#acedff", "secondary-fixed": "#dbe1ff", "on-secondary-fixed": "#00174b", "tertiary-fixed-dim": "#4cd7f6", "primary-fixed-dim": "#bec6e0", "secondary": "#0051d5", "surface-dim": "#cbdbf5", "on-primary-container": "#7c839b", "surface-variant": "#d3e4fe", "background": "#f8f9ff", "on-error": "#ffffff", "on-primary": "#ffffff", "tertiary-container": "#001f26", "primary": "#000000", "on-tertiary-container": "#0090a9" }, borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, spacing: { "space-xs": "0.5rem", "space-md": "1rem", "panel-width-sm": "20rem", "edge-margin-desktop": "1.5rem", "space-2xs": "0.25rem", "space-2xl": "3rem", "panel-width-lg": "32rem", "panel-width-md": "26rem", "edge-margin-mobile": "1rem", "space-xl": "2rem", "space-sm": "0.75rem", "space-lg": "1.5rem" }, fontFamily: { "body-md": ["Manrope"], "headline-lg-mobile": ["Plus Jakarta Sans"], "headline-md": ["Plus Jakarta Sans"], "body-lg": ["Manrope"], "headline-xl": ["Plus Jakarta Sans"], "data-metric-lg": ["Manrope"], "headline-xl-mobile": ["Plus Jakarta Sans"], "body-sm": ["Manrope"], "label-md": ["Manrope"], "title-lg": ["Plus Jakarta Sans"], "code-sm": ["Manrope"], "label-sm": ["Manrope"], "data-metric-md": ["Manrope"], "headline-lg": ["Plus Jakarta Sans"] }, fontSize: { "body-md": ["14px", { lineHeight: "20px", letterSpacing: "0em", fontWeight: "400" }], "headline-lg-mobile": ["22px", { lineHeight: "30px", letterSpacing: "-0.015em", fontWeight: "700" }], "headline-md": ["20px", { lineHeight: "28px", letterSpacing: "-0.015em", fontWeight: "600" }], "body-lg": ["15px", { lineHeight: "24px", letterSpacing: "-0.005em", fontWeight: "400" }], "headline-xl": ["36px", { lineHeight: "44px", letterSpacing: "-0.025em", fontWeight: "700" }], "data-metric-lg": ["32px", { lineHeight: "36px", letterSpacing: "-0.03em", fontWeight: "700" }], "headline-xl-mobile": ["28px", { lineHeight: "36px", letterSpacing: "-0.02em", fontWeight: "700" }], "body-sm": ["13px", { lineHeight: "18px", letterSpacing: "0em", fontWeight: "400" }], "label-md": ["12px", { lineHeight: "16px", letterSpacing: "0.02em", fontWeight: "600" }], "title-lg": ["16px", { lineHeight: "24px", letterSpacing: "-0.01em", fontWeight: "600" }], "code-sm": ["12px", { lineHeight: "16px", letterSpacing: "0.01em", fontWeight: "500" }], "label-sm": ["11px", { lineHeight: "14px", letterSpacing: "0.04em", fontWeight: "600" }], "data-metric-md": ["20px", { lineHeight: "24px", letterSpacing: "-0.02em", fontWeight: "700" }], "headline-lg": ["28px", { lineHeight: "36px", letterSpacing: "-0.02em", fontWeight: "700" }] } } } };</script><style>@layer base{html,body{width:100vw;margin:0;padding:0;min-height:100%;}body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}}::-webkit-scrollbar{display:none;}</style><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  
+<script src="../shared/config.js"></script>
+<link rel="stylesheet" href="../shared/app.css" />
+<script src="../shared/app.js" defer></script>
+</head><body class="bg-surface text-on-surface font-body-md text-body-md min-h-screen flex flex-col relative"><header class="fixed top-0 w-full z-50 pt-safe px-edge-margin-mobile"><div class="h-16 flex items-center justify-between mt-space-2xs px-space-md rounded-xl bg-surface-container-lowest/90 backdrop-blur-xl shadow-[0_4px_20px_-2px_rgba(15,23,42,0.08)]"><div class="flex items-center gap-space-xs min-w-0"><div class="w-9 h-9 rounded-lg bg-primary-container text-on-primary flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-[20px] text-tertiary-fixed">shield_with_heart</span></div><div class="flex flex-col min-w-0"><span class="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-bold truncate">ClimateShield Citizen</span><h1 class="font-title-lg text-title-lg text-on-surface font-bold truncate tracking-tight">Alerts</h1></div></div><div class="flex items-center gap-space-xs shrink-0"><span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface-container text-on-surface-variant font-label-sm text-label-sm"><span class="w-2 h-2 rounded-full bg-secondary-container animate-pulse"></span>Live</span><img alt="Profile" class="w-8 h-8 rounded-full object-cover shadow-[0_1px_8px_rgba(0,0,0,0.04)]" src="https://lh3.googleusercontent.com/aida/AEtjO1WZa1gNvntWWeiT4QhM-l_fIhJeTNPgwhOocSm5zkFiyeUn3CdWKg2P6QBAp2739f4ineyLsZACoh0wcEewdNPLn7dJp1NR4H3lnvVimUYZHBtoiKTEcHeUelauAMp_CGDEiOGu2-Yqz4_Vqk5IejETJ6u1R9tsOCq5DwbAv411fFrUovtU623EzW2rGPgJX0iZQ2U-lv-rR-wRns1wPkTfcV5BBGcpGIRxWJQowEeXYjkRRS5BZt3IWUg"/></div></div></header><main class="flex-1 flex flex-col relative w-full pt-16 pb-24 bg-surface"><div class="flex flex-col w-full">
+<div class="px-edge-margin-mobile pt-space-xs pb-space-sm">
+<div class="relative w-full mb-space-sm">
+<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-on-surface-variant">
+<span class="material-symbols-outlined text-[20px]">search</span>
+</div>
+<input class="w-full h-10 pl-9 pr-8 bg-surface-container-lowest text-on-surface placeholder:text-outline font-body-md text-body-md rounded-lg shadow-sm focus:outline-none focus:bg-surface-container-low transition-colors duration-150" id="alert-search-input" placeholder="Search alerts or neighborhood..." type="text"/>
+<button class="absolute inset-y-0 right-0 pr-3 hidden items-center text-outline hover:text-on-surface" id="clear-search-btn">
+<span class="material-symbols-outlined text-[18px]">close</span>
+</button>
+</div>
+<div class="flex items-center gap-space-2xs overflow-x-auto no-scrollbar py-0.5" id="filter-chips">
+<button class="filter-chip active shrink-0 px-3 py-1.5 rounded-full bg-primary-container text-on-primary font-label-md text-label-md shadow-sm transition-all duration-150 flex items-center gap-1.5" data-filter="all">
+<span>All Alerts</span>
+<span class="bg-surface-container-lowest/20 text-on-primary px-1.5 py-0.2 rounded-full font-label-sm text-[10px]">3</span>
+</button>
+<button class="filter-chip shrink-0 px-3 py-1.5 rounded-full bg-surface-container-lowest text-on-surface font-label-md text-label-md shadow-sm hover:bg-surface-container transition-all duration-150 flex items-center gap-1.5" data-filter="high">
+<span class="w-2 h-2 rounded-full bg-error"></span>
+<span>High Severity</span>
+</button>
+<button class="filter-chip shrink-0 px-3 py-1.5 rounded-full bg-surface-container-lowest text-on-surface font-label-md text-label-md shadow-sm hover:bg-surface-container transition-all duration-150 flex items-center gap-1.5" data-filter="weather">
+<span class="material-symbols-outlined text-[15px] text-secondary">cloud</span>
+<span>Weather</span>
+</button>
+<button class="filter-chip shrink-0 px-3 py-1.5 rounded-full bg-surface-container-lowest text-on-surface font-label-md text-label-md shadow-sm hover:bg-surface-container transition-all duration-150 flex items-center gap-1.5" data-filter="corridors">
+<span class="material-symbols-outlined text-[15px] text-secondary-container">alt_route</span>
+<span>Safe Corridors</span>
+</button>
+</div>
+</div>
+<div class="px-edge-margin-mobile flex items-center justify-between pb-space-xs text-on-surface-variant">
+<span class="font-label-sm text-label-sm uppercase tracking-wider font-semibold">Active Citizen Advisories</span>
+<span class="font-label-sm text-label-sm flex items-center gap-1 text-secondary font-medium">
+<span class="material-symbols-outlined text-[14px]">sync</span>
+<span>Auto-sync 30s</span>
+</span>
+</div>
+<div class="px-edge-margin-mobile flex flex-col gap-space-sm" id="alerts-container">
+<article class="relative overflow-hidden bg-surface-container-lowest rounded-xl shadow-[0_4px_20px_-2px_rgba(15,23,42,0.08)] transition-transform duration-150 active:scale-[0.99]" data-card="high weather corridors">
+<div class="absolute left-0 top-0 bottom-0 w-1.5 bg-[#EA580C]"></div>
+<div class="pl-4 pr-space-md py-space-md flex flex-col gap-space-xs">
+<div class="flex items-center justify-between flex-wrap gap-1.5">
+<div class="flex items-center gap-1.5">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-surface-container font-label-sm text-label-sm font-bold text-on-surface">
+<span class="w-1.5 h-1.5 rounded-full bg-[#06B6D4]"></span>
+              Flash Flood
+            </span>
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#FFEDD5] text-[#C2410C] font-label-sm text-label-sm font-bold">
+<span class="w-1.5 h-1.5 rounded-full bg-[#EA580C] animate-ping"></span>
+              HIGH
+            </span>
+</div>
+<span class="font-label-sm text-label-sm text-outline tabular-nums flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]">schedule</span>
+            Updated 4m ago
+          </span>
+</div>
+<div class="mt-0.5">
+<h2 class="font-title-lg text-title-lg text-on-surface font-bold leading-snug">
+            Rapid Inundation on South Waterfront
+          </h2>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1 leading-relaxed">
+            Water levels rising rapidly along 3rd and 5th avenues. Storm drains overloaded. Avoid low-elevation underpasses.
+          </p>
+</div>
+<div class="pt-1 mt-0.5 flex items-center justify-between">
+<button class="group inline-flex items-center gap-1.5 font-label-md text-label-md font-bold text-[#EA580C] hover:text-[#C2410C] transition-colors duration-150" type="button">
+<span>View safe detour route</span>
+<span class="material-symbols-outlined text-[16px] group-hover:translate-x-0.5 transition-transform duration-150">arrow_forward</span>
+</button>
+<span class="inline-flex items-center text-outline-variant hover:text-on-surface-variant p-1">
+<span class="material-symbols-outlined text-[18px]">share</span>
+</span>
+</div>
+</div>
+</article>
+<article class="relative overflow-hidden bg-surface-container-lowest rounded-xl shadow-[0_4px_20px_-2px_rgba(15,23,42,0.08)] transition-transform duration-150 active:scale-[0.99]" data-card="weather">
+<div class="absolute left-0 top-0 bottom-0 w-1.5 bg-[#D97706]"></div>
+<div class="pl-4 pr-space-md py-space-md flex flex-col gap-space-xs">
+<div class="flex items-center justify-between flex-wrap gap-1.5">
+<div class="flex items-center gap-1.5">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-surface-container font-label-sm text-label-sm font-bold text-on-surface">
+<span class="w-1.5 h-1.5 rounded-full bg-[#D97706]"></span>
+              Heat Warning
+            </span>
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#FEF3C7] text-[#B45309] font-label-sm text-label-sm font-bold">
+<span class="w-1.5 h-1.5 rounded-full bg-[#D97706]"></span>
+              MODERATE
+            </span>
+</div>
+<span class="font-label-sm text-label-sm text-outline tabular-nums flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]">schedule</span>
+            Updated 18m ago
+          </span>
+</div>
+<div class="mt-0.5">
+<h2 class="font-title-lg text-title-lg text-on-surface font-bold leading-snug">
+            Extreme Heat Watch • Midtown Sector
+          </h2>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1 leading-relaxed">
+            Temperatures peaking at 39°C. 4 public cooling shelters activated with generator backups.
+          </p>
+</div>
+<div class="pt-1 mt-0.5 flex items-center justify-between">
+<button class="group inline-flex items-center gap-1.5 font-label-md text-label-md font-bold text-[#B45309] hover:text-[#92400E] transition-colors duration-150" type="button">
+<span>Find cooling centers</span>
+<span class="material-symbols-outlined text-[16px] group-hover:translate-x-0.5 transition-transform duration-150">arrow_forward</span>
+</button>
+<span class="inline-flex items-center text-outline-variant hover:text-on-surface-variant p-1">
+<span class="material-symbols-outlined text-[18px]">share</span>
+</span>
+</div>
+</div>
+</article>
+<article class="relative overflow-hidden bg-surface-container-lowest rounded-xl shadow-[0_4px_20px_-2px_rgba(15,23,42,0.08)] transition-transform duration-150 active:scale-[0.99]" data-card="all">
+<div class="absolute left-0 top-0 bottom-0 w-1.5 bg-[#2563EB]"></div>
+<div class="pl-4 pr-space-md py-space-md flex flex-col gap-space-xs">
+<div class="flex items-center justify-between flex-wrap gap-1.5">
+<div class="flex items-center gap-1.5">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-surface-container font-label-sm text-label-sm font-bold text-on-surface">
+<span class="w-1.5 h-1.5 rounded-full bg-[#2563EB]"></span>
+              Hydrology Notice
+            </span>
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#DBEAFE] text-[#1D4ED8] font-label-sm text-label-sm font-bold">
+<span class="w-1.5 h-1.5 rounded-full bg-[#2563EB]"></span>
+              INFO
+            </span>
+</div>
+<span class="font-label-sm text-label-sm text-outline tabular-nums flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]">schedule</span>
+            Updated 1h ago
+          </span>
+</div>
+<div class="mt-0.5">
+<h2 class="font-title-lg text-title-lg text-on-surface font-bold leading-snug">
+            Precautionary Dam Release Scheduled 16:00
+          </h2>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1 leading-relaxed">
+            Controlled discharge into East Basin. No residential danger anticipated.
+          </p>
+</div>
+<div class="pt-1 mt-0.5 flex items-center justify-between">
+<span class="inline-flex items-center gap-1 font-label-sm text-label-sm text-outline">
+<span class="material-symbols-outlined text-[15px] text-secondary">verified</span>
+            Municipal Utilities Board
+          </span>
+<span class="inline-flex items-center text-outline-variant hover:text-on-surface-variant p-1">
+<span class="material-symbols-outlined text-[18px]">share</span>
+</span>
+</div>
+</div>
+</article>
+</div>
+<div class="hidden px-edge-margin-mobile py-space-xl flex-col items-center justify-center text-center" id="no-alerts-state">
+<div class="w-14 h-14 rounded-full bg-surface-container flex items-center justify-center text-secondary mb-space-xs">
+<span class="material-symbols-outlined text-[28px]">check_circle</span>
+</div>
+<h3 class="font-title-lg text-title-lg font-bold text-on-surface">All Clear in Your Area</h3>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-xs mt-1">
+      No critical hazards reported matching your current filter. We will notify you instantly if conditions evolve.
+    </p>
+</div>
+<div class="px-edge-margin-mobile mt-space-lg mb-space-md">
+<div class="p-space-md rounded-xl bg-surface-container-low shadow-sm flex items-start gap-space-xs">
+<div class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center shrink-0 text-secondary-container">
+<span class="material-symbols-outlined text-[18px]">notifications_active</span>
+</div>
+<div class="flex-1 min-w-0">
+<span class="font-title-lg text-title-lg font-bold text-on-surface block">Hyperlocal Geofence Alerts</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">
+          Push notices fire only if you are within 2.5 km of a verified corridor obstacle or flash hazard.
+        </p>
+</div>
+</div>
+</div>
+</div>
+<script>
+  (function() {
+    const alertsTab = document.querySelector('nav a[data-path="alerts"]');
+    if (alertsTab) {
+      alertsTab.classList.remove('text-on-surface-variant');
+      alertsTab.classList.add('text-secondary', 'font-semibold');
+      const icon = alertsTab.querySelector('.material-symbols-outlined');
+      if (icon) {
+        icon.style.fontVariationSettings = "'FILL' 1";
+      }
+    }
+
+    const chips = document.querySelectorAll('#filter-chips .filter-chip');
+    const cards = document.querySelectorAll('#alerts-container article');
+    const emptyState = document.getElementById('no-alerts-state');
+    const searchInput = document.getElementById('alert-search-input');
+    const clearBtn = document.getElementById('clear-search-btn');
+
+    let currentFilter = 'all';
+
+    function applyFilters() {
+      const query = (searchInput.value || '').trim().toLowerCase();
+      let visibleCount = 0;
+
+      cards.forEach(card => {
+        const text = card.textContent.toLowerCase();
+        const cardTags = card.getAttribute('data-card') || '';
+        const matchesQuery = query === '' || text.includes(query);
+        const matchesFilter = (currentFilter === 'all') || cardTags.includes(currentFilter);
+
+        if (matchesQuery && matchesFilter) {
+          card.style.display = 'block';
+          visibleCount++;
+        } else {
+          card.style.display = 'none';
+        }
+      });
+
+      if (visibleCount === 0) {
+        emptyState.classList.remove('hidden');
+        emptyState.classList.add('flex');
+      } else {
+        emptyState.classList.add('hidden');
+        emptyState.classList.remove('flex');
+      }
+    }
+
+    chips.forEach(chip => {
+      chip.addEventListener('click', function() {
+        chips.forEach(c => {
+          c.classList.remove('active', 'bg-primary-container', 'text-on-primary');
+          c.classList.add('bg-surface-container-lowest', 'text-on-surface');
+        });
+        this.classList.remove('bg-surface-container-lowest', 'text-on-surface');
+        this.classList.add('active', 'bg-primary-container', 'text-on-primary');
+        currentFilter = this.getAttribute('data-filter');
+        applyFilters();
+      });
+    });
+
+    searchInput.addEventListener('input', function() {
+      if (this.value.length > 0) {
+        clearBtn.classList.remove('hidden');
+        clearBtn.classList.add('flex');
+      } else {
+        clearBtn.classList.remove('flex');
+        clearBtn.classList.add('hidden');
+      }
+      applyFilters();
+    });
+
+    clearBtn.addEventListener('click', function() {
+      searchInput.value = '';
+      clearBtn.classList.remove('flex');
+      clearBtn.classList.add('hidden');
+      applyFilters();
+    });
+  })();
+</script></main><aside class="fixed right-edge-margin-mobile bottom-24 mb-3 z-50 pointer-events-auto"><a class="flex items-center justify-center w-14 h-14 rounded-full bg-error text-on-error shadow-[0_12px_32px_-4px_rgba(186,26,26,0.36)] active:scale-95 transition-transform duration-150" data-path="emergency" href="#"><div class="flex flex-col items-center justify-center"><span class="material-symbols-outlined text-[24px]">sos</span><span class="font-label-sm text-[9px] font-bold tracking-tight leading-none uppercase">Alert</span></div></a></aside><nav class="fixed bottom-0 w-full z-50 pb-safe bg-surface-container-lowest/90 backdrop-blur-xl shadow-[0_-4px_20px_-2px_rgba(15,23,42,0.06)]" data-active-classes="text-secondary font-semibold"><div class="flex items-center justify-around h-16 px-space-xs"><a class="flex flex-col items-center justify-center min-w-[56px] min-h-[44px] px-space-xs text-on-surface-variant transition-colors duration-150" data-path="map" href="#"><span class="material-symbols-outlined text-[22px]">map</span><span class="font-label-sm text-label-sm mt-0.5">Map</span></a><a aria-current="page" class="flex flex-col items-center justify-center min-w-[56px] min-h-[44px] px-space-xs transition-colors duration-150 text-secondary font-semibold" data-path="alerts" href="#"><span class="material-symbols-outlined text-[22px]">warning</span><span class="font-label-sm text-label-sm mt-0.5">Alerts</span></a><a class="flex flex-col items-center justify-center min-w-[56px] min-h-[44px] px-space-xs text-on-surface-variant transition-colors duration-150" data-path="reports" href="#"><span class="material-symbols-outlined text-[22px]">assignment_late</span><span class="font-label-sm text-label-sm mt-0.5">Reports</span></a><a class="flex flex-col items-center justify-center min-w-[56px] min-h-[44px] px-space-xs text-on-surface-variant transition-colors duration-150" data-path="profile" href="#"><span class="material-symbols-outlined text-[22px]">person</span><span class="font-label-sm text-label-sm mt-0.5">Profile</span></a></div></nav>
+<div id="app-nav"></div>
+</body></html>

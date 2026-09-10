@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 40" fill="none">
+  <rect width="36" height="36" rx="9" fill="#0F172A"/>
+  <path d="M18 7L9 11.5V19C9 24.8 12.8 30.2 18 31.5C23.2 30.2 27 24.8 27 19V11.5L18 7Z" stroke="#06B6D4" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M14 19L17 22L22 16" stroke="#16A34A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="46" y="24" font-family="Plus Jakarta Sans, sans-serif" font-size="17" font-weight="800" letter-spacing="-0.5px" fill="#0F172A">Climate<tspan fill="#06B6D4">Shield</tspan></text>
+</svg>

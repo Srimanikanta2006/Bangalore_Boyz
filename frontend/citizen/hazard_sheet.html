@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@600;700;800&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { colors: { "surface-container-highest": "#d3e4fe", "secondary-container": "#316bf3", "on-secondary-container": "#fefcff", "on-primary-fixed-variant": "#3f465c", "primary-fixed": "#dae2fd", "on-secondary": "#ffffff", "on-secondary-fixed-variant": "#003ea8", "on-tertiary-fixed-variant": "#004e5c", "inverse-surface": "#213145", "on-background": "#0b1c30", "on-surface": "#0b1c30", "secondary-fixed-dim": "#b4c5ff", "on-tertiary": "#ffffff", "error": "#ba1a1a", "on-tertiary-fixed": "#001f26", "surface-bright": "#f8f9ff", "tertiary": "#000000", "surface-tint": "#565e74", "outline-variant": "#c6c6cd", "surface-container": "#e5eeff", "surface-container-lowest": "#ffffff", "error-container": "#ffdad6", "surface-container-low": "#eff4ff", "outline": "#76777d", "on-error-container": "#93000a", "surface": "#f8f9ff", "on-primary-fixed": "#131b2e", "inverse-on-surface": "#eaf1ff", "primary-container": "#131b2e", "on-surface-variant": "#45464d", "inverse-primary": "#bec6e0", "surface-container-high": "#dce9ff", "tertiary-fixed": "#acedff", "secondary-fixed": "#dbe1ff", "on-secondary-fixed": "#00174b", "tertiary-fixed-dim": "#4cd7f6", "primary-fixed-dim": "#bec6e0", "secondary": "#0051d5", "surface-dim": "#cbdbf5", "on-primary-container": "#7c839b", "surface-variant": "#d3e4fe", "background": "#f8f9ff", "on-error": "#ffffff", "on-primary": "#ffffff", "tertiary-container": "#001f26", "primary": "#000000", "on-tertiary-container": "#0090a9" }, borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, spacing: { "space-xs": "0.5rem", "space-md": "1rem", "panel-width-sm": "20rem", "edge-margin-desktop": "1.5rem", "space-2xs": "0.25rem", "space-2xl": "3rem", "panel-width-lg": "32rem", "panel-width-md": "26rem", "edge-margin-mobile": "1rem", "space-xl": "2rem", "space-sm": "0.75rem", "space-lg": "1.5rem" }, fontFamily: { "body-md": ["Manrope"], "headline-lg-mobile": ["Plus Jakarta Sans"], "headline-md": ["Plus Jakarta Sans"], "body-lg": ["Manrope"], "headline-xl": ["Plus Jakarta Sans"], "data-metric-lg": ["Manrope"], "headline-xl-mobile": ["Plus Jakarta Sans"], "body-sm": ["Manrope"], "label-md": ["Manrope"], "title-lg": ["Plus Jakarta Sans"], "code-sm": ["Manrope"], "label-sm": ["Manrope"], "data-metric-md": ["Manrope"], "headline-lg": ["Plus Jakarta Sans"] }, fontSize: { "body-md": ["14px", { lineHeight: "20px", letterSpacing: "0em", fontWeight: "400" }], "headline-lg-mobile": ["22px", { lineHeight: "30px", letterSpacing: "-0.015em", fontWeight: "700" }], "headline-md": ["20px", { lineHeight: "28px", letterSpacing: "-0.015em", fontWeight: "600" }], "body-lg": ["15px", { lineHeight: "24px", letterSpacing: "-0.005em", fontWeight: "400" }], "headline-xl": ["36px", { lineHeight: "44px", letterSpacing: "-0.025em", fontWeight: "700" }], "data-metric-lg": ["32px", { lineHeight: "36px", letterSpacing: "-0.03em", fontWeight: "700" }], "headline-xl-mobile": ["28px", { lineHeight: "36px", letterSpacing: "-0.02em", fontWeight: "700" }], "body-sm": ["13px", { lineHeight: "18px", letterSpacing: "0em", fontWeight: "400" }], "label-md": ["12px", { lineHeight: "16px", letterSpacing: "0.02em", fontWeight: "600" }], "title-lg": ["16px", { lineHeight: "24px", letterSpacing: "-0.01em", fontWeight: "600" }], "code-sm": ["12px", { lineHeight: "16px", letterSpacing: "0.01em", fontWeight: "500" }], "label-sm": ["11px", { lineHeight: "14px", letterSpacing: "0.04em", fontWeight: "600" }], "data-metric-md": ["20px", { lineHeight: "24px", letterSpacing: "-0.02em", fontWeight: "700" }], "headline-lg": ["28px", { lineHeight: "36px", letterSpacing: "-0.02em", fontWeight: "700" }] } } } };</script><style>@layer base{html,body{width:100vw;margin:0;padding:0;min-height:100%;}body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}}::-webkit-scrollbar{display:none;}</style><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  
+<script src="../shared/config.js"></script>
+<link rel="stylesheet" href="../shared/app.css" />
+<script src="../shared/app.js" defer></script>
+</head><body class="bg-surface text-on-surface font-body-md text-body-md min-h-screen flex flex-col relative"><header class="fixed top-0 w-full z-50 pt-safe px-edge-margin-mobile"><div class="h-16 flex items-center justify-between mt-space-2xs px-space-sm rounded-xl bg-surface-container-lowest/90 backdrop-blur-xl shadow-[0_4px_20px_-2px_rgba(15,23,42,0.08)]"><div class="flex items-center gap-space-xs min-w-0"><button aria-label="Go back" class="w-11 h-11 rounded-lg flex items-center justify-center text-on-surface hover:bg-surface-container transition-colors shrink-0" onclick="history.back()"><span class="material-symbols-outlined text-[22px]">arrow_back</span></button><div class="flex flex-col min-w-0"><span class="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-bold truncate">ClimateShield Rescue</span><h1 class="font-title-lg text-title-lg text-on-surface font-bold truncate tracking-tight">Route Select</h1></div></div><div class="flex items-center gap-space-xs shrink-0"><img alt="Profile" class="w-8 h-8 rounded-full object-cover shadow-[0_1px_8px_rgba(0,0,0,0.04)]" src="https://lh3.googleusercontent.com/aida/AEtjO1WZa1gNvntWWeiT4QhM-l_fIhJeTNPgwhOocSm5zkFiyeUn3CdWKg2P6QBAp2739f4ineyLsZACoh0wcEewdNPLn7dJp1NR4H3lnvVimUYZHBtoiKTEcHeUelauAMp_CGDEiOGu2-Yqz4_Vqk5IejETJ6u1R9tsOCq5DwbAv411fFrUovtU623EzW2rGPgJX0iZQ2U-lv-rR-wRns1wPkTfcV5BBGcpGIRxWJQowEeXYjkRRS5BZt3IWUg"/></div></div></header><main class="flex-1 flex flex-col relative w-full pt-16 bg-surface pb-safe"><div class="flex flex-col w-full relative select-none">
+<!-- Map Simulation Viewport -->
+<div class="relative w-full h-[460px] overflow-hidden bg-surface-container-low">
+<!-- Map Background Canvas -->
+<div class="absolute inset-0 w-full h-full bg-cover bg-center" data-location="Downtown Houston, Texas Buffalo Bayou flood district" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAoKsL583yl1zE6HpAIdBCVXmngZJsm1nKwbHsRApc6ek8oWBHKlTDsZgmueXNbb4wUB6kdCOcWuxfl3P7AHlCnMoKthn91MpR9MBGX9t5qePmLtV4zAOjNv4Mbgeb6HbXRuVvYWAyREbINvTLR0Vqs-vMvuMYeD5dsGYZCPTCFKFWNubUbFfh22ouA6tXqk32aXGl7Tx2xFIYbgzOK7WW5wVwFsg7M-Qp8CuXteCHl1syYuN3oLYXL')"></div>
+<!-- Technical Cartographic HUD Overlays -->
+<div class="absolute inset-0 bg-primary-container/25 pointer-events-none"></div>
+<!-- Active Flood Vector Area Simulation (Cyan/Red Hazard Overlay) -->
+<div class="absolute inset-0 pointer-events-none flex items-center justify-center p-space-md">
+<svg class="w-full h-full max-w-sm opacity-90 drop-shadow-[0_0_16px_rgba(234,88,12,0.4)]" fill="none" viewbox="0 0 320 280" xmlns="http://www.w3.org/2000/svg">
+<!-- Flood Inundation Contour -->
+<path d="M 40,80 Q 90,40 160,70 T 270,90 Q 300,160 250,220 T 140,240 Q 60,230 45,170 Z" fill="rgba(6,182,212,0.22)" stroke="#06B6D4" stroke-dasharray="4 3" stroke-width="2"></path>
+<path d="M 70,105 Q 110,80 160,95 T 235,115 Q 260,160 220,195 T 130,205 Q 80,200 65,150 Z" fill="rgba(234,88,12,0.28)" stroke="#EA580C" stroke-width="2.5"></path>
+<!-- Center Incident Marker Beacon -->
+<g class="animate-pulse">
+<circle cx="160" cy="145" fill="rgba(234,88,12,0.2)" r="28"></circle>
+<circle cx="160" cy="145" fill="#EA580C" r="14"></circle>
+<circle cx="160" cy="145" fill="#ffffff" r="5"></circle>
+</g>
+<!-- Depth Sounding Pins -->
+<g transform="translate(195, 115)">
+<rect fill="#131b2e" height="22" rx="4" width="52"></rect>
+<text fill="#ffffff" font-family="Manrope" font-size="10" font-weight="700" text-anchor="middle" x="26" y="15">120 mm</text>
+</g>
+<g transform="translate(75, 165)">
+<rect fill="#131b2e" height="22" rx="4" width="68"></rect>
+<text fill="#acedff" font-family="Manrope" font-size="10" font-weight="700" text-anchor="middle" x="34" y="15">Flow: 2.8m/s</text>
+</g>
+</svg>
+</div>
+<!-- Quick Floating Telemetry Pills (Top Over Map) -->
+<div class="absolute top-space-sm left-space-md right-space-md flex items-center justify-between pointer-events-none">
+<div class="flex items-center gap-space-2xs px-space-xs py-space-2xs rounded-full bg-surface-container-lowest/90 backdrop-blur-md shadow-sm">
+<span class="w-2 h-2 rounded-full bg-[#EA580C] animate-ping"></span>
+<span class="font-code-sm text-code-sm font-bold text-on-surface">SECTOR 04-B</span>
+</div>
+<div class="flex items-center gap-space-2xs px-space-xs py-space-2xs rounded-full bg-surface-container-lowest/90 backdrop-blur-md shadow-sm">
+<span class="material-symbols-outlined text-[16px] text-secondary">satellite_alt</span>
+<span class="font-code-sm text-code-sm font-semibold text-on-surface">RADAR SYNC: 14s AGO</span>
+</div>
+</div>
+</div>
+<!-- Interactive Bottom Sheet (Snap Half-State: ~45% screen height feel) -->
+<div class="relative -mt-10 rounded-t-[24px] bg-surface-container-lowest shadow-[0_-8px_30px_rgba(15,23,42,0.12)] flex flex-col z-20 transition-all duration-300" id="floodBottomSheet">
+<!-- Drag Pill Indicator Bar -->
+<div class="w-full flex items-center justify-center pt-space-xs pb-space-2xs cursor-grab active:cursor-grabbing">
+<div class="w-10 h-1.5 rounded-full bg-surface-container-highest"></div>
+</div>
+<!-- Header Block with Left Edge Color Accent Bar -->
+<div class="relative px-space-md pt-space-xs pb-space-sm flex flex-col">
+<!-- Left Edge Accent Bar for High Severity -->
+<div class="absolute left-0 top-3 bottom-2 w-1.5 bg-[#EA580C] rounded-r"></div>
+<!-- Pill Badges & Risk Score Row -->
+<div class="flex items-center justify-between gap-space-xs pl-space-xs">
+<div class="flex items-center gap-space-xs flex-wrap">
+<!-- Severity Pill Badge -->
+<div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#FFEDD5] text-[#C2410C]">
+<span class="w-1.5 h-1.5 rounded-full bg-[#EA580C]"></span>
+<span class="font-label-sm text-label-sm uppercase tracking-wider font-bold">High Severity</span>
+</div>
+<!-- Hazard Type Chip -->
+<div class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-surface-container-low text-on-surface">
+<span class="material-symbols-outlined text-[14px] text-[#06B6D4]" style="font-variation-settings: 'FILL' 1;">water_drop</span>
+<span class="font-label-sm text-label-sm font-semibold">Flash Inundation</span>
+</div>
+</div>
+<!-- Risk Score Tabular Metric -->
+<div class="flex items-baseline gap-0.5 shrink-0 bg-surface-container-low px-space-xs py-1 rounded-lg">
+<span class="font-label-sm text-label-sm text-on-surface-variant font-semibold">RISK</span>
+<span class="font-data-metric-md text-data-metric-md text-[#EA580C] tracking-tight ml-1 font-bold">82</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">/100</span>
+</div>
+</div>
+<!-- Sector Name & Rapid Timestamp -->
+<div class="mt-space-xs pl-space-xs flex items-center justify-between">
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface font-bold tracking-tight">Bayou Crossing Corridor</h2>
+<span class="font-code-sm text-code-sm text-on-surface-variant tabular-nums">UPDATED 1m AGO</span>
+</div>
+<!-- Cause Summary Line -->
+<div class="mt-space-2xs pl-space-xs flex items-start gap-1.5 text-on-surface-variant">
+<span class="material-symbols-outlined text-[18px] text-[#EA580C] shrink-0 mt-0.5">warning</span>
+<p class="font-body-md text-body-md leading-snug">
+          Heavy runoff exceeding storm drainage capacity. <span class="text-[#EA580C] font-semibold">Peak surge expected in 18 min.</span>
+</p>
+</div>
+</div>
+<!-- Impact Metrics Cards Row -->
+<div class="px-space-md py-space-xs grid grid-cols-3 gap-space-xs">
+<!-- Metric 1: Road Inundation -->
+<div class="bg-surface-container-low rounded-xl p-space-xs flex flex-col justify-between">
+<div class="flex items-center justify-between text-on-surface-variant">
+<span class="font-label-sm text-label-sm font-bold">ROAD CUT</span>
+<span class="material-symbols-outlined text-[16px] text-secondary">alt_route</span>
+</div>
+<div class="mt-space-xs">
+<span class="font-data-metric-md text-data-metric-md text-on-surface font-bold">2.4</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant ml-0.5">km</span>
+</div>
+<span class="font-label-sm text-label-sm text-error mt-0.5 font-semibold truncate">Impacting Loop 610</span>
+</div>
+<!-- Metric 2: Water Depth -->
+<div class="bg-surface-container-low rounded-xl p-space-xs flex flex-col justify-between">
+<div class="flex items-center justify-between text-on-surface-variant">
+<span class="font-label-sm text-label-sm font-bold">MAX DEPTH</span>
+<span class="material-symbols-outlined text-[16px] text-[#06B6D4]">waves</span>
+</div>
+<div class="mt-space-xs">
+<span class="font-data-metric-md text-data-metric-md text-on-surface font-bold">120</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant ml-0.5">mm</span>
+</div>
+<span class="font-label-sm text-label-sm text-[#C2410C] mt-0.5 font-semibold truncate">+15mm / 10min</span>
+</div>
+<!-- Metric 3: Critical Critical Access Restriction -->
+<div class="bg-surface-container-low rounded-xl p-space-xs flex flex-col justify-between">
+<div class="flex items-center justify-between text-on-surface-variant">
+<span class="font-label-sm text-label-sm font-bold">CRITICAL</span>
+<span class="material-symbols-outlined text-[16px] text-error">local_hospital</span>
+</div>
+<div class="mt-space-xs">
+<span class="font-label-md text-label-md text-error font-bold leading-tight line-clamp-2">Hospital Route</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant mt-0.5 truncate">St. Jude Gate B</span>
+</div>
+</div>
+<!-- Live Evacuation & Relief Post Status Strip -->
+<div class="px-space-md py-space-xs">
+<div class="bg-surface-container rounded-lg p-space-xs flex items-center justify-between">
+<div class="flex items-center gap-space-xs min-w-0">
+<span class="material-symbols-outlined text-[20px] text-secondary shrink-0">shield</span>
+<div class="flex flex-col min-w-0">
+<span class="font-label-sm text-label-sm font-bold text-on-surface truncate">St. Jude Emergency Evacuation Gate</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant truncate">Direct ambulance diversion enabled via North Spur</span>
+</div>
+</div>
+<button aria-label="Route information" class="w-8 h-8 rounded-lg bg-surface-container-lowest flex items-center justify-center text-on-surface shadow-sm shrink-0">
+<span class="material-symbols-outlined text-[18px]">chevron_right</span>
+</button>
+</div>
+</div>
+<!-- Operational Action Buttons Docked at Bottom -->
+<div class="px-space-md pt-space-xs pb-space-lg flex flex-col gap-space-xs bg-surface-container-lowest">
+<!-- Secondary Outline / Avoid Button -->
+<button class="w-full h-11 rounded-lg bg-surface-container-low hover:bg-surface-container text-on-surface font-body-md text-body-md font-semibold flex items-center justify-center gap-space-xs transition-colors" id="avoidBtn">
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant">block</span>
+<span>Avoid this area</span>
+</button>
+<!-- Primary Operational Action (Strict Rule: Single Solid Primary #0F172A button) -->
+<button class="w-full h-11 rounded-lg bg-primary-container text-on-primary font-body-md text-body-md font-semibold flex items-center justify-center gap-space-xs shadow-md transition-all active:scale-[0.99]" id="safeRouteBtn">
+<span class="material-symbols-outlined text-[20px] text-tertiary-fixed">navigation</span>
+<span>Find Safe Route</span>
+</button>
+</div>
+</div>
+</div>
+<script>
+  (function() {
+    const sheet = document.getElementById('floodBottomSheet');
+    const safeRouteBtn = document.getElementById('safeRouteBtn');
+    const avoidBtn = document.getElementById('avoidBtn');
+
+    if (safeRouteBtn) {
+      safeRouteBtn.addEventListener('click', function() {
+        const originalText = this.innerHTML;
+        this.innerHTML = '<span class="material-symbols-outlined text-[20px] animate-spin">progress_activity</span><span>Calculating Safe Corridor...</span>';
+        setTimeout(() => {
+          this.innerHTML = '<span class="material-symbols-outlined text-[20px] text-tertiary-fixed">check_circle</span><span>Rerouting Active (ETA +4m)</span>';
+          setTimeout(() => {
+            this.innerHTML = originalText;
+          }, 2400);
+        }, 900);
+      });
+    }
+
+    if (avoidBtn) {
+      avoidBtn.addEventListener('click', function() {
+        this.classList.toggle('bg-error-container');
+        this.classList.toggle('text-on-error-container');
+        if (this.innerText.includes('Avoid this area')) {
+          this.innerHTML = '<span class="material-symbols-outlined text-[18px]">check</span><span>Marked as Restricted Route</span>';
+        } else {
+          this.innerHTML = '<span class="material-symbols-outlined text-[18px]">block</span><span>Avoid this area</span>';
+        }
+      });
+    }
+  })();
+</script></main>
+<div id="app-nav"></div>
+</body></html>
