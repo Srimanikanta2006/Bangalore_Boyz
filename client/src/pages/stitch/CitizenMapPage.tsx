@@ -3,7 +3,29 @@ import { useNavigate } from 'react-router-dom';
 import { Header } from '../../components/stitch/Header';
 import { BottomNav } from '../../components/stitch/BottomNav';
 import { SosFab } from '../../components/stitch/SosFab';
-import { Mock } from '../../components/stitch/Mock';
+import { useCitizenNearby } from '../../citizen/useCitizenNearby';
+import type { CorridorStatus, SafetyLevel } from '../../citizen/api';
+
+const SAFETY_LABEL: Record<SafetyLevel, string> = {
+  SAFE: 'All Clear',
+  MODERATE: 'Moderate Caution',
+  HIGH: 'High Risk',
+  CRITICAL: 'Critical Danger',
+};
+
+const CORRIDOR_LABEL: Record<CorridorStatus, string> = {
+  CLEAR: 'Safe Corridor Active',
+  CAUTION: 'Use Caution',
+  BLOCKED: 'Corridor Blocked',
+};
+
+function prettyType(type: string): string {
+  return type
+    .toLowerCase()
+    .split('_')
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ');
+}
 
 export const CitizenMapPage: React.FC = () => {
   const navigate = useNavigate();
@@ -12,8 +34,42 @@ export const CitizenMapPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [zoomLevel, setZoomLevel] = useState(1);
 
+  const { data, loading, error, coords, refetch } = useCitizenNearby(5);
+
+  // --- Derived, real-data display values (no fabricated fallbacks) ---
+  const wardName = data?.ward?.name ?? (loading ? 'Locating…' : error ? 'Live data unavailable' : 'Your area');
+
+  const freshnessSec = data?.weather.freshnessSeconds ?? null;
+  const liveLabel =
+    freshnessSec != null ? `Live • ${Math.max(0, Math.round(freshnessSec / 60))}m ago` : loading ? 'Syncing…' : 'Offline';
+
+  const aqi = data?.airQuality?.usAqi ?? null;
+  const aqiLabel = aqi != null ? `Air AQI ${aqi}` : loading ? 'AQI…' : 'AQI n/a';
+
+  const floodHazard =
+    data?.hazards.find((h) => h.type.includes('FLOOD') || h.type === 'DRAINAGE_OVERFLOW') ?? data?.hazards[0] ?? null;
+  const floodLabel = floodHazard
+    ? `${prettyType(floodHazard.type)} · ${floodHazard.severity}`
+    : loading
+      ? 'Loading hazards…'
+      : 'No active flood';
+
+  const tempC = data?.weather.temperatureC ?? null;
+  const heatLabel =
+    tempC != null ? `${Math.round(tempC)}°C${data?.weather.condition ? ` · ${data.weather.condition}` : ''}` : loading ? '—' : 'n/a';
+
+  const riskCount = data?.safety.riskCount ?? 0;
+  const rainMin = data?.weather.rainArrivalMinutes ?? null;
+  const riskSummary = loading
+    ? 'Loading live conditions…'
+    : `${riskCount} risk${riskCount === 1 ? '' : 's'} nearby${rainMin != null ? ` • Rain in ${rainMin}m` : ''}`;
+
+  const safetyLabel = data ? SAFETY_LABEL[data.safety.level] : loading ? 'Assessing…' : '—';
+  const corridorLabel = data ? CORRIDOR_LABEL[data.corridorStatus] : loading ? '…' : '—';
+
   const handleRecenter = () => {
     setRecenterActive(true);
+    refetch();
     setTimeout(() => setRecenterActive(false), 300);
   };
 
@@ -101,12 +157,10 @@ export const CitizenMapPage: React.FC = () => {
             <div
               className="absolute left-[38%] top-[62%] -translate-x-1/2 -translate-y-1/2 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface-container-lowest/95 backdrop-blur shadow-md pointer-events-auto cursor-pointer hover:bg-surface transition-colors"
               id="flood-marker"
-              onClick={() => navigate('/citizen/hazard/sec-04b')}
+              onClick={() => navigate(floodHazard ? `/citizen/hazard/${floodHazard.id}` : '/citizen/alerts')}
             >
               <span className="w-2 h-2 rounded-full bg-tertiary-fixed-dim"></span>
-              <span className="font-label-sm text-label-sm text-on-surface font-semibold">
-                <Mock label="Hazard Label">Creek Tidal Surge +0.4m</Mock>
-              </span>
+              <span className="font-label-sm text-label-sm text-on-surface font-semibold">{floodLabel}</span>
             </div>
 
             <div
@@ -115,9 +169,7 @@ export const CitizenMapPage: React.FC = () => {
               onClick={() => navigate('/citizen/alerts')}
             >
               <span className="w-2 h-2 rounded-full bg-error"></span>
-              <span className="font-label-sm text-label-sm text-on-surface font-semibold">
-                <Mock label="Hazard Label">Heat Stress 38°C</Mock>
-              </span>
+              <span className="font-label-sm text-label-sm text-on-surface font-semibold">{heatLabel}</span>
             </div>
 
             {/* TOP FLOATING CONTROLS LAYER */}
@@ -136,16 +188,19 @@ export const CitizenMapPage: React.FC = () => {
                 >
                   <span className="material-symbols-outlined text-secondary text-[16px]">my_location</span>
                   <span className="font-label-md text-label-md font-bold tracking-tight truncate max-w-[210px]">
-                    <Mock label="Current Ward">Downtown &amp; Waterfront</Mock>
+                    {wardName}
                   </span>
+                  {coords?.usingFallback && (
+                    <span className="material-symbols-outlined text-outline text-[14px]" title="Using demo location (GPS unavailable)">
+                      help
+                    </span>
+                  )}
                   <span className="material-symbols-outlined text-outline text-[14px]">expand_more</span>
                 </button>
 
                 <div className="flex items-center gap-1 bg-surface-container-lowest/90 backdrop-blur-md px-2 py-1 rounded-full shadow-sm">
-                  <span className="w-1.5 h-1.5 rounded-full bg-secondary-container animate-pulse"></span>
-                  <span className="font-label-sm text-label-sm font-semibold text-on-surface-variant">
-                    <Mock label="Telemetry Sync">Sensors: 100%</Mock>
-                  </span>
+                  <span className={`w-1.5 h-1.5 rounded-full ${error ? 'bg-error' : 'bg-secondary-container animate-pulse'}`}></span>
+                  <span className="font-label-sm text-label-sm font-semibold text-on-surface-variant">{liveLabel}</span>
                 </div>
               </div>
 
@@ -255,7 +310,7 @@ export const CitizenMapPage: React.FC = () => {
                 onClick={() => setActiveLayer(activeLayer === 'aqi' ? 'all' : 'aqi')}
               >
                 <span className="w-2 h-2 rounded-full bg-error"></span>
-                <span><Mock label="Air AQI Value">Air AQI 64</Mock></span>
+                <span>{aqiLabel}</span>
               </button>
             </div>
 
@@ -272,7 +327,7 @@ export const CitizenMapPage: React.FC = () => {
                     <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-secondary-container"></span>
                   </span>
                   <span className="font-label-md text-label-md font-semibold text-on-surface truncate">
-                    <Mock label="Nearby Risk Summary">3 risks nearby • Rain arriving in 25m</Mock>
+                    {riskSummary}
                   </span>
                 </div>
                 <div className="w-6 h-6 rounded-full bg-surface-container flex items-center justify-center shrink-0 text-on-surface-variant">
@@ -291,14 +346,12 @@ export const CitizenMapPage: React.FC = () => {
                   Metropolitan Safety Index
                 </p>
                 <p className="font-headline-lg-mobile text-headline-lg-mobile font-bold text-on-surface">
-                  <Mock label="Safety Level">Moderate Caution</Mock>
+                  {safetyLabel}
                 </p>
               </div>
               <div className="flex items-center gap-2 bg-surface-container px-3 py-1 rounded-full">
                 <span className="material-symbols-outlined text-secondary text-[18px]">verified_user</span>
-                <span className="font-label-md text-label-md font-bold text-on-surface">
-                  <Mock label="Corridor Status">Safe Corridor Active</Mock>
-                </span>
+                <span className="font-label-md text-label-md font-bold text-on-surface">{corridorLabel}</span>
               </div>
             </div>
 
