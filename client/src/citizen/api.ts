@@ -283,3 +283,36 @@ export interface SubmitSosInput {
 export function submitSos(input: SubmitSosInput): Promise<SosEvent> {
   return api.post<SosEvent>('/citizen/sos', input);
 }
+
+export interface RoutePoint {
+  latitude: number;
+  longitude: number;
+}
+
+export interface CandidateRouteInput {
+  label?: string;
+  distanceMeters?: number;
+  durationSeconds?: number;
+  points: RoutePoint[];
+}
+
+export interface ScoredRoute {
+  label: string;
+  distanceMeters: number | null;
+  durationSeconds: number | null;
+  riskScore: number;
+  riskLevel: 'LOW' | 'MODERATE' | 'HIGH' | 'CRITICAL';
+  hazardZonesHit: { zoneId: string; zoneName: string; severity: Severity }[];
+  blockedRoadsHit: { assetId: string; name: string; operationalStatus: string }[];
+  sampledPoints: number;
+  explanation: string;
+}
+
+export interface ScoreRoutesResult {
+  routes: ScoredRoute[];
+  recommendedIndex: number;
+}
+
+export function scoreRoutes(routes: CandidateRouteInput[]): Promise<ScoreRoutesResult> {
+  return api.post<ScoreRoutesResult>('/citizen/routes/score', { routes });
+}

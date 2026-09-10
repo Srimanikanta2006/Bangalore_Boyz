@@ -6,6 +6,7 @@ import { CITIZEN_ROLES } from '../types/auth';
 import { citizenNearbyQuerySchema } from '../validators/citizen.schema';
 import { createCitizenReportSchema } from '../validators/citizenReport.schema';
 import { createSosSchema } from '../validators/sos.schema';
+import { scoreRoutesSchema } from '../validators/routeScoring.schema';
 import * as citizenController from '../controllers/citizen.controller';
 
 const router = Router();
@@ -74,5 +75,20 @@ router.post('/citizen/sos', authenticate, requireRole(...CITIZEN_ROLES), validat
 
 /** GET /api/citizen/sos - own SOS history only. */
 router.get('/citizen/sos', authenticate, requireRole(...CITIZEN_ROLES), citizenController.mySos);
+
+/**
+ * POST /api/citizen/routes/score
+ * Stage F (§7 option 1): client supplies 1-5 candidate route geometries
+ * (e.g. from a free public routing provider); this deterministically scores
+ * each against REAL backend hazard/zone/road data. No routing engine here -
+ * the backend never invents geometry, only risk.
+ */
+router.post(
+  '/citizen/routes/score',
+  authenticate,
+  requireRole(...CITIZEN_ROLES),
+  validate(scoreRoutesSchema, 'body'),
+  citizenController.scoreRoutes,
+);
 
 export default router;

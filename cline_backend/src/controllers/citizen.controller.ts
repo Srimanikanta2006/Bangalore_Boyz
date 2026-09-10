@@ -2,10 +2,12 @@ import type { Request, Response } from 'express';
 import { getCitizenNearby, getCitizenAlerts, getCitizenHazardDetail } from '../services/citizen.service';
 import { createCitizenReport, listMyCitizenReports, getMyCitizenReport } from '../services/citizenReport.service';
 import { createSosEvent, listMySosEvents } from '../services/sos.service';
+import { scoreCandidateRoutes } from '../services/routeScoring.service';
 import { wrap } from '../utils/wrap';
 import type { CitizenNearbyQuery } from '../validators/citizen.schema';
 import type { CreateCitizenReportInput } from '../validators/citizenReport.schema';
 import type { CreateSosInput } from '../validators/sos.schema';
+import type { ScoreRoutesInput } from '../validators/routeScoring.schema';
 
 export const nearby = wrap(async (req: Request, res: Response) => {
   const query = req.query as unknown as CitizenNearbyQuery;
@@ -53,5 +55,11 @@ export const submitSos = wrap(async (req: Request, res: Response) => {
 
 export const mySos = wrap(async (req: Request, res: Response) => {
   const data = await listMySosEvents(req.user!.id);
+  res.json({ success: true, data });
+});
+
+export const scoreRoutes = wrap(async (req: Request, res: Response) => {
+  const input = req.body as ScoreRoutesInput;
+  const data = await scoreCandidateRoutes(input.routes);
   res.json({ success: true, data });
 });
