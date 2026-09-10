@@ -79,7 +79,7 @@ export const departments: DepartmentSeed[] = [
 // ---------------- USERS (5 demo accounts) ----------------
 
 export interface UserSeed {
-  id: string; name: string; email: string; role: string; departmentId: string; phone: string;
+  id: string; name: string; email: string; role: string; departmentId: string | null; phone: string;
 }
 
 export const users: UserSeed[] = [
@@ -88,6 +88,8 @@ export const users: UserSeed[] = [
   { id: 'user_dispatch', name: 'Priya Sharma', email: 'dispatcher@climateshield.demo', role: 'DISPATCHER', departmentId: 'dept_em', phone: '+1-555-0203' },
   { id: 'user_field', name: 'Marcus Webb', email: 'field@climateshield.demo', role: 'FIELD_OPERATOR', departmentId: 'dept_pw', phone: '+1-555-0204' },
   { id: 'user_analyst', name: 'Jordan Lee', email: 'analyst@climateshield.demo', role: 'ANALYST', departmentId: 'dept_em', phone: '+1-555-0205' },
+  // Citizen demo account (public-safety facing). No department. Uses the shared demo password.
+  { id: 'user_citizen', name: 'Ravi Kumar', email: 'citizen@climateshield.demo', role: 'CITIZEN', departmentId: null, phone: '+1-555-0301' },
 ];
 
 // ---------------- INFRASTRUCTURE ASSETS (18) ----------------

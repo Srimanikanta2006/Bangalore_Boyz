@@ -63,3 +63,66 @@ export function requireRole(...roles: Role[]) {
     next();
   };
 }
+
+/**
+ * Explicitly denies CITIZEN accounts on internal/government read endpoints.
+ * Government write endpoints are already fail-closed (their requireRole lists
+ * never include CITIZEN); this guard additionally hides internal READ data
+ * (incidents, tasks, units, audit, deployments, telemetry internals) from
+ * authenticated citizens. Must run AFTER `authenticate`.
+ */
+export function denyCitizen(req: Request, _res: Response, next: NextFunction): void {
+  if (req.user?.role === 'CITIZEN') {
+    return next(Errors.forbidden('This resource is not available to citizen accounts.'));
+  }
+  next();
+}
+
+/**
+ * Internal path prefixes a CITIZEN account must never read. Government staff
+ * roles are unaffected. Citizen-safe public data (hazards, zones, hotspots,
+ * infrastructure, map assets/hazards/incidents, weather, location) is NOT listed.
+ */
+const CITIZEN_DENIED_PREFIXES = [
+  '/api/government',
+  '/api/overview',
+  '/api/response-center',
+  '/api/incidents',
+  '/api/tasks',
+  '/api/units',
+  '/api/audit',
+  '/api/analytics',
+  '/api/simulations',
+  '/api/departments',
+  '/api/cascade',
+  '/api/map/overlays',
+  '/api/map/units',
+];
+
+function isInternalPath(pathname: string): boolean {
+  return CITIZEN_DENIED_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`));
+}
+
+/**
+ * App-level guard mounted once (before the route stack). For internal path
+ * prefixes only, it inspects the Bearer token purely to detect CITIZEN accounts
+ * and blocks them with 403. It never sets req.user and never changes behavior
+ * for missing/invalid tokens (the per-route `authenticate` still runs and owns
+ * the 401 path) or for non-citizen roles.
+ */
+export function blockCitizenFromInternal(req: Request, _res: Response, next: NextFunction): void {
+  const pathname = req.originalUrl.split('?')[0];
+  if (!isInternalPath(pathname)) return next();
+
+  const token = extractToken(req);
+  if (!token) return next();
+  try {
+    const payload = jwt.verify(token, env.JWT_SECRET) as JwtPayload;
+    if (payload.role === 'CITIZEN') {
+      return next(Errors.forbidden('This resource is not available to citizen accounts.'));
+    }
+  } catch {
+    // Invalid token: defer to the per-route authenticate (returns 401).
+  }
+  next();
+}

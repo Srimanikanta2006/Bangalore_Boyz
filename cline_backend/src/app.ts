@@ -3,6 +3,7 @@ import helmet from 'helmet';
 import cors from 'cors';
 import { env } from './config/env';
 import { requestLogger } from './middleware/requestLogger';
+import { blockCitizenFromInternal } from './middleware/auth';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 
 import healthRoutes from './routes/health.routes';
@@ -43,6 +44,10 @@ export function createApp() {
   );
   app.use(express.json({ limit: '1mb' }));
   app.use(requestLogger);
+
+  // Block CITIZEN accounts from internal/government read endpoints (defense in
+  // depth; government writes are already fail-closed via requireRole).
+  app.use(blockCitizenFromInternal);
 
   // --- API routes (all mounted under /api) ---
   app.use('/api', healthRoutes);

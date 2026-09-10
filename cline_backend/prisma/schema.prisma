@@ -19,6 +19,7 @@ enum Role {
   DISPATCHER
   FIELD_OPERATOR
   ANALYST
+  CITIZEN
 }
 
 enum DepartmentType {

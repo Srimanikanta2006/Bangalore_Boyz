@@ -39,4 +39,7 @@ declare global {
 }
 
 export const GOVERNMENT_ROLES: Role[] = ['GOVERNMENT_OPERATOR', 'DISPATCHER', 'ADMIN'];
+/** All internal/government staff roles. Intentionally EXCLUDES CITIZEN (fail-closed). */
 export const ALL_ROLES: Role[] = ['ADMIN', 'GOVERNMENT_OPERATOR', 'DISPATCHER', 'FIELD_OPERATOR', 'ANALYST'];
+/** Citizen-accessible role group (public-safety facing endpoints). */
+export const CITIZEN_ROLES: Role[] = ['CITIZEN'];
