@@ -2,7 +2,7 @@
 
 **Urban Climate Risk, Heat & Flood Resilience Platform — Government Operations / Emergency Command Center backend.**
 
-Node.js + Express + TypeScript + PostgreSQL (Supabase) + Prisma REST API powering the Government Command Center UI: Overview, Live Map, Incidents, Response Center, Simulator, Infrastructure, Analytics, Historical Hotspots and Departments.
+Node.js + Express + TypeScript + PostgreSQL (local Docker; Supabase optional) + Prisma REST API powering the Government Command Center UI: Overview, Live Map, Incidents, Response Center, Simulator, Infrastructure, Analytics, Historical Hotspots and Departments.
 
 > **DEMO DATA NOTICE** — every coordinate, measurement, hazard, incident and historical record seeded by this project is **SYNTHETIC DEMO data** for a fictional municipal area ("Bayview Metro"). It is not real-world observation data, and every payload that carries demo data is tagged `dataQuality: "SYNTHETIC_DEMO"` (or `source: "SYNTHETIC_DEMO"` on historical events).
 
@@ -21,7 +21,7 @@ Frontend (separate)  ->  REST /api  ->  routes (validation + auth guards)
                                       |- task.service      dispatch transactions + lifecycle
                                       |- simulator.service deterministic scenario math
                                       '- ...11 more domain services
-                                  ->  Prisma (parameterized)  ->  PostgreSQL (Supabase)
+                                  ->  Prisma (parameterized)  ->  PostgreSQL (local Docker / Supabase)
 ```
 
 - **Backend owns all business logic**: incident/task state machines, unit availability, dispatch rules, SLA deadlines, risk scores, cascade analysis, response plans, audit history. The frontend only renders.
@@ -51,15 +51,28 @@ cline_backend/
 
 ## Quickstart
 
-### Option A — local PostgreSQL via Docker
+### Option A — local PostgreSQL via Docker Compose (default)
+
+The repo ships a `docker-compose.yml` that runs `postgres:16-alpine` on
+`localhost:5432` (db `climateshield`, user/pass `postgres`/`postgres`) with a
+persistent named volume. The default `.env.example` already points at it.
 
 ```bash
-docker run -d --name climateshield-pg \
-  -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=climateshield \
-  -p 5432:5432 postgres:16-alpine
-
-cp .env.example .env   # then set the local URLs shown below
+cp .env.example .env           # already has the local docker URLs
+npm install
+npm run db:bootstrap           # docker compose up -d + migrate deploy + seed
+npm run dev                    # tsx watch  (http://localhost:4000)
 ```
+
+`npm run db:bootstrap` is shorthand for:
+
+```bash
+docker compose up -d           # start Postgres (persists in volume climateshield_pgdata)
+npm run prisma:deploy          # apply migrations
+npm run prisma:seed            # SYNTHETIC DEMO dataset
+```
+
+Helper scripts: `db:up`, `db:down`, `db:logs`, `db:nuke` (down + wipe volume).
 
 `.env` for local docker:
 
@@ -69,19 +82,21 @@ DIRECT_URL=postgresql://postgres:postgres@localhost:5432/climateshield
 JWT_SECRET=<run: node -e "console.log(require('crypto').randomBytes(48).toString('hex'))">
 ```
 
-### Option B — Supabase (production)
+### Option B — Supabase (optional alternative)
 
-1. Create a project at [supabase.com](https://supabase.com).
-2. **Project Settings → Database → Connection string → URI**:
+To use hosted Supabase instead of the local container, swap the two DB URLs in
+`.env` (see the commented block in `.env.example`):
    - **Transaction pooler** (`...pooler.supabase.com:6543/postgres?pgbouncer=true`) → `DATABASE_URL` (runtime queries)
    - **Session/direct** (`...pooler.supabase.com:5432/postgres` or the `db.<ref>.supabase.com:5432` URL) → `DIRECT_URL` (migrations)
-3. Put both in `.env` (never commit it).
 
-### Install, migrate, seed, run
+Then run migrate + seed the same way. Never commit real connection strings.
+
+### Manual install, migrate, seed, run
 
 ```bash
 npm install
-npx prisma migrate deploy     # or: npm run prisma:migrate (dev)
+docker compose up -d           # local Postgres (skip if using Supabase)
+npx prisma migrate deploy      # or: npm run prisma:migrate (dev)
 npx prisma db seed             # SYNTHETIC DEMO dataset
 npm run dev                    # tsx watch  (http://localhost:4000)
 
@@ -93,7 +108,7 @@ npm run build && npm start
 
 | Variable | Required | Description |
 |---|---|---|
-| `DATABASE_URL` | yes | Pooled PostgreSQL URL (Supabase pgBouncer `:6543` or local Postgres) — runtime queries |
+| `DATABASE_URL` | yes | PostgreSQL URL — runtime queries (local Docker `:5432`, or Supabase pgBouncer `:6543`) |
 | `DIRECT_URL` | yes* | Direct PostgreSQL URL — Prisma migrations/admin (*falls back to `DATABASE_URL`) |
 | `JWT_SECRET` | yes | ≥32-char random secret (`node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"`) |
 | `JWT_EXPIRES_IN` | no | Token lifetime (default `12h`) |
@@ -105,13 +120,9 @@ npm run build && npm start
 | `WEATHER_API_KEY` | no | Reserved for future key-based providers (unused by Open-Meteo) |
 | `WEATHER_CACHE_SECONDS` | no | In-memory cache TTL for live weather (default `300`; `0` disables) |
 | `WEATHER_POLL_INTERVAL_MINUTES` | no | Background zone polling for snapshot history (default `10`; `0` disables) |
-| `SUPABASE_URL` | no | Supabase project URL (`https://<project-ref>.supabase.co`) |
-| `SUPABASE_PUBLISHABLE_KEY` | no | Supabase publishable / anon key |
-| `SUPABASE_SECRET_KEY` | no | Supabase secret / service-role key |
-| `SUPABASE_JWKS_URL` | no | Supabase JWT verification keyset URL |
 | `GEMINI_API_KEY` | no | Optional Google Gemini key for P4 explanation layer (falls back deterministically) |
 
-**No external API keys are needed.** The MVP is fully self-contained with Open-Meteo and OpenStreetMap. The only credentials needed to connect to Supabase PostgreSQL are your Supabase database connection strings + a generated `JWT_SECRET`.
+**No external API keys are needed.** The MVP is fully self-contained with Open-Meteo and OpenStreetMap. The only credentials needed are a PostgreSQL connection (the bundled local Docker container by default) + a generated `JWT_SECRET`.
 
 ## Demo credentials (SYNTHETIC DEMO accounts)
 
@@ -269,7 +280,7 @@ Integration suites auto-skip if no database is reachable. Run `npx prisma db see
 
 ## What you must configure before running
 
-1. `DATABASE_URL` + `DIRECT_URL` → your Supabase (or local) PostgreSQL connection strings
+1. `DATABASE_URL` + `DIRECT_URL` → your PostgreSQL connection strings (local Docker by default; Supabase optional)
 2. `JWT_SECRET` → a generated random secret
 3. (Optional) `DEMO_USER_PASSWORD` → your demo password, `CORS_ORIGIN` → your frontend origin
 

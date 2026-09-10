@@ -24,11 +24,6 @@ const envSchema = z.object({
   // Leave GEMINI_API_KEY blank to run the deterministic fallback (no external call).
   GEMINI_API_KEY: z.string().default(''),
   GEMINI_MODEL: z.string().default('gemini-2.5-flash'),
-  // --- Supabase configuration ---
-  SUPABASE_URL: z.string().optional(),
-  SUPABASE_PUBLISHABLE_KEY: z.string().optional(),
-  SUPABASE_SECRET_KEY: z.string().optional(),
-  SUPABASE_JWKS_URL: z.string().optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);

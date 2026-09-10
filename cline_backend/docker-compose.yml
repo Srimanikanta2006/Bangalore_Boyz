@@ -1,0 +1,33 @@
+# ClimateShield backend - local PostgreSQL (Docker)
+# Replaces the hosted Supabase database for local development.
+#
+# Quick start:
+#   docker compose up -d           # start Postgres on localhost:5432
+#   npm run prisma:deploy          # apply migrations
+#   npm run prisma:seed            # load synthetic demo data
+#   npm run dev                    # start the API on :4000
+#
+# Data persists in the named volume `climateshield_pgdata`.
+# To wipe and start fresh:  docker compose down -v
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: climateshield-pg
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: climateshield
+    ports:
+      - "5432:5432"
+    volumes:
+      - climateshield_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d climateshield"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  climateshield_pgdata:

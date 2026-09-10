@@ -3,7 +3,7 @@ import { env } from '../config/env';
 
 /**
  * Shared PrismaClient singleton.
- * Runtime queries use DATABASE_URL (pooled / Supabase pgBouncer);
+ * Runtime queries use DATABASE_URL (local Docker Postgres, or pooled Supabase pgBouncer);
  * migrations use DIRECT_URL (see prisma/schema.prisma).
  */
 export const prisma = new PrismaClient({
