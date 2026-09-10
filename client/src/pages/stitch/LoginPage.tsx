@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Header } from '../../components/stitch/Header';
 import { BottomNav } from '../../components/stitch/BottomNav';
 import { SosFab } from '../../components/stitch/SosFab';
 import { Mock } from '../../components/stitch/Mock';
+import { login } from '../../services/api';
 
 type RoleType = 'citizen' | 'government' | 'gov-field' | 'rescue';
 
@@ -13,6 +14,18 @@ export const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('citizen.active@climateshield.org');
   const [password, setPassword] = useState('••••••••••••');
   const [showPassword, setShowPassword] = useState(false);
+  const [authenticating, setAuthenticating] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
+
+  // Prefill the Person 1 demo credentials when the Government role is selected
+  // (the operator can still edit them before signing in).
+  useEffect(() => {
+    if (selectedRole === 'government') {
+      setEmail('government@climateshield.demo');
+      setPassword('DemoGov@2024');
+      setAuthError(null);
+    }
+  }, [selectedRole]);
 
   const roleConfigs: Record<RoleType, { label: string; icon: string; target: string }> = {
     citizen: {
@@ -37,8 +50,24 @@ export const LoginPage: React.FC = () => {
     },
   };
 
-  const handleLaunch = () => {
-    navigate(roleConfigs[selectedRole].target);
+  const handleLaunch = async () => {
+    const target = roleConfigs[selectedRole].target;
+    // (a) Government role authenticates against the live backend and stores the
+    // JWT as 'cs_token'; other roles keep the existing preview navigation.
+    if (selectedRole === 'government') {
+      setAuthenticating(true);
+      setAuthError(null);
+      try {
+        await login(email, password);
+        navigate(target);
+      } catch (err) {
+        setAuthError(err instanceof Error ? err.message : 'Login failed');
+      } finally {
+        setAuthenticating(false);
+      }
+      return;
+    }
+    navigate(target);
   };
 
   return (
@@ -142,13 +171,21 @@ export const LoginPage: React.FC = () => {
 
             {/* Secondary Outline Action */}
             <button
-              className="w-full h-10 mt-1 rounded-lg bg-surface-container text-on-surface font-body-md text-body-md font-semibold flex items-center justify-center gap-1.5 active:bg-surface-container-high transition-colors"
+              className="w-full h-10 mt-1 rounded-lg bg-surface-container text-on-surface font-body-md text-body-md font-semibold flex items-center justify-center gap-1.5 active:bg-surface-container-high transition-colors disabled:opacity-60"
               type="button"
               onClick={handleLaunch}
+              disabled={authenticating}
             >
               <span className="material-symbols-outlined text-[18px]">login</span>
-              <span>Verify &amp; Sign In</span>
+              <span>{authenticating ? 'Authenticating…' : 'Verify & Sign In'}</span>
             </button>
+
+            {authError && (
+              <p className="font-body-sm text-body-sm text-error font-semibold flex items-center gap-1 mt-1">
+                <span className="material-symbols-outlined text-[16px]">error</span>
+                {authError}
+              </p>
+            )}
           </div>
 
           {/* Role Selector Switch Section */}
@@ -369,10 +406,11 @@ export const LoginPage: React.FC = () => {
           {/* Exactly ONE primary solid operational CTA button */}
           <div className="sticky bottom-0 bg-surface/90 backdrop-blur-md pt-2 pb-1">
             <button
-              className="w-full h-12 rounded-xl bg-primary text-on-primary font-body-md text-body-md font-bold flex items-center justify-center gap-2 shadow-lg active:scale-[0.99] transition-transform"
+              className="w-full h-12 rounded-xl bg-primary text-on-primary font-body-md text-body-md font-bold flex items-center justify-center gap-2 shadow-lg active:scale-[0.99] transition-transform disabled:opacity-60"
               id="primary-launch-btn"
               type="button"
               onClick={handleLaunch}
+              disabled={authenticating}
             >
               <span
                 className="material-symbols-outlined text-[20px]"

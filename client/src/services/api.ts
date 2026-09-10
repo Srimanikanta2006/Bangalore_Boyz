@@ -224,3 +224,96 @@ export async function toggleStaleData(): Promise<{ isStale: boolean; quality: Da
   if (!res.ok) throw new Error('Failed to toggle stale simulation');
   return res.json();
 }
+
+// ===========================================================================
+// cline_backend contract client (docs/API.md)
+// ---------------------------------------------------------------------------
+// The canonical backend (:4000) wraps every response in a success envelope:
+//   success: { "success": true, "data": ... }
+//   error:   { "success": false, "error": { "code", "message", "details" } }
+// `requestEnvelope` unwraps `.data` and surfaces the backend error message.
+// All requests reuse `apiFetch`, so the JWT ('cs_token') hook applies here too.
+// ===========================================================================
+
+async function requestEnvelope<T = unknown>(path: string, init: RequestInit = {}): Promise<T> {
+  const res = await apiFetch(`${API_BASE}${path}`, init);
+  let body: any = null;
+  try {
+    body = await res.json();
+  } catch {
+    body = null;
+  }
+  if (!res.ok || (body && body.success === false)) {
+    const message =
+      body?.error?.message || body?.error?.code || `Request failed (HTTP ${res.status})`;
+    throw new Error(message);
+  }
+  // Unwrap the success envelope; tolerate a bare payload just in case.
+  return (body && typeof body === 'object' && 'data' in body ? body.data : body) as T;
+}
+
+function jsonInit(method: string, payload?: unknown): RequestInit {
+  return {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+    body: payload !== undefined ? JSON.stringify(payload) : undefined,
+  };
+}
+
+// (a) Auth — POST /api/auth/login. Stores the JWT under 'cs_token' on success.
+export interface LoginResult {
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+    departmentId?: string;
+    departmentName?: string;
+  };
+  token: string;
+  tokenType: string;
+  expiresIn: string;
+}
+
+export async function login(email: string, password: string): Promise<LoginResult> {
+  const data = await requestEnvelope<LoginResult>('/auth/login', jsonInit('POST', { email, password }));
+  if (data?.token) {
+    localStorage.setItem('cs_token', data.token);
+  }
+  return data;
+}
+
+// (b) Government dashboard — GET /api/government/overview.
+export async function fetchGovernmentOverview(): Promise<any> {
+  return requestEnvelope<any>('/government/overview');
+}
+
+// (c) Zone cascade — GET /api/zones/:zoneId/cascade (accepts zone id or code).
+export async function fetchZoneCascade(zoneId: string): Promise<any> {
+  return requestEnvelope<any>(`/zones/${encodeURIComponent(zoneId)}/cascade`);
+}
+
+// (d) AI explanation — POST /api/incidents/:id/explain.
+// NOTE: this endpoint is NOT in docs/API.md. Shape verified against backend
+// source (explain.service.ts): the AI fields the UI renders — situationSummary,
+// causalChains, keyImpacts, recommendedActions, roleSpecificBriefings,
+// confidence — live under `data.explanation` (not at the top level).
+export async function explainIncident(incidentId: string): Promise<any> {
+  return requestEnvelope<any>(`/incidents/${encodeURIComponent(incidentId)}/explain`, jsonInit('POST'));
+}
+
+// (e) Operator approval — POST /api/tasks (manual task creation; GOV role).
+export interface CreateTaskPayload {
+  title: string;
+  incidentId?: string;
+  assetId?: string;
+  assignedUnitId?: string;
+  assignedDepartmentId?: string;
+  priority?: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  description?: string;
+  slaDeadline?: string;
+}
+
+export async function createTask(payload: CreateTaskPayload): Promise<any> {
+  return requestEnvelope<any>('/tasks', jsonInit('POST', payload));
+}
