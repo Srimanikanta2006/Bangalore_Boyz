@@ -1,15 +1,40 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GovHqLayout } from '../../components/stitch/GovHqLayout';
+import { fetchGovernmentOverview } from '../../services/api';
 import { 
   AlertTriangle, Radio, Download, Send, TrendingUp, 
   Waves, Thermometer, Zap, Hospital, Building2, 
   Navigation, CheckCircle2, ChevronRight, Layers, Maximize2
 } from 'lucide-react';
 
+const POLL_INTERVAL_MS = 15000;
+
 export const GovCommandCenterPage: React.FC = () => {
   const navigate = useNavigate();
   const [alertBroadcasted, setAlertBroadcasted] = useState(false);
+  const [overview, setOverview] = useState<any | null>(null);
+
+  // (b) Live KPIs from GET /api/government/overview, refreshed every 15s.
+  useEffect(() => {
+    let active = true;
+    const load = async () => {
+      try {
+        const data = await fetchGovernmentOverview();
+        if (active) setOverview(data);
+      } catch {
+        // Backend may be unreachable (401/offline) — keep last-known UI.
+      }
+    };
+    load();
+    const timer = setInterval(load, POLL_INTERVAL_MS);
+    return () => {
+      active = false;
+      clearInterval(timer);
+    };
+  }, []);
+
+  const fmtLevel = (level?: string) => (level ? level.replace(/_/g, ' ') : 'MODERATE CAUTION');
 
   const handleBroadcast = () => {
     setAlertBroadcasted(true);
@@ -72,10 +97,10 @@ export const GovCommandCenterPage: React.FC = () => {
                       MUNICIPAL RESILIENCE INDEX
                     </span>
                     <div className="flex items-baseline gap-2 mt-1">
-                      <span className="text-3xl font-extrabold text-[#0b1c30]">38<span className="text-sm font-normal text-[#76777d]">/100</span></span>
+                      <span className="text-3xl font-extrabold text-[#0b1c30]">{overview?.resilienceIndex ?? 38}<span className="text-sm font-normal text-[#76777d]">/100</span></span>
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#fef3c7] text-[#b45309] text-[10px] font-bold">
                         <span className="w-1.5 h-1.5 rounded-full bg-[#d97706]" />
-                        MODERATE CAUTION
+                        {fmtLevel(overview?.resilienceLevel)}
                       </span>
                     </div>
                   </div>
@@ -101,7 +126,7 @@ export const GovCommandCenterPage: React.FC = () => {
               <div className="grid grid-cols-4 gap-2 pt-2 bg-[#eff4ff] rounded-xl p-2.5 border border-[#d3e4fe] text-xs">
                 <div className="flex flex-col">
                   <span className="text-[10px] text-[#76777d]">Precipitation</span>
-                  <span className="font-mono font-bold text-[#0b1c30]">42 mm/h</span>
+                  <span className="font-mono font-bold text-[#0b1c30]">{overview?.precipitation?.value ?? 42} {overview?.precipitation?.unit ?? 'mm/h'}</span>
                   <span className="text-[10px] text-[#dc2626] font-semibold mt-0.5">Peak</span>
                 </div>
                 <div className="flex flex-col">
@@ -128,10 +153,10 @@ export const GovCommandCenterPage: React.FC = () => {
             <div className="rounded-2xl bg-white p-4 shadow-sm border border-[#e5eeff] flex flex-col justify-between">
               <div className="flex items-center justify-between">
                 <span className="text-[10px] uppercase font-bold text-[#76777d] tracking-wider">ACTIVE THREAT MATRIX</span>
-                <span className="px-2 py-0.5 rounded-full bg-[#fee2e2] text-[#b91c1c] text-[10px] font-bold">4 ACTIVE</span>
+                <span className="px-2 py-0.5 rounded-full bg-[#fee2e2] text-[#b91c1c] text-[10px] font-bold">{overview?.activeThreats ?? 4} ACTIVE</span>
               </div>
               <div className="my-1">
-                <span className="text-3xl font-extrabold text-[#0b1c30]">4</span>
+                <span className="text-3xl font-extrabold text-[#0b1c30]">{overview?.monitoredZones ?? 4}</span>
                 <span className="text-xs text-[#76777d] block">Monitored Zones</span>
               </div>
               <div className="space-y-1.5 text-xs">
@@ -157,8 +182,8 @@ export const GovCommandCenterPage: React.FC = () => {
                 <Hospital className="w-4 h-4 text-[#dc2626]" />
               </div>
               <div className="my-1">
-                <span className="text-2xl font-extrabold text-[#0b1c30]">2 <span className="text-sm font-semibold text-[#dc2626]">Compromised</span></span>
-                <span className="text-xs text-[#76777d] block">14 Inspected / Normal</span>
+                <span className="text-2xl font-extrabold text-[#0b1c30]">{overview?.criticalInfrastructure?.compromised ?? 2} <span className="text-sm font-semibold text-[#dc2626]">Compromised</span></span>
+                <span className="text-xs text-[#76777d] block">{overview?.criticalInfrastructure?.total ?? 14} Inspected / Normal</span>
               </div>
               <div className="space-y-1.5 text-xs">
                 <div className="p-2 rounded-lg bg-[#fff7ed] flex items-center justify-between">
@@ -242,7 +267,7 @@ export const GovCommandCenterPage: React.FC = () => {
 
               <div className="flex items-center gap-2">
                 <button 
-                  onClick={() => navigate('/gov/zone-cascade/4B')}
+                  onClick={() => navigate('/gov/zone-cascade/EB')}
                   className="px-3 py-1.5 rounded-xl bg-black/75 backdrop-blur-md border border-white/10 text-white text-xs font-semibold hover:bg-white/10 transition-colors flex items-center gap-1.5"
                 >
                   <Layers className="w-3.5 h-3.5 text-[#38bdf8]" />
@@ -253,7 +278,7 @@ export const GovCommandCenterPage: React.FC = () => {
 
             {/* Interactive Target Callouts on Canvas */}
             <div 
-              onClick={() => navigate('/gov/zone-cascade/4B')}
+              onClick={() => navigate('/gov/zone-cascade/EB')}
               className="absolute top-[48%] left-[45%] z-20 flex flex-col items-center cursor-pointer group"
             >
               <div className="w-6 h-6 rounded-full bg-[#dc2626] text-white flex items-center justify-center font-bold shadow-lg animate-bounce">

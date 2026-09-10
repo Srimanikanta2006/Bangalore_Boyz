@@ -1,18 +1,104 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { GovHqLayout } from '../../components/stitch/GovHqLayout';
+import { fetchZoneCascade, explainIncident, createTask } from '../../services/api';
 import { 
   Waves, AlertTriangle, Hospital, Zap, ArrowRight, 
-  Layers, Users, Shield, Radio, CheckCircle2, ChevronRight
+  Layers, Users, Shield, Radio, CheckCircle2, ChevronRight, Sparkles
 } from 'lucide-react';
+
+const POLL_INTERVAL_MS = 15000;
+// Demo incident (Person 1 seed) used for the grounded AI explanation.
+const DEMO_INCIDENT_ID = 'INC-204';
+
+const chainColors = ['#ba1a1a', '#ea580c', '#316bf3', '#0090a9'];
 
 export const GovZoneCascadePage: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  const zoneId = id || '04-B';
+  const zoneId = id || 'EB';
 
   const [activeLayer, setActiveLayer] = useState<'hydro' | 'arterials' | 'egress'>('hydro');
   const [mitigationDispatched, setMitigationDispatched] = useState(false);
+
+  // (c) Live zone cascade from GET /api/zones/:zoneId/cascade (15s poll).
+  const [cascadeData, setCascadeData] = useState<any | null>(null);
+
+  // (d) Grounded AI explanation from POST /api/incidents/:id/explain.
+  const [explain, setExplain] = useState<any | null>(null);
+  const [explainLoading, setExplainLoading] = useState(false);
+  const [explainError, setExplainError] = useState<string | null>(null);
+
+  // (e) Operator approval state — track which recommended actions were dispatched.
+  const [approved, setApproved] = useState<Record<number, 'pending' | 'done' | 'error'>>({});
+
+  useEffect(() => {
+    let active = true;
+    const load = async () => {
+      try {
+        const data = await fetchZoneCascade(zoneId);
+        if (active) setCascadeData(data);
+      } catch {
+        // Backend may be unreachable (401/offline) — keep last-known UI.
+      }
+    };
+    load();
+    const timer = setInterval(load, POLL_INTERVAL_MS);
+    return () => {
+      active = false;
+      clearInterval(timer);
+    };
+  }, [zoneId]);
+
+  // The verified AI fields live under `data.explanation` (see api.ts note).
+  const explanation = explain?.explanation ?? null;
+  const recommendedActions: any[] = explanation?.recommendedActions ?? [];
+
+  // (c) Cascade chain: real DRAIN-07 -> RD-24 -> HOSP nodes when loaded, else mock.
+  const fallbackChain = [
+    { assetCode: 'DRAIN-07', asset: 'Bayou Culvert Flash Overflow', impact: 'OVERWHELMED', impactScore: 84 },
+    { assetCode: 'RD-24', asset: 'Substation 9 Basin Infiltration', impact: 'INUNDATED', impactScore: 67 },
+    { assetCode: 'HOSP-01', asset: 'Hospital Corridor Severed', impact: 'ACCESS_BLOCKED', impactScore: 42 },
+  ];
+  const chainNodes: any[] =
+    cascadeData?.cascade?.length ? cascadeData.cascade : fallbackChain;
+
+  const handleExplain = async () => {
+    setExplainLoading(true);
+    setExplainError(null);
+    try {
+      const data = await explainIncident(DEMO_INCIDENT_ID);
+      setExplain(data);
+    } catch (err) {
+      setExplainError(err instanceof Error ? err.message : 'AI explanation unavailable');
+    } finally {
+      setExplainLoading(false);
+    }
+  };
+
+  const priorityToTask = (p?: string): 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' => {
+    const up = (p || '').toUpperCase();
+    if (up === 'CRITICAL') return 'CRITICAL';
+    if (up === 'HIGH') return 'HIGH';
+    if (up === 'MEDIUM' || up === 'MODERATE') return 'MEDIUM';
+    return 'LOW';
+  };
+
+  // (e) Human-in-the-loop: approve a single AI recommended action -> POST /api/tasks.
+  const handleApprove = async (index: number, action: any) => {
+    setApproved((prev) => ({ ...prev, [index]: 'pending' }));
+    try {
+      await createTask({
+        title: action?.reason || action?.actionId || 'Operator-approved response action',
+        incidentId: DEMO_INCIDENT_ID,
+        priority: priorityToTask(action?.priority),
+        description: `Approved from Zone ${zoneId} cascade AI recommendation (${action?.actionId ?? 'n/a'}).`,
+      });
+      setApproved((prev) => ({ ...prev, [index]: 'done' }));
+    } catch {
+      setApproved((prev) => ({ ...prev, [index]: 'error' }));
+    }
+  };
 
   const handleDispatchMitigation = () => {
     setMitigationDispatched(true);
@@ -145,14 +231,14 @@ export const GovZoneCascadePage: React.FC = () => {
             <div className="flex items-center justify-between mt-3 pt-2 border-t border-[#e5eeff]">
               <div className="flex items-center gap-2">
                 <span className="px-2.5 py-0.5 rounded-full bg-[#ffdad6] text-[#93000a] text-xs font-bold uppercase">
-                  CRITICAL
+                  {cascadeData?.riskLevel ?? 'CRITICAL'}
                 </span>
                 <span className="px-2.5 py-0.5 rounded-full bg-[#eff4ff] text-[#0090a9] text-xs font-semibold">
-                  Flood Inundation
+                  {cascadeData?.hazard?.type ? String(cascadeData.hazard.type).replace(/_/g, ' ') : 'Flood Inundation'}
                 </span>
               </div>
               <div className="flex items-baseline gap-0.5">
-                <span className="text-2xl font-extrabold text-[#ba1a1a]">88</span>
+                <span className="text-2xl font-extrabold text-[#ba1a1a]">{cascadeData?.riskScore ?? 88}</span>
                 <span className="text-xs text-[#76777d]">/100</span>
               </div>
             </div>
@@ -194,49 +280,38 @@ export const GovZoneCascadePage: React.FC = () => {
                 Cascade Failure Chain
               </span>
 
-              <div className="p-3 rounded-xl bg-white border border-[#ba1a1a] shadow-xs flex items-start gap-2.5">
-                <span className="w-5 h-5 rounded-full bg-[#ba1a1a] text-white text-xs flex items-center justify-center font-bold shrink-0 mt-0.5">
-                  1
-                </span>
-                <div>
-                  <span className="font-bold text-[#ba1a1a] block">Bayou Culvert Flash Overflow</span>
-                  <p className="text-[#45464d] text-[11px] mt-0.5">
-                    1.65m water depth over arterial culvert intake disables roadway access.
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex justify-center text-[#76777d]">
-                <ArrowRight className="w-4 h-4 rotate-90" />
-              </div>
-
-              <div className="p-3 rounded-xl bg-white border border-[#ea580c] shadow-xs flex items-start gap-2.5">
-                <span className="w-5 h-5 rounded-full bg-[#ea580c] text-white text-xs flex items-center justify-center font-bold shrink-0 mt-0.5">
-                  2
-                </span>
-                <div>
-                  <span className="font-bold text-[#ea580c] block">Substation 9 Basin Infiltration</span>
-                  <p className="text-[#45464d] text-[11px] mt-0.5">
-                    Surge water breaches 0.35m perimeter berm, risking transformer bank shutdown.
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex justify-center text-[#76777d]">
-                <ArrowRight className="w-4 h-4 rotate-90" />
-              </div>
-
-              <div className="p-3 rounded-xl bg-white border border-[#316bf3] shadow-xs flex items-start gap-2.5">
-                <span className="w-5 h-5 rounded-full bg-[#316bf3] text-white text-xs flex items-center justify-center font-bold shrink-0 mt-0.5">
-                  3
-                </span>
-                <div>
-                  <span className="font-bold text-[#0051d5] block">Hospital Corridor Severed</span>
-                  <p className="text-[#45464d] text-[11px] mt-0.5">
-                    Emergency ambulance route to St. Jude Regional diverted, adding +14 min transit delay.
-                  </p>
-                </div>
-              </div>
+              {chainNodes.map((node, i) => {
+                const color = chainColors[Math.min(i, chainColors.length - 1)];
+                return (
+                  <React.Fragment key={node.assetCode ?? i}>
+                    {i > 0 && (
+                      <div className="flex justify-center text-[#76777d]">
+                        <ArrowRight className="w-4 h-4 rotate-90" />
+                      </div>
+                    )}
+                    <div
+                      className="p-3 rounded-xl bg-white shadow-xs flex items-start gap-2.5"
+                      style={{ borderWidth: 1, borderStyle: 'solid', borderColor: color }}
+                    >
+                      <span
+                        className="w-5 h-5 rounded-full text-white text-xs flex items-center justify-center font-bold shrink-0 mt-0.5"
+                        style={{ backgroundColor: color }}
+                      >
+                        {i + 1}
+                      </span>
+                      <div>
+                        <span className="font-bold block" style={{ color }}>
+                          {node.assetCode ? `${node.assetCode} · ` : ''}{node.asset}
+                        </span>
+                        <p className="text-[#45464d] text-[11px] mt-0.5">
+                          Impact: {String(node.impact ?? node.impactType ?? 'IMPACTED').replace(/_/g, ' ')}
+                          {node.impactScore != null ? ` (${node.impactScore}/100)` : ''}
+                        </p>
+                      </div>
+                    </div>
+                  </React.Fragment>
+                );
+              })}
             </div>
 
             {/* Demographics Exposure */}
@@ -245,7 +320,7 @@ export const GovZoneCascadePage: React.FC = () => {
               <div className="grid grid-cols-3 gap-2 text-center mt-1">
                 <div className="bg-white p-2 rounded-lg border border-[#e5eeff]">
                   <span className="text-[10px] text-[#76777d] block font-semibold">Residents</span>
-                  <span className="font-bold text-xs text-[#0b1c30]">14,200</span>
+                  <span className="font-bold text-xs text-[#0b1c30]">{(cascadeData?.impact?.residents ?? 14200).toLocaleString()}</span>
                 </div>
                 <div className="bg-white p-2 rounded-lg border border-[#e5eeff]">
                   <span className="text-[10px] text-[#76777d] block font-semibold">Mobility-Imp.</span>
@@ -256,6 +331,98 @@ export const GovZoneCascadePage: React.FC = () => {
                   <span className="font-bold text-xs text-[#0b1c30]">420</span>
                 </div>
               </div>
+            </div>
+
+            {/* (d) Grounded AI Explanation (XAI) + (e) Operator Approval */}
+            <div className="p-3 bg-white rounded-xl border border-[#d3e4fe] space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-xs text-[#0b1c30] flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-[#0051d5]" />
+                  AI Situation Explanation
+                </span>
+                {explanation && (
+                  <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[#eff4ff] text-[#0051d5] font-semibold">
+                    {explain?.usedFallback ? 'DETERMINISTIC' : 'GEMINI'}
+                    {explanation.confidence != null ? ` · ${Math.round(explanation.confidence * 100)}%` : ''}
+                  </span>
+                )}
+              </div>
+
+              {!explanation && (
+                <button
+                  type="button"
+                  onClick={handleExplain}
+                  disabled={explainLoading}
+                  className="w-full h-9 rounded-lg bg-[#eff4ff] text-[#0051d5] font-semibold text-[11px] flex items-center justify-center gap-1.5 border border-[#d3e4fe] hover:bg-[#e5eeff] transition-colors disabled:opacity-60"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  {explainLoading ? 'Generating…' : `Explain incident ${DEMO_INCIDENT_ID} with AI`}
+                </button>
+              )}
+
+              {explainError && (
+                <p className="text-[11px] text-[#ba1a1a] font-semibold flex items-center gap-1">
+                  <AlertTriangle className="w-3.5 h-3.5" />
+                  {explainError}
+                </p>
+              )}
+
+              {explanation && (
+                <>
+                  <p className="text-[11px] text-[#45464d] leading-snug">
+                    {explanation.situationSummary || explanation.impactSummary || explanation.explanation}
+                  </p>
+
+                  {recommendedActions.length > 0 && (
+                    <div className="space-y-1.5 pt-1">
+                      <span className="text-[10px] uppercase font-bold text-[#76777d] tracking-wider block">
+                        Recommended Actions — operator approval required
+                      </span>
+                      {recommendedActions.map((action, i) => {
+                        const state = approved[i];
+                        return (
+                          <div
+                            key={action?.actionId ?? i}
+                            className="p-2 rounded-lg bg-[#f8f9ff] border border-[#e5eeff] flex items-start justify-between gap-2"
+                          >
+                            <div className="min-w-0">
+                              <span className="font-semibold text-[11px] text-[#0b1c30] block">
+                                {action?.reason || action?.actionId}
+                              </span>
+                              {action?.priority && (
+                                <span className="text-[9px] font-bold uppercase text-[#b45309]">
+                                  {action.priority} priority
+                                </span>
+                              )}
+                            </div>
+                            <button
+                              type="button"
+                              data-action="approve-recommendation"
+                              onClick={() => handleApprove(i, action)}
+                              disabled={state === 'pending' || state === 'done'}
+                              className={`shrink-0 px-2.5 py-1 rounded-lg text-[10px] font-bold text-white transition-colors ${
+                                state === 'done'
+                                  ? 'bg-emerald-600'
+                                  : state === 'error'
+                                  ? 'bg-[#ba1a1a]'
+                                  : 'bg-[#0f172a] hover:bg-[#1e293b]'
+                              } disabled:opacity-70`}
+                            >
+                              {state === 'done'
+                                ? 'Dispatched ✓'
+                                : state === 'pending'
+                                ? 'Dispatching…'
+                                : state === 'error'
+                                ? 'Retry'
+                                : 'Approve'}
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           </div>
 
