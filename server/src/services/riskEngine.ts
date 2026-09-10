@@ -104,6 +104,13 @@ export class RiskEngine {
       explanation = `MODERATE RISK: Minor surface ponding likely. Monitor drain intake grids for debris blockage.`;
     }
 
+    const confidence: 'HIGH' | 'MEDIUM' | 'LOW' =
+      weather.isStale || weather.dataQuality === 'STALE'
+        ? 'LOW'
+        : weather.dataQuality === 'DEGRADED'
+        ? 'MEDIUM'
+        : 'HIGH';
+
     return {
       score: finalScore,
       level,
@@ -111,6 +118,7 @@ export class RiskEngine {
       drainageDeficitMmHr: Number(drainDeficit.toFixed(1)),
       factors,
       explanation,
+      confidence,
     };
   }
 
@@ -189,6 +197,13 @@ export class RiskEngine {
       explanation = `HEAT ADVISORY: Warm conditions with moderate heat index. Hydration and shade protocols recommended.`;
     }
 
+    const confidence: 'HIGH' | 'MEDIUM' | 'LOW' =
+      weather.isStale || weather.dataQuality === 'STALE'
+        ? 'LOW'
+        : weather.dataQuality === 'DEGRADED'
+        ? 'MEDIUM'
+        : 'HIGH';
+
     return {
       score: finalScore,
       level,
@@ -197,6 +212,7 @@ export class RiskEngine {
       heatStrainIndex: Math.round(hazardScore),
       factors,
       explanation,
+      confidence,
     };
   }
 
@@ -235,6 +251,13 @@ export class RiskEngine {
     else if (compositeScore >= 60) compositeLevel = 'HIGH';
     else if (compositeScore >= 35) compositeLevel = 'MODERATE';
 
+    const confidence: 'HIGH' | 'MEDIUM' | 'LOW' =
+      weather.isStale || weather.dataQuality === 'STALE'
+        ? 'LOW'
+        : weather.dataQuality === 'DEGRADED'
+        ? 'MEDIUM'
+        : 'HIGH';
+
     return {
       assetId: asset.id,
       assetName: asset.name,
@@ -249,6 +272,7 @@ export class RiskEngine {
       compositeLevel,
       primaryThreat,
       calculatedAt: new Date().toISOString(),
+      confidence,
     };
   }
 }

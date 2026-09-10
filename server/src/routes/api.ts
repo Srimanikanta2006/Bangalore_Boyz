@@ -36,14 +36,6 @@ router.get('/wards', (_req: Request, res: Response) => {
   }
 });
 
-router.get('/wards/:id', (req: Request, res: Response) => {
-  const ward = stateStore.getWardById(req.params.id);
-  if (!ward) {
-    return res.status(404).json({ error: 'Ward not found' });
-  }
-  res.json(ward);
-});
-
 // Assets
 router.get('/assets', (req: Request, res: Response) => {
   try {
@@ -118,8 +110,14 @@ router.post('/assets', (req: Request, res: Response) => {
 router.get('/weather', (_req: Request, res: Response) => {
   try {
     const reading = weatherService.getCurrentReading();
+    const dataQuality = stateStore.getDataQualityStatus();
     res.json({
-      reading,
+      reading: {
+        ...reading,
+        dataQuality: dataQuality.status,
+        lastUpdatedMinutesAgo: dataQuality.lastUpdatedMinutesAgo,
+      },
+      dataQuality,
       activeScenarioId: weatherService.getActiveScenarioId(),
     });
   } catch (err) {
@@ -204,7 +202,7 @@ router.get('/risks/:assetId', (req: Request, res: Response) => {
   res.json(assessment);
 });
 
-// Alerts & Incident Actions
+// Alerts
 router.get('/alerts', (req: Request, res: Response) => {
   try {
     const { status } = req.query;
@@ -218,9 +216,6 @@ router.get('/alerts', (req: Request, res: Response) => {
 router.patch('/alerts/:id/status', (req: Request, res: Response) => {
   try {
     const { status, actorName, notes } = req.body;
-    if (!['TRIGGERED', 'ACKNOWLEDGED', 'DISPATCHED', 'IN_PROGRESS', 'RESOLVED'].includes(status)) {
-      return res.status(400).json({ error: 'Invalid alert status' });
-    }
     const updated = stateStore.updateAlertStatus(req.params.id, status, actorName, notes);
     if (!updated) {
       return res.status(404).json({ error: 'Alert not found' });
@@ -228,6 +223,135 @@ router.patch('/alerts/:id/status', (req: Request, res: Response) => {
     res.json({
       message: `Alert transitioned to ${status}`,
       alert: updated,
+    });
+  } catch (err) {
+    res.status(500).json({ error: (err as Error).message });
+  }
+});
+
+// Incidents (Core Workflow)
+router.get('/incidents', (req: Request, res: Response) => {
+  try {
+    const { status } = req.query;
+    const incidents = stateStore.getIncidents(status as any);
+    res.json(incidents);
+  } catch (err) {
+    res.status(500).json({ error: (err as Error).message });
+  }
+});
+
+router.get('/incidents/:id', (req: Request, res: Response) => {
+  const incident = stateStore.getIncidentById(req.params.id);
+  if (!incident) {
+    return res.status(404).json({ error: 'Incident not found' });
+  }
+  res.json(incident);
+});
+
+const CreatePlanSchema = z.object({
+  assetId: z.string(),
+  hazardType: z.enum(['FLOOD', 'HEAT', 'COMPOUND']),
+  title: z.string(),
+  assignedTeam: z.string(),
+  leadResponder: z.string(),
+  notes: z.string().optional(),
+  taskTitles: z.array(z.string()).min(1),
+});
+
+router.post('/incidents', (req: Request, res: Response) => {
+  try {
+    const validated = CreatePlanSchema.parse(req.body);
+    const incident = stateStore.createIncidentFromPlan(validated);
+    res.status(201).json({
+      message: `Incident #${incident.incidentNumber} created successfully`,
+      incident,
+    });
+  } catch (err) {
+    res.status(400).json({ error: (err as Error).message });
+  }
+});
+
+// Response Tasks
+router.get('/tasks', (_req: Request, res: Response) => {
+  try {
+    const incidents = stateStore.getIncidents();
+    const allTasks = incidents.flatMap((inc) =>
+      inc.tasks.map((t) => ({
+        ...t,
+        incidentNumber: inc.incidentNumber,
+        incidentTitle: inc.title,
+        assetName: inc.assetName,
+        wardName: inc.wardName,
+        hazardType: inc.hazardType,
+      }))
+    );
+    res.json(allTasks);
+  } catch (err) {
+    res.status(500).json({ error: (err as Error).message });
+  }
+});
+
+router.patch('/tasks/:id/status', (req: Request, res: Response) => {
+  try {
+    const { status, notes } = req.body;
+    const result = stateStore.updateTaskStatus(req.params.id, status, notes);
+    if (!result) {
+      return res.status(404).json({ error: 'Task not found' });
+    }
+    res.json({
+      message: `Task ${req.params.id} updated to ${status}`,
+      task: result.task,
+      incident: result.incident,
+    });
+  } catch (err) {
+    res.status(500).json({ error: (err as Error).message });
+  }
+});
+
+router.post('/tasks/:id/escalate', (req: Request, res: Response) => {
+  try {
+    const { actor } = req.body;
+    const task = stateStore.escalateTask(req.params.id, actor);
+    if (!task) {
+      return res.status(404).json({ error: 'Task not found' });
+    }
+    res.json({
+      message: `Task ${req.params.id} escalated`,
+      task,
+    });
+  } catch (err) {
+    res.status(500).json({ error: (err as Error).message });
+  }
+});
+
+// Historical Repeat Intelligence
+router.get('/history', (_req: Request, res: Response) => {
+  try {
+    const history = stateStore.getHistoricalRepeatLocations();
+    res.json(history);
+  } catch (err) {
+    res.status(500).json({ error: (err as Error).message });
+  }
+});
+
+// Data Quality & Freshness Controls
+router.get('/data-quality', (_req: Request, res: Response) => {
+  try {
+    const quality = stateStore.getDataQualityStatus();
+    res.json(quality);
+  } catch (err) {
+    res.status(500).json({ error: (err as Error).message });
+  }
+});
+
+router.post('/data-quality/toggle-stale', (_req: Request, res: Response) => {
+  try {
+    const isStale = stateStore.toggleStaleSimulation();
+    const quality = stateStore.getDataQualityStatus();
+    res.json({
+      message: isStale ? 'Simulating STALE weather data' : 'Restored FRESH weather data feed',
+      isStale,
+      quality,
     });
   } catch (err) {
     res.status(500).json({ error: (err as Error).message });

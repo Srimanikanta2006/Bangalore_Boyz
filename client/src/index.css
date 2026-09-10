@@ -4,76 +4,66 @@
 
 @layer base {
   body {
-    @apply bg-slate-950 text-slate-100 font-sans antialiased selection:bg-cyan-500 selection:text-white;
+    @apply bg-slate-50 text-slate-900 font-sans antialiased selection:bg-sky-100 selection:text-sky-900;
   }
 }
 
-/* Custom Leaflet Map styling */
+/* Professional Leaflet Map styling */
 .leaflet-container {
   width: 100%;
   height: 100%;
-  background: #0B1120 !important;
+  background: #F1F5F9 !important;
   font-family: inherit;
 }
 
 .leaflet-popup-content-wrapper {
-  background-color: #0F172A !important;
-  color: #F8FAFC !important;
-  border-radius: 0.75rem !important;
-  border: 1px solid #334155 !important;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5) !important;
+  background-color: #FFFFFF !important;
+  color: #0F172A !important;
+  border-radius: 0.5rem !important;
+  border: 1px solid #CBD5E1 !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1) !important;
+  padding: 0 !important;
+}
+
+.leaflet-popup-content {
+  margin: 0 !important;
+  line-height: inherit !important;
 }
 
 .leaflet-popup-tip {
-  background-color: #0F172A !important;
-  border: 1px solid #334155 !important;
+  background-color: #FFFFFF !important;
+  border: 1px solid #CBD5E1 !important;
 }
 
-/* Marker pulse animations */
-@keyframes pulse-critical {
+/* Marker pulse for active incidents and critical states */
+@keyframes pulse-critical-ring {
   0% {
-    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+    box-shadow: 0 0 0 0 rgba(225, 29, 72, 0.4);
   }
   70% {
-    box-shadow: 0 0 0 14px rgba(239, 68, 68, 0);
+    box-shadow: 0 0 0 10px rgba(225, 29, 72, 0);
   }
   100% {
-    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+    box-shadow: 0 0 0 0 rgba(225, 29, 72, 0);
   }
 }
 
-.marker-critical {
-  animation: pulse-critical 2s infinite;
+.marker-critical-ring {
+  animation: pulse-critical-ring 2s infinite;
 }
 
-@keyframes pulse-high {
-  0% {
-    box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.6);
-  }
-  70% {
-    box-shadow: 0 0 0 10px rgba(249, 115, 22, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(249, 115, 22, 0);
-  }
-}
-
-.marker-high {
-  animation: pulse-high 2.2s infinite;
-}
-
-/* Scrollbar styling */
+/* Clean operational scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #0F172A;
+  background: #F8FAFC;
 }
 ::-webkit-scrollbar-thumb {
-  background: #334155;
+  background: #CBD5E1;
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #475569;
+  background: #94A3B8;
 }

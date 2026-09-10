@@ -4,8 +4,12 @@ import {
   WeatherReading,
   AssetRiskAssessment,
   Alert,
+  Incident,
+  ResponseTask,
+  HistoricalRepeatLocation,
   SimulationScenario,
   CitySummaryStats,
+  DataQualityStatus,
 } from '../types';
 
 const API_BASE = '/api';
@@ -42,7 +46,11 @@ export async function createAsset(assetData: Omit<Asset, 'id'>): Promise<Asset> 
   return res.json();
 }
 
-export async function fetchWeather(): Promise<{ reading: WeatherReading; activeScenarioId: string | null }> {
+export async function fetchWeather(): Promise<{
+  reading: WeatherReading;
+  dataQuality: DataQualityStatus;
+  activeScenarioId: string | null;
+}> {
   const res = await fetch(`${API_BASE}/weather`);
   if (!res.ok) throw new Error('Failed to fetch weather');
   return res.json();
@@ -92,8 +100,9 @@ export async function fetchAssetRisk(assetId: string): Promise<AssetRiskAssessme
   return res.json();
 }
 
-export async function fetchAlerts(): Promise<Alert[]> {
-  const res = await fetch(`${API_BASE}/alerts`);
+export async function fetchAlerts(status?: Alert['status']): Promise<Alert[]> {
+  const url = status ? `${API_BASE}/alerts?status=${status}` : `${API_BASE}/alerts`;
+  const res = await fetch(url);
   if (!res.ok) throw new Error('Failed to fetch alerts');
   return res.json();
 }
@@ -110,5 +119,91 @@ export async function updateAlertStatus(
     body: JSON.stringify({ status, actorName, notes }),
   });
   if (!res.ok) throw new Error('Failed to update alert status');
+  return res.json();
+}
+
+// Incidents
+export async function fetchIncidents(status?: Incident['status']): Promise<Incident[]> {
+  const url = status ? `${API_BASE}/incidents?status=${status}` : `${API_BASE}/incidents`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error('Failed to fetch incidents');
+  return res.json();
+}
+
+export async function fetchIncidentById(id: string): Promise<Incident> {
+  const res = await fetch(`${API_BASE}/incidents/${id}`);
+  if (!res.ok) throw new Error('Failed to fetch incident');
+  return res.json();
+}
+
+export async function createIncident(data: {
+  assetId: string;
+  hazardType: 'FLOOD' | 'HEAT' | 'COMPOUND';
+  title: string;
+  assignedTeam: string;
+  leadResponder: string;
+  notes?: string;
+  taskTitles: string[];
+}): Promise<{ message: string; incident: Incident }> {
+  const res = await fetch(`${API_BASE}/incidents`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err.error || 'Failed to create response incident');
+  }
+  return res.json();
+}
+
+// Tasks
+export async function fetchTasks(): Promise<ResponseTask[]> {
+  const res = await fetch(`${API_BASE}/tasks`);
+  if (!res.ok) throw new Error('Failed to fetch tasks');
+  return res.json();
+}
+
+export async function updateTaskStatus(
+  taskId: string,
+  status: ResponseTask['status'],
+  notes?: string
+): Promise<{ task: ResponseTask; incident: Incident }> {
+  const res = await fetch(`${API_BASE}/tasks/${taskId}/status`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status, notes }),
+  });
+  if (!res.ok) throw new Error('Failed to update task status');
+  return res.json();
+}
+
+export async function escalateTask(taskId: string, actor: string = 'Supervisor'): Promise<{ task: ResponseTask }> {
+  const res = await fetch(`${API_BASE}/tasks/${taskId}/escalate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ actor }),
+  });
+  if (!res.ok) throw new Error('Failed to escalate task');
+  return res.json();
+}
+
+// History
+export async function fetchHistory(): Promise<HistoricalRepeatLocation[]> {
+  const res = await fetch(`${API_BASE}/history`);
+  if (!res.ok) throw new Error('Failed to fetch historical repeat locations');
+  return res.json();
+}
+
+// Data Quality
+export async function fetchDataQuality(): Promise<DataQualityStatus> {
+  const res = await fetch(`${API_BASE}/data-quality`);
+  if (!res.ok) throw new Error('Failed to fetch data quality');
+  return res.json();
+}
+
+export async function toggleStaleData(): Promise<{ isStale: boolean; quality: DataQualityStatus }> {
+  const res = await fetch(`${API_BASE}/data-quality/toggle-stale`, { method: 'POST' });
+  if (!res.ok) throw new Error('Failed to toggle stale simulation');
   return res.json();
 }

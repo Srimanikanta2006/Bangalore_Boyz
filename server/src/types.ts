@@ -46,6 +46,8 @@ export interface Asset {
   contactTeam: string;
   emergencyContact: string;
   status: 'OPERATIONAL' | 'AT_RISK' | 'DISRUPTED' | 'PROTECTED';
+  historicalIncidentCount?: number;
+  drainageQuality?: 'Poor' | 'Moderate' | 'Good';
 }
 
 export interface WeatherReading {
@@ -62,6 +64,9 @@ export interface WeatherReading {
   soilMoisturePct: number;
   waterGaugeLevelM?: number;
   status: 'NORMAL' | 'HEAVY_RAIN' | 'CLOUDBURST' | 'HEATWAVE' | 'SEVERE_HEAT';
+  isStale?: boolean;
+  dataQuality?: 'GOOD' | 'DEGRADED' | 'STALE';
+  lastUpdatedMinutesAgo?: number;
 }
 
 export interface RiskFactorWeights {
@@ -78,6 +83,7 @@ export interface FloodRiskAssessment {
   drainageDeficitMmHr: number;
   factors: RiskFactorWeights;
   explanation: string;
+  confidence: 'HIGH' | 'MEDIUM' | 'LOW';
 }
 
 export interface HeatRiskAssessment {
@@ -88,6 +94,7 @@ export interface HeatRiskAssessment {
   heatStrainIndex: number;
   factors: RiskFactorWeights;
   explanation: string;
+  confidence: 'HIGH' | 'MEDIUM' | 'LOW';
 }
 
 export interface AssetRiskAssessment {
@@ -104,6 +111,7 @@ export interface AssetRiskAssessment {
   compositeLevel: 'LOW' | 'MODERATE' | 'HIGH' | 'CRITICAL';
   primaryThreat: 'FLOOD' | 'HEAT' | 'COMPOUND' | 'NONE';
   calculatedAt: string;
+  confidence: 'HIGH' | 'MEDIUM' | 'LOW';
 }
 
 export interface ActionPlaybookSOP {
@@ -136,7 +144,8 @@ export interface Alert {
     compositeScore: number;
   };
   sop: ActionPlaybookSOP;
-  status: 'TRIGGERED' | 'ACKNOWLEDGED' | 'DISPATCHED' | 'IN_PROGRESS' | 'RESOLVED';
+  status: 'NEW' | 'ACKNOWLEDGED' | 'ESCALATED' | 'RESOLVED';
+  incidentId?: string;
   dispatchedAt?: string;
   resolvedAt?: string;
   actionHistory: Array<{
@@ -144,6 +153,82 @@ export interface Alert {
     action: string;
     actor: string;
     notes?: string;
+  }>;
+}
+
+export interface ResponseTask {
+  id: string;
+  incidentId: string;
+  title: string;
+  assignedTeam: string;
+  assignedPerson: string;
+  priority: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
+  dueTime: string;
+  status: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'ESCALATED';
+  completedAt?: string;
+  escalatedAt?: string;
+  escalationLevel: 0 | 1 | 2; // 0: Normal, 1: Supervisor, 2: District Command
+  notes?: string;
+}
+
+export interface IncidentTimelineEvent {
+  id: string;
+  time: string;
+  title: string;
+  description: string;
+  actor: string;
+  type:
+    | 'RISK_CALCULATED'
+    | 'ALERT_GENERATED'
+    | 'MANAGER_NOTIFIED'
+    | 'INCIDENT_ACKNOWLEDGED'
+    | 'TEAM_ASSIGNED'
+    | 'TASK_COMPLETED'
+    | 'ACTION_TAKEN'
+    | 'ESCALATED'
+    | 'RESOLVED';
+}
+
+export interface Incident {
+  id: string;
+  incidentNumber: number;
+  hazardType: 'FLOOD' | 'HEAT' | 'COMPOUND';
+  title: string;
+  assetId: string;
+  assetName: string;
+  wardId: string;
+  wardName: string;
+  severity: 'CRITICAL' | 'HIGH' | 'MODERATE' | 'LOW';
+  status: 'DETECTED' | 'ACKNOWLEDGED' | 'RESPONDING' | 'RESOLVED' | 'CLOSED';
+  assignedTeam: string;
+  leadResponder: string;
+  createdAt: string;
+  resolvedAt?: string;
+  tasks: ResponseTask[];
+  timeline: IncidentTimelineEvent[];
+  notes?: string;
+}
+
+export interface HistoricalRepeatLocation {
+  id?: string;
+  name?: string;
+  assetId: string;
+  assetName: string;
+  wardName: string;
+  assetType: AssetType;
+  hazardType: 'FLOOD' | 'HEAT';
+  totalIncidentsLast12m: number;
+  averageSeverity: 'CRITICAL' | 'HIGH' | 'MODERATE';
+  recurringTrigger: string;
+  averageResolutionHours: number;
+  elevationM: number;
+  drainageQuality: 'Poor' | 'Moderate' | 'Good';
+  pastIncidents: Array<{
+    date: string;
+    peakRiskScore: number;
+    triggerValue: string;
+    impactSummary: string;
+    resolutionTimeHours: number;
   }>;
 }
 

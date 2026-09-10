@@ -64,7 +64,7 @@ export class SOPEngine {
         compositeScore: assessment.compositeRiskScore,
       },
       sop,
-      status: 'TRIGGERED',
+      status: 'NEW',
       actionHistory: [
         {
           timestamp: new Date().toISOString(),

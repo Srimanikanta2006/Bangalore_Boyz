@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, PlusCircle, Building2, MapPin } from 'lucide-react';
+import { X, PlusCircle, Building, MapPin } from 'lucide-react';
 import { Ward, Asset, AssetType, CriticalityLevel } from '../types';
 
 interface NewAssetModalProps {
@@ -30,11 +30,10 @@ export const NewAssetModal: React.FC<NewAssetModalProps> = ({
   const [basementEquipment, setBasementEquipment] = useState(true);
   const [hasDewateringPumps, setHasDewateringPumps] = useState(false);
   const [populationServed, setPopulationServed] = useState('25000');
-  const [contactTeam, setContactTeam] = useState('Facility Emergency Response');
+  const [contactTeam, setContactTeam] = useState('BBMP Rapid Response Taskforce');
   const [emergencyContact, setEmergencyContact] = useState('+91 80 2200 1100');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // When ward changes, automatically update center coordinates
   const handleWardChange = (newWardId: string) => {
     setWardId(newWardId);
     const ward = wards.find((w) => w.id === newWardId);
@@ -74,6 +73,8 @@ export const NewAssetModal: React.FC<NewAssetModalProps> = ({
         contactTeam,
         emergencyContact,
         status: 'OPERATIONAL',
+        historicalIncidentCount: 0,
+        drainageQuality: 'Moderate',
       });
       onClose();
     } catch (err) {
@@ -84,69 +85,69 @@ export const NewAssetModal: React.FC<NewAssetModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
-      <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+      <div className="bg-white border border-slate-200 rounded-xl w-full max-w-xl shadow-xl overflow-hidden flex flex-col max-h-[92vh]">
         {/* Modal Header */}
-        <div className="p-4 sm:p-5 border-b border-slate-800 flex items-center justify-between bg-slate-950/70">
+        <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-cyan-500/20 text-cyan-400 border border-cyan-500/30">
-              <Building2 className="w-5 h-5" />
+            <div className="p-1.5 rounded-lg bg-sky-100 text-sky-800 border border-sky-200">
+              <Building className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-extrabold text-base text-white">Establish Asset Context</h3>
-              <p className="text-xs text-slate-400">
-                Register a new critical facility into the urban climate risk mesh
+              <h3 className="font-bold text-sm text-slate-900">Establish Asset Geographic Context</h3>
+              <p className="text-[11px] text-slate-500">
+                Register a new critical facility into the municipal risk mesh
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition"
+            className="p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Modal Form */}
-        <form onSubmit={handleSubmit} className="p-5 overflow-y-auto space-y-4 text-xs text-slate-300">
+        <form onSubmit={handleSubmit} className="p-5 overflow-y-auto space-y-4 text-xs text-slate-700">
           {/* Asset Name */}
           <div>
-            <label className="block font-semibold text-slate-300 mb-1">Asset Name</label>
+            <label className="block font-semibold text-slate-700 mb-1">Asset Name</label>
             <input
               type="text"
               required
               placeholder="e.g. Baptist Hospital Emergency Wing / Koramangala 11kV Substation"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-cyan-500"
+              className="w-full bg-white border border-slate-200 rounded-md px-3 py-1.5 text-slate-900 placeholder-slate-400 focus:ring-1 focus:ring-sky-500 focus:border-sky-500"
             />
           </div>
 
           {/* Type & Ward */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block font-semibold text-slate-300 mb-1">Asset Category</label>
+              <label className="block font-semibold text-slate-700 mb-1">Asset Category</label>
               <select
                 value={type}
                 onChange={(e) => setType(e.target.value as AssetType)}
-                className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-cyan-500"
+                className="w-full bg-white border border-slate-200 rounded-md px-2.5 py-1.5 text-slate-800 focus:ring-1 focus:ring-sky-500 focus:border-sky-500"
               >
                 <option value="HOSPITAL">Hospital / Healthcare</option>
                 <option value="POWER_SUBSTATION">Power Substation</option>
                 <option value="METRO_STATION">Metro / Transit Hub</option>
                 <option value="STORMWATER_PUMP">Stormwater Pumping Station</option>
-                <option value="RESIDENTIAL_SETTLEMENT">Informal Settlement / Low-Lying Community</option>
-                <option value="CRITICAL_ROAD_JUNCTION">Critical Road Junction / Underpass</option>
-                <option value="INDUSTRIAL_PARK">Tech / Industrial Park</option>
+                <option value="RESIDENTIAL_SETTLEMENT">Informal Settlement</option>
+                <option value="CRITICAL_ROAD_JUNCTION">Road Junction / Underpass</option>
+                <option value="INDUSTRIAL_PARK">Industrial / Tech Park</option>
               </select>
             </div>
 
             <div>
-              <label className="block font-semibold text-slate-300 mb-1">Municipal Ward</label>
+              <label className="block font-semibold text-slate-700 mb-1">Municipal Ward</label>
               <select
                 value={wardId}
                 onChange={(e) => handleWardChange(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-cyan-500"
+                className="w-full bg-white border border-slate-200 rounded-md px-2.5 py-1.5 text-slate-800 focus:ring-1 focus:ring-sky-500 focus:border-sky-500"
               >
                 {wards.map((w) => (
                   <option key={w.id} value={w.id}>
@@ -160,35 +161,35 @@ export const NewAssetModal: React.FC<NewAssetModalProps> = ({
           {/* Coordinates & Elevation */}
           <div className="grid grid-cols-3 gap-3">
             <div>
-              <label className="block font-semibold text-slate-300 mb-1">Latitude</label>
+              <label className="block font-semibold text-slate-700 mb-1">Latitude</label>
               <input
                 type="number"
                 step="0.0001"
                 required
                 value={lat}
                 onChange={(e) => setLat(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-cyan-500"
+                className="w-full bg-white border border-slate-200 rounded-md px-2.5 py-1.5 text-slate-800 focus:ring-1 focus:ring-sky-500 focus:border-sky-500"
               />
             </div>
             <div>
-              <label className="block font-semibold text-slate-300 mb-1">Longitude</label>
+              <label className="block font-semibold text-slate-700 mb-1">Longitude</label>
               <input
                 type="number"
                 step="0.0001"
                 required
                 value={lng}
                 onChange={(e) => setLng(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-cyan-500"
+                className="w-full bg-white border border-slate-200 rounded-md px-2.5 py-1.5 text-slate-800 focus:ring-1 focus:ring-sky-500 focus:border-sky-500"
               />
             </div>
             <div>
-              <label className="block font-semibold text-slate-300 mb-1">Elevation (m MSL)</label>
+              <label className="block font-semibold text-slate-700 mb-1">Elevation (m MSL)</label>
               <input
                 type="number"
                 required
                 value={elevationM}
                 onChange={(e) => setElevationM(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-cyan-500"
+                className="w-full bg-white border border-slate-200 rounded-md px-2.5 py-1.5 text-slate-800 focus:ring-1 focus:ring-sky-500 focus:border-sky-500"
               />
             </div>
           </div>
@@ -196,7 +197,7 @@ export const NewAssetModal: React.FC<NewAssetModalProps> = ({
           {/* Drainage Capacity & Impervious Surface */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block font-semibold text-slate-300 mb-1">
+              <label className="block font-semibold text-slate-700 mb-1">
                 Drainage Capacity (mm/hr)
               </label>
               <input
@@ -204,11 +205,11 @@ export const NewAssetModal: React.FC<NewAssetModalProps> = ({
                 required
                 value={drainageCapacityMmHr}
                 onChange={(e) => setDrainageCapacityMmHr(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-cyan-500"
+                className="w-full bg-white border border-slate-200 rounded-md px-2.5 py-1.5 text-slate-800 focus:ring-1 focus:ring-sky-500 focus:border-sky-500"
               />
             </div>
             <div>
-              <label className="block font-semibold text-slate-300 mb-1">
+              <label className="block font-semibold text-slate-700 mb-1">
                 Impervious Surface (%)
               </label>
               <input
@@ -218,52 +219,52 @@ export const NewAssetModal: React.FC<NewAssetModalProps> = ({
                 required
                 value={imperviousPct}
                 onChange={(e) => setImperviousPct(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-cyan-500"
+                className="w-full bg-white border border-slate-200 rounded-md px-2.5 py-1.5 text-slate-800 focus:ring-1 focus:ring-sky-500 focus:border-sky-500"
               />
             </div>
           </div>
 
-          {/* Criticality & Population Served */}
+          {/* Criticality & Population */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block font-semibold text-slate-300 mb-1">
-                Criticality Level (1 to 5)
+              <label className="block font-semibold text-slate-700 mb-1">
+                Criticality Tier (1 to 5)
               </label>
               <select
                 value={criticality}
                 onChange={(e) => setCriticality(parseInt(e.target.value, 10) as CriticalityLevel)}
-                className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-cyan-500"
+                className="w-full bg-white border border-slate-200 rounded-md px-2.5 py-1.5 text-slate-800 focus:ring-1 focus:ring-sky-500 focus:border-sky-500"
               >
-                <option value={5}>Level 5 - Vital (Hospitals / Major Grid)</option>
-                <option value={4}>Level 4 - High (Transit Hubs / Large Settlements)</option>
-                <option value={3}>Level 3 - Medium (Major Intersections)</option>
-                <option value={2}>Level 2 - Secondary</option>
-                <option value={1}>Level 1 - Baseline</option>
+                <option value={5}>Tier 5 - Vital (Hospitals, Major Substation)</option>
+                <option value={4}>Tier 4 - High (Transit Hub, Settlements)</option>
+                <option value={3}>Tier 3 - Moderate (Arterial Junction)</option>
+                <option value={2}>Tier 2 - Secondary</option>
+                <option value={1}>Tier 1 - Baseline</option>
               </select>
             </div>
             <div>
-              <label className="block font-semibold text-slate-300 mb-1">Population Served</label>
+              <label className="block font-semibold text-slate-700 mb-1">Population Served</label>
               <input
                 type="number"
                 value={populationServed}
                 onChange={(e) => setPopulationServed(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-cyan-500"
+                className="w-full bg-white border border-slate-200 rounded-md px-2.5 py-1.5 text-slate-800 focus:ring-1 focus:ring-sky-500 focus:border-sky-500"
               />
             </div>
           </div>
 
-          {/* Checkboxes: Physical Vulnerabilities & Mitigations */}
-          <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
-            <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">
-              Physical Vulnerabilities & Resilience Measures
+          {/* Vulnerability Checkboxes */}
+          <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 space-y-2">
+            <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider block">
+              Physical Vulnerabilities & Onsite Buffers
             </span>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-[11px]">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={basementEquipment}
                   onChange={(e) => setBasementEquipment(e.target.checked)}
-                  className="rounded bg-slate-800 border-slate-700 text-cyan-500 focus:ring-0"
+                  className="rounded border-slate-300 text-sky-700 focus:ring-0"
                 />
                 <span>Basement Equipment</span>
               </label>
@@ -272,59 +273,37 @@ export const NewAssetModal: React.FC<NewAssetModalProps> = ({
                   type="checkbox"
                   checked={hasDewateringPumps}
                   onChange={(e) => setHasDewateringPumps(e.target.checked)}
-                  className="rounded bg-slate-800 border-slate-700 text-cyan-500 focus:ring-0"
+                  className="rounded border-slate-300 text-sky-700 focus:ring-0"
                 />
-                <span>Dewatering Pumps Onsite</span>
+                <span>Dewatering Pumps</span>
               </label>
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={hasBackupPower}
                   onChange={(e) => setHasBackupPower(e.target.checked)}
-                  className="rounded bg-slate-800 border-slate-700 text-cyan-500 focus:ring-0"
+                  className="rounded border-slate-300 text-sky-700 focus:ring-0"
                 />
                 <span>Backup Generators</span>
               </label>
             </div>
           </div>
 
-          {/* Contact Team */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block font-semibold text-slate-300 mb-1">Response Unit Name</label>
-              <input
-                type="text"
-                value={contactTeam}
-                onChange={(e) => setContactTeam(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-cyan-500"
-              />
-            </div>
-            <div>
-              <label className="block font-semibold text-slate-300 mb-1">Emergency Contact #</label>
-              <input
-                type="text"
-                value={emergencyContact}
-                onChange={(e) => setEmergencyContact(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-cyan-500"
-              />
-            </div>
-          </div>
-
           {/* Submit Buttons */}
-          <div className="pt-3 border-t border-slate-800 flex items-center justify-end gap-2">
+          <div className="pt-3 border-t border-slate-200 flex items-center justify-end gap-2">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold transition"
+              className="px-3 py-1.5 rounded-md border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 font-medium transition"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold shadow-lg shadow-cyan-950/50 transition"
+              className="flex items-center gap-1 px-4 py-1.5 rounded-md bg-sky-900 hover:bg-sky-800 text-white font-semibold shadow-xs transition"
             >
-              <PlusCircle className="w-4 h-4" />
+              <PlusCircle className="w-3.5 h-3.5" />
               <span>{isSubmitting ? 'Registering...' : 'Register Asset in Risk Mesh'}</span>
             </button>
           </div>
