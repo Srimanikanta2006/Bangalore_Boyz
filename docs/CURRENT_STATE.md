@@ -20,7 +20,11 @@ This file acts as the live status dashboard for the project. Every team member a
 - [x] Fixed sidebar overlap, desktop header alignment, and role navigation isolation
 - [x] Restored `response_center.html` to pristine layout and removed duplicate header buttons
 - [x] Built interactive sliding drawer Command Center sidebar with header toggle `[ ☰ ]`
-- [x] Created `NAVIGATION_MAP.md` site graph documentation
+- [x] Reshaped mock data layer to match Contracts 1-4 (`explain-response.json`, `tasks-mock-response.json`, `hotspots.json`)
+- [x] Surfaced Contract 2 P4 AI explanation in exact 8 MVP Priority Order fields in `zone_detail.html` & `overview.html`
+- [x] Implemented Contract 3 Operator Approval Flow (`data-action="approve-recommendation"`) generating payload for P1 Task API
+- [x] Enforced zero direct AI provider API key exposure in browser code
+- [x] Updated `NAVIGATION_MAP.md` with Data Contracts specification for P1/P2/P4 teammates
 - [x] Global AI coding agent instructions created (`AGENTS.md`)
 - [x] Standard project documentation hierarchy created (`docs/`)
 - [x] Environment variable template created (`.env.example`)
