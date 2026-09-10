@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Header } from '../../components/stitch/Header';
 import { Mock } from '../../components/stitch/Mock';
 
-export const FloodDetailPage: React.FC = () => {
+export const CitizenFloodSheetPage: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
 
@@ -17,7 +17,7 @@ export const FloodDetailPage: React.FC = () => {
       setCalculatingRoute(false);
       setRouteSuccess(true);
       setTimeout(() => {
-        navigate(`/rescue/route/${id || 'flood-1'}`);
+        navigate('/citizen/routes');
       }, 1000);
     }, 900);
   };
@@ -30,10 +30,10 @@ export const FloodDetailPage: React.FC = () => {
     <div className="bg-surface text-on-surface font-body-md text-body-md min-h-screen flex flex-col relative w-full max-w-[440px] mx-auto shadow-2xl border-x border-outline-variant/20">
       {/* Header with Back Button */}
       <Header
-        title="Route Select"
-        subtitle="ClimateShield Rescue"
+        title="Hazard Sheet"
+        subtitle="ClimateShield Citizen"
         hasBack={true}
-        onBack={() => navigate(-1)}
+        onBack={() => navigate('/citizen/map')}
       />
 
       {/* Main Viewport */}
@@ -256,7 +256,7 @@ export const FloodDetailPage: React.FC = () => {
                   aria-label="Route information"
                   className="w-8 h-8 rounded-lg bg-surface-container-lowest flex items-center justify-center text-on-surface shadow-sm shrink-0"
                   type="button"
-                  onClick={() => navigate(`/rescue/route/${id || 'flood-1'}`)}
+                  onClick={() => navigate('/citizen/routes')}
                 >
                   <span className="material-symbols-outlined text-[18px]">chevron_right</span>
                 </button>

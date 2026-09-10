@@ -107,9 +107,9 @@ export const HazardReportPage: React.FC = () => {
       {/* Header with Back Button */}
       <Header
         title="Hazard Report"
-        subtitle="ClimateShield Rescue"
+        subtitle="ClimateShield Citizen"
         hasBack={true}
-        onBack={() => navigate(-1)}
+        onBack={() => navigate('/citizen/map')}
       />
 
       {/* Main Form Flow */}
