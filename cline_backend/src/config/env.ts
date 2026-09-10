@@ -23,7 +23,7 @@ const envSchema = z.object({
   // --- P4 AI explanation layer (Google Gemini) ---
   // Leave GEMINI_API_KEY blank to run the deterministic fallback (no external call).
   GEMINI_API_KEY: z.string().default(''),
-  GEMINI_MODEL: z.string().default('gemini-2.5-flash'),
+  GEMINI_MODEL: z.string().default('gemini-3.6-flash'),
   // --- Supabase configuration ---
   SUPABASE_URL: z.string().optional(),
   SUPABASE_PUBLISHABLE_KEY: z.string().optional(),

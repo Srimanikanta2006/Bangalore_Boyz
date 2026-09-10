@@ -37,7 +37,7 @@ export interface ExplanationResult {
 const DEFAULT_TIMEOUT_MS = 45_000;
 
 /** Default safe model if none specified in GEMINI_MODEL or options */
-export const DEFAULT_GEMINI_MODEL = "gemini-2.5-flash";
+export const DEFAULT_GEMINI_MODEL = "gemini-3.6-flash";
 
 /**
  * Resolves the Gemini model name to use.
