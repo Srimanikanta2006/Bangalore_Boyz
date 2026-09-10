@@ -2,6 +2,7 @@ import express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
 import { env } from './config/env';
+import { EVIDENCE_DIR, EVIDENCE_URL_PREFIX } from './middleware/upload';
 import { requestLogger } from './middleware/requestLogger';
 import { blockCitizenFromInternal } from './middleware/auth';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
@@ -45,6 +46,9 @@ export function createApp() {
   );
   app.use(express.json({ limit: '1mb' }));
   app.use(requestLogger);
+
+  // Read-only static serving of citizen-uploaded evidence (local disk storage, Stage D §6 Option B).
+  app.use(EVIDENCE_URL_PREFIX, express.static(EVIDENCE_DIR));
 
   // Block CITIZEN accounts from internal/government read endpoints (defense in
   // depth; government writes are already fail-closed via requireRole).

@@ -48,8 +48,10 @@ interface RequestOptions {
 }
 
 async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
+  const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData;
   const headers: Record<string, string> = {};
-  if (options.body !== undefined) headers['Content-Type'] = 'application/json';
+  // FormData: let the browser set Content-Type (with multipart boundary) itself.
+  if (options.body !== undefined && !isFormData) headers['Content-Type'] = 'application/json';
   if (!options.anonymous && authToken) headers.Authorization = `Bearer ${authToken}`;
 
   let res: Response;
@@ -57,7 +59,7 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
     res = await fetch(`${API_BASE}${path}`, {
       method: options.method ?? 'GET',
       headers,
-      body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
+      body: options.body === undefined ? undefined : isFormData ? (options.body as FormData) : JSON.stringify(options.body),
       signal: options.signal,
     });
   } catch (err) {

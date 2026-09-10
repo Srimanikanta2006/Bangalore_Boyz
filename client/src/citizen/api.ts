@@ -196,3 +196,60 @@ export interface CitizenHazardDetail {
 export function fetchCitizenHazardDetail(id: string, signal?: AbortSignal): Promise<CitizenHazardDetail> {
   return api.get<CitizenHazardDetail>(`/citizen/hazards/${encodeURIComponent(id)}`, { signal });
 }
+
+export type CitizenReportCategory =
+  | 'FLASH_FLOOD'
+  | 'ROAD_BLOCKED'
+  | 'DOWNED_LINE'
+  | 'EXTREME_HEAT'
+  | 'WATER_MAIN'
+  | 'LANDSLIDE_MUD'
+  | 'STORM_DAMAGE'
+  | 'OTHER';
+
+export interface CitizenReportEvidence {
+  id: string;
+  mediaType: string;
+  url: string;
+  byteSize: number | null;
+  createdAt: string;
+}
+
+export interface CitizenReport {
+  id: string;
+  reportCode: string;
+  category: CitizenReportCategory;
+  description: string | null;
+  latitude: number;
+  longitude: number;
+  reportedSeverity: Severity | null;
+  status: 'SUBMITTED' | 'UNDER_REVIEW' | 'VERIFIED' | 'DISMISSED' | 'RESOLVED';
+  createdAt: string;
+  updatedAt: string;
+  evidence: CitizenReportEvidence[];
+  incident: { id: string; incidentCode: string; status: string } | null;
+}
+
+export interface SubmitCitizenReportInput {
+  category: CitizenReportCategory;
+  description?: string;
+  latitude: number;
+  longitude: number;
+  reportedSeverity?: Severity;
+  files?: File[];
+}
+
+export function submitCitizenReport(input: SubmitCitizenReportInput): Promise<CitizenReport> {
+  const form = new FormData();
+  form.set('category', input.category);
+  if (input.description) form.set('description', input.description);
+  form.set('latitude', String(input.latitude));
+  form.set('longitude', String(input.longitude));
+  if (input.reportedSeverity) form.set('reportedSeverity', input.reportedSeverity);
+  for (const file of input.files ?? []) form.append('evidence', file);
+  return api.post<CitizenReport>('/citizen/reports', form);
+}
+
+export function fetchMyCitizenReports(): Promise<CitizenReport[]> {
+  return api.get<CitizenReport[]>('/citizen/reports');
+}

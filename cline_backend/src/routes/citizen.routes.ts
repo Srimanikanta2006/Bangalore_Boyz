@@ -1,8 +1,10 @@
 import { Router } from 'express';
 import { authenticate, requireRole } from '../middleware/auth';
 import { validate } from '../middleware/validation';
+import { evidenceUpload } from '../middleware/upload';
 import { CITIZEN_ROLES } from '../types/auth';
 import { citizenNearbyQuerySchema } from '../validators/citizen.schema';
+import { createCitizenReportSchema } from '../validators/citizenReport.schema';
 import * as citizenController from '../controllers/citizen.controller';
 
 const router = Router();
@@ -41,5 +43,25 @@ router.get(
  * (unmodified) cascade engine for its zone. CITIZEN-only.
  */
 router.get('/citizen/hazards/:id', authenticate, requireRole(...CITIZEN_ROLES), citizenController.hazardDetail);
+
+/**
+ * POST /api/citizen/reports (multipart/form-data: category, description?,
+ * latitude, longitude, reportedSeverity?, up to 3 files field "evidence")
+ * Creates a CitizenReport + auto-linked Incident (NEW) for operator triage.
+ */
+router.post(
+  '/citizen/reports',
+  authenticate,
+  requireRole(...CITIZEN_ROLES),
+  evidenceUpload,
+  validate(createCitizenReportSchema, 'body'),
+  citizenController.submitReport,
+);
+
+/** GET /api/citizen/reports - own report history only. */
+router.get('/citizen/reports', authenticate, requireRole(...CITIZEN_ROLES), citizenController.myReports);
+
+/** GET /api/citizen/reports/:id - own report detail + evidence (404 on foreign id). */
+router.get('/citizen/reports/:id', authenticate, requireRole(...CITIZEN_ROLES), citizenController.myReportDetail);
 
 export default router;

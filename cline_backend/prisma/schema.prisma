@@ -8,7 +8,7 @@ generator client {
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL") // pooled (Supabase pgBouncer / local)
-  directUrl = env("DIRECT_URL")   // direct connection for migrations
+  directUrl = env("DIRECT_URL") // direct connection for migrations
 }
 
 // ============================ ENUMS ============================
@@ -20,6 +20,30 @@ enum Role {
   FIELD_OPERATOR
   ANALYST
   CITIZEN
+}
+
+enum CitizenReportCategory {
+  FLASH_FLOOD
+  ROAD_BLOCKED
+  DOWNED_LINE
+  EXTREME_HEAT
+  WATER_MAIN
+  LANDSLIDE_MUD
+  STORM_DAMAGE
+  OTHER
+}
+
+enum CitizenReportStatus {
+  SUBMITTED
+  UNDER_REVIEW
+  VERIFIED
+  DISMISSED
+  RESOLVED
+}
+
+enum EvidenceStorageType {
+  LOCAL_DISK
+  EXTERNAL_URL
 }
 
 enum DepartmentType {
@@ -213,17 +237,17 @@ enum CascadeImpactType {
 // ============================ MODELS ============================
 
 model User {
-  id           String    @id @default(cuid())
+  id           String      @id @default(cuid())
   name         String
-  email        String    @unique
+  email        String      @unique
   passwordHash String
-  role         Role      @default(GOVERNMENT_OPERATOR)
+  role         Role        @default(GOVERNMENT_OPERATOR)
   departmentId String?
   department   Department? @relation(fields: [departmentId], references: [id])
   phone        String?
-  isActive     Boolean   @default(true)
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  isActive     Boolean     @default(true)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
 
   createdIncidents   Incident[]          @relation("IncidentCreator")
   createdTasks       Task[]              @relation("TaskCreator")
@@ -231,6 +255,8 @@ model User {
   changedTaskHistory TaskStatusHistory[] @relation("HistoryChanger")
   auditLogs          AuditLog[]
   notifications      Notification[]
+  citizenReports     CitizenReport[]     @relation("CitizenReportReporter")
+  sosEvents          SosEvent[]          @relation("SosEventRequester")
 
   @@index([role])
   @@index([departmentId])
@@ -248,7 +274,7 @@ model Department {
 
   users User[]
   units ResponseUnit[]
-  tasks Task[] @relation("TaskDepartment")
+  tasks Task[]         @relation("TaskDepartment")
 
   @@index([type])
 }
@@ -276,6 +302,8 @@ model Zone {
   historicalEvents  HistoricalEvent[]
   simulationResults SimulationResult[]
   weatherSnapshots  WeatherSnapshot[]
+  citizenReports    CitizenReport[]
+  sosEvents         SosEvent[]
 
   @@index([riskLevel])
 }
@@ -301,15 +329,15 @@ model InfrastructureAsset {
   createdAt         DateTime          @default(now())
   updatedAt         DateTime          @updatedAt
 
-  incidents        Incident[]          @relation("IncidentPrimaryAsset")
+  incidents        Incident[]         @relation("IncidentPrimaryAsset")
   tasks            Task[]
   telemetry        TelemetryReading[]
   riskScores       RiskScore[]
   historicalEvents HistoricalEvent[]
-  edgesFrom        DependencyEdge[]    @relation("EdgeSource")
-  edgesTo          DependencyEdge[]    @relation("EdgeTarget")
-  cascadeRoots     CascadeEvent[]      @relation("CascadeRoot")
-  cascadeAffected  CascadeEvent[]      @relation("CascadeAffected")
+  edgesFrom        DependencyEdge[]   @relation("EdgeSource")
+  edgesTo          DependencyEdge[]   @relation("EdgeTarget")
+  cascadeRoots     CascadeEvent[]     @relation("CascadeRoot")
+  cascadeAffected  CascadeEvent[]     @relation("CascadeAffected")
 
   @@index([zoneId])
   @@index([type])
@@ -337,8 +365,8 @@ model Hazard {
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
 
-  incidents   Incident[]
-  riskScores  RiskScore[]
+  incidents  Incident[]
+  riskScores RiskScore[]
 
   @@index([zoneId])
   @@index([type])
@@ -347,31 +375,33 @@ model Hazard {
 }
 
 model Incident {
-  id              String        @id @default(cuid())
-  incidentCode    String        @unique
-  title           String
-  description     String?
-  type            IncidentType
-  severity        Severity
-  status          IncidentStatus @default(NEW)
-  zoneId          String
-  zone            Zone          @relation(fields: [zoneId], references: [id])
-  hazardId        String?
-  hazard          Hazard?       @relation(fields: [hazardId], references: [id])
-  primaryAssetId  String?
-  primaryAsset    InfrastructureAsset? @relation("IncidentPrimaryAsset", fields: [primaryAssetId], references: [id])
-  reportedAt      DateTime      @default(now())
-  acknowledgedAt  DateTime?
-  resolvedAt      DateTime?
-  slaDeadline     DateTime?
-  createdById     String?
-  dataQuality     String        @default("SYNTHETIC_DEMO") // operator-created => ESTIMATED
-  createdBy       User?         @relation("IncidentCreator", fields: [createdById], references: [id])
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  id             String               @id @default(cuid())
+  incidentCode   String               @unique
+  title          String
+  description    String?
+  type           IncidentType
+  severity       Severity
+  status         IncidentStatus       @default(NEW)
+  zoneId         String
+  zone           Zone                 @relation(fields: [zoneId], references: [id])
+  hazardId       String?
+  hazard         Hazard?              @relation(fields: [hazardId], references: [id])
+  primaryAssetId String?
+  primaryAsset   InfrastructureAsset? @relation("IncidentPrimaryAsset", fields: [primaryAssetId], references: [id])
+  reportedAt     DateTime             @default(now())
+  acknowledgedAt DateTime?
+  resolvedAt     DateTime?
+  slaDeadline    DateTime?
+  createdById    String?
+  dataQuality    String               @default("SYNTHETIC_DEMO") // operator-created => ESTIMATED
+  createdBy      User?                @relation("IncidentCreator", fields: [createdById], references: [id])
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
 
   tasks         Task[]
   cascadeEvents CascadeEvent[]
+  citizenReport CitizenReport? @relation("CitizenReportIncident")
+  sosEvent      SosEvent?      @relation("SosEventIncident")
 
   @@index([incidentCode])
   @@index([severity])
@@ -382,22 +412,104 @@ model Incident {
   @@index([primaryAssetId])
 }
 
+model CitizenReport {
+  id               String                @id @default(cuid())
+  reportCode       String                @unique
+  reporterId       String
+  reporter         User                  @relation("CitizenReportReporter", fields: [reporterId], references: [id])
+  category         CitizenReportCategory
+  description      String?
+  latitude         Float
+  longitude        Float
+  zoneId           String
+  zone             Zone                  @relation(fields: [zoneId], references: [id])
+  reportedSeverity Severity?
+  observations     Json?
+  status           CitizenReportStatus   @default(SUBMITTED)
+  incidentId       String?               @unique
+  incident         Incident?             @relation("CitizenReportIncident", fields: [incidentId], references: [id])
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
+
+  evidence ReportEvidence[]
+
+  @@index([reporterId, createdAt])
+  @@index([zoneId])
+  @@index([status])
+}
+
+model ReportEvidence {
+  id          String              @id @default(cuid())
+  reportId    String
+  report      CitizenReport       @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  mediaType   String
+  storageType EvidenceStorageType
+  storageRef  String
+  byteSize    Int?
+  capturedAt  DateTime?
+  latitude    Float?
+  longitude   Float?
+  description String?
+  createdAt   DateTime            @default(now())
+
+  @@index([reportId])
+}
+
+enum SosThreat {
+  MEDICAL
+  FIRE_RESCUE
+  FLOOD_BOAT
+  HAZARD_GAS
+}
+
+enum SosStatus {
+  OPEN
+  ACKNOWLEDGED
+  DISPATCHED
+  RESOLVED
+  CANCELLED
+}
+
+model SosEvent {
+  id                  String    @id @default(cuid())
+  sosCode             String    @unique
+  requesterId         String
+  requester           User      @relation("SosEventRequester", fields: [requesterId], references: [id])
+  latitude            Float
+  longitude           Float
+  zoneId              String
+  zone                Zone      @relation(fields: [zoneId], references: [id])
+  primaryThreat       SosThreat
+  secondaryConditions Json?
+  peopleAffected      Int?
+  note                String?
+  status              SosStatus @default(OPEN)
+  incidentId          String?   @unique
+  incident            Incident? @relation("SosEventIncident", fields: [incidentId], references: [id])
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  @@index([requesterId, createdAt])
+  @@index([zoneId])
+  @@index([status])
+}
+
 model ResponseUnit {
-  id           String     @id @default(cuid())
-  name         String
-  callsign     String     @unique
-  type         UnitType
-  departmentId String
-  department   Department @relation(fields: [departmentId], references: [id])
-  status       UnitStatus @default(AVAILABLE)
-  latitude     Float?
-  longitude    Float?
-  teamSize     Int        @default(4)
-  capacity     Int?
+  id             String     @id @default(cuid())
+  name           String
+  callsign       String     @unique
+  type           UnitType
+  departmentId   String
+  department     Department @relation(fields: [departmentId], references: [id])
+  status         UnitStatus @default(AVAILABLE)
+  latitude       Float?
+  longitude      Float?
+  teamSize       Int        @default(4)
+  capacity       Int?
   specialization String?
-  etaMinutes   Int?
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  etaMinutes     Int?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
 
   tasks Task[]
 
@@ -407,29 +519,29 @@ model ResponseUnit {
 }
 
 model Task {
-  id                   String     @id @default(cuid())
-  taskCode             String     @unique
+  id                   String               @id @default(cuid())
+  taskCode             String               @unique
   title                String
   description          String?
   incidentId           String?
-  incident             Incident?  @relation(fields: [incidentId], references: [id])
+  incident             Incident?            @relation(fields: [incidentId], references: [id])
   assetId              String?
   asset                InfrastructureAsset? @relation(fields: [assetId], references: [id])
   assignedUnitId       String?
-  assignedUnit         ResponseUnit? @relation(fields: [assignedUnitId], references: [id])
+  assignedUnit         ResponseUnit?        @relation(fields: [assignedUnitId], references: [id])
   assignedDepartmentId String?
-  assignedDepartment   Department? @relation("TaskDepartment", fields: [assignedDepartmentId], references: [id])
+  assignedDepartment   Department?          @relation("TaskDepartment", fields: [assignedDepartmentId], references: [id])
   createdById          String?
-  createdBy            User?      @relation("TaskCreator", fields: [createdById], references: [id])
-  status               TaskStatus @default(ASSIGNED)
-  priority             Priority   @default(MEDIUM)
+  createdBy            User?                @relation("TaskCreator", fields: [createdById], references: [id])
+  status               TaskStatus           @default(ASSIGNED)
+  priority             Priority             @default(MEDIUM)
   slaDeadline          DateTime?
-  createdAt            DateTime   @default(now())
+  createdAt            DateTime             @default(now())
   acknowledgedAt       DateTime?
   startedAt            DateTime?
   completedAt          DateTime?
   verifiedAt           DateTime?
-  updatedAt            DateTime   @updatedAt
+  updatedAt            DateTime             @updatedAt
 
   history TaskStatusHistory[]
 
@@ -441,30 +553,30 @@ model Task {
 }
 
 model TaskStatusHistory {
-  id           String     @id @default(cuid())
-  taskId       String
-  task         Task       @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  fromStatus   TaskStatus?
-  toStatus     TaskStatus
-  changedById  String?
-  changedBy    User?      @relation("HistoryChanger", fields: [changedById], references: [id])
-  note         String?
-  createdAt    DateTime   @default(now())
+  id          String      @id @default(cuid())
+  taskId      String
+  task        Task        @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  fromStatus  TaskStatus?
+  toStatus    TaskStatus
+  changedById String?
+  changedBy   User?       @relation("HistoryChanger", fields: [changedById], references: [id])
+  note        String?
+  createdAt   DateTime    @default(now())
 
   @@index([taskId])
   @@index([changedById])
 }
 
 model DependencyEdge {
-  id             String         @id @default(cuid())
+  id             String              @id @default(cuid())
   sourceAssetId  String
   sourceAsset    InfrastructureAsset @relation("EdgeSource", fields: [sourceAssetId], references: [id])
   targetAssetId  String
   targetAsset    InfrastructureAsset @relation("EdgeTarget", fields: [targetAssetId], references: [id])
-  dependencyType DependencyType @default(SUPPORTS)
-  strength       Float          @default(0.5)
+  dependencyType DependencyType      @default(SUPPORTS)
+  strength       Float               @default(0.5)
   description    String?
-  createdAt      DateTime       @default(now())
+  createdAt      DateTime            @default(now())
 
   @@unique([sourceAssetId, targetAssetId, dependencyType])
   @@index([sourceAssetId])
@@ -472,18 +584,18 @@ model DependencyEdge {
 }
 
 model RiskScore {
-  id                    String   @id @default(cuid())
-  assetId               String
-  asset                 InfrastructureAsset @relation(fields: [assetId], references: [id])
-  hazardId              String?
-  hazard                Hazard?  @relation(fields: [hazardId], references: [id])
-  score                 Int
-  confidence            Float    @default(0.5)
+  id                     String              @id @default(cuid())
+  assetId                String
+  asset                  InfrastructureAsset @relation(fields: [assetId], references: [id])
+  hazardId               String?
+  hazard                 Hazard?             @relation(fields: [hazardId], references: [id])
+  score                  Int
+  confidence             Float               @default(0.5)
   vulnerabilityComponent Float
-  hazardComponent       Float
-  historicalComponent   Float
-  explanation           String?
-  calculatedAt          DateTime @default(now())
+  hazardComponent        Float
+  historicalComponent    Float
+  explanation            String?
+  calculatedAt           DateTime            @default(now())
 
   @@index([assetId])
   @@index([hazardId])
@@ -491,18 +603,18 @@ model RiskScore {
 }
 
 model CascadeEvent {
-  id               String         @id @default(cuid())
-  incidentId       String?
-  incident         Incident?      @relation(fields: [incidentId], references: [id])
-  rootAssetId      String
-  rootAsset        InfrastructureAsset @relation("CascadeRoot", fields: [rootAssetId], references: [id])
-  affectedAssetId  String
-  affectedAsset    InfrastructureAsset @relation("CascadeAffected", fields: [affectedAssetId], references: [id])
-  depth            Int
-  impactType       CascadeImpactType @default(DEGRADED)
-  impactScore      Float
-  explanation      String?
-  createdAt        DateTime       @default(now())
+  id              String              @id @default(cuid())
+  incidentId      String?
+  incident        Incident?           @relation(fields: [incidentId], references: [id])
+  rootAssetId     String
+  rootAsset       InfrastructureAsset @relation("CascadeRoot", fields: [rootAssetId], references: [id])
+  affectedAssetId String
+  affectedAsset   InfrastructureAsset @relation("CascadeAffected", fields: [affectedAssetId], references: [id])
+  depth           Int
+  impactType      CascadeImpactType   @default(DEGRADED)
+  impactScore     Float
+  explanation     String?
+  createdAt       DateTime            @default(now())
 
   @@index([incidentId])
   @@index([rootAssetId])
@@ -510,32 +622,32 @@ model CascadeEvent {
 }
 
 model TelemetryReading {
-  id        String   @id @default(cuid())
+  id        String              @id @default(cuid())
   assetId   String
   asset     InfrastructureAsset @relation(fields: [assetId], references: [id])
   metric    String
   value     Float
   unit      String
   source    String?
-  timestamp DateTime @default(now())
+  timestamp DateTime            @default(now())
 
   @@index([assetId, timestamp])
   @@index([metric, timestamp])
 }
 
 model HistoricalEvent {
-  id          String             @id @default(cuid())
+  id          String               @id @default(cuid())
   assetId     String?
   asset       InfrastructureAsset? @relation(fields: [assetId], references: [id])
   zoneId      String
-  zone        Zone               @relation(fields: [zoneId], references: [id])
+  zone        Zone                 @relation(fields: [zoneId], references: [id])
   hazardType  HazardType
   severity    Severity
   occurredAt  DateTime
   resolvedAt  DateTime?
   outcome     String?
-  source      String             @default("SYNTHETIC_DEMO")
-  dataQuality String             @default("SYNTHETIC_DEMO")
+  source      String               @default("SYNTHETIC_DEMO")
+  dataQuality String               @default("SYNTHETIC_DEMO")
 
   @@index([zoneId])
   @@index([hazardType])
@@ -544,16 +656,16 @@ model HistoricalEvent {
 }
 
 model Hotspot {
-  id              String    @id @default(cuid())
+  id              String     @id @default(cuid())
   zoneId          String
-  zone            Zone      @relation(fields: [zoneId], references: [id])
+  zone            Zone       @relation(fields: [zoneId], references: [id])
   name            String
   latitude        Float
   longitude       Float
   hazardType      HazardType
-  eventCount      Int       @default(0)
-  severityScore   Float     @default(0)
-  recurrenceScore Float     @default(0)
+  eventCount      Int        @default(0)
+  severityScore   Float      @default(0)
+  recurrenceScore Float      @default(0)
   lastOccurredAt  DateTime?
   description     String?
 
@@ -562,15 +674,15 @@ model Hotspot {
 }
 
 model Simulation {
-  id          String           @id @default(cuid())
-  name        String
+  id           String           @id @default(cuid())
+  name         String
   scenarioType ScenarioType
-  parameters  Json
-  status      SimulationStatus @default(PENDING)
-  createdById String?
-  createdBy   User?            @relation("SimulationCreator", fields: [createdById], references: [id])
-  createdAt   DateTime         @default(now())
-  completedAt DateTime?
+  parameters   Json
+  status       SimulationStatus @default(PENDING)
+  createdById  String?
+  createdBy    User?            @relation("SimulationCreator", fields: [createdById], references: [id])
+  createdAt    DateTime         @default(now())
+  completedAt  DateTime?
 
   results SimulationResult[]
 
@@ -579,18 +691,18 @@ model Simulation {
 }
 
 model SimulationResult {
-  id                 String    @id @default(cuid())
-  simulationId       String
-  simulation         Simulation @relation(fields: [simulationId], references: [id], onDelete: Cascade)
-  zoneId             String?
-  zone               Zone?      @relation(fields: [zoneId], references: [id])
-  riskScore          Int
-  affectedAssets     Int
-  affectedRoads      Int
+  id                  String     @id @default(cuid())
+  simulationId        String
+  simulation          Simulation @relation(fields: [simulationId], references: [id], onDelete: Cascade)
+  zoneId              String?
+  zone                Zone?      @relation(fields: [zoneId], references: [id])
+  riskScore           Int
+  affectedAssets      Int
+  affectedRoads       Int
   estimatedPopulation Int
-  estimatedDamage    Json?
-  recommendedActions Json?
-  createdAt          DateTime  @default(now())
+  estimatedDamage     Json?
+  recommendedActions  Json?
+  createdAt           DateTime   @default(now())
 
   @@index([simulationId])
   @@index([zoneId])
@@ -628,22 +740,22 @@ model Notification {
 
 // Live weather observations polled/fetched per location (provider-backed history)
 model WeatherSnapshot {
-  id               String    @id @default(cuid())
-  zoneId           String?
-  zone             Zone?     @relation(fields: [zoneId], references: [id])
-  latitude         Float
-  longitude        Float
-  provider         String
-  dataQuality      String    @default("LIVE_OBSERVED")
-  temperatureC     Float?
-  precipitationMm  Float?
+  id                String    @id @default(cuid())
+  zoneId            String?
+  zone              Zone?     @relation(fields: [zoneId], references: [id])
+  latitude          Float
+  longitude         Float
+  provider          String
+  dataQuality       String    @default("LIVE_OBSERVED")
+  temperatureC      Float?
+  precipitationMm   Float?
   rainfallMmPerHour Float?
-  windSpeedKmh     Float?
-  windDirectionDeg Float?
-  weatherCode      Int?
-  weatherCondition String?
-  observedAt       DateTime?
-  createdAt        DateTime  @default(now())
+  windSpeedKmh      Float?
+  windDirectionDeg  Float?
+  weatherCode       Int?
+  weatherCondition  String?
+  observedAt        DateTime?
+  createdAt         DateTime  @default(now())
 
   @@index([zoneId, createdAt])
   @@index([createdAt])
