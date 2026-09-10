@@ -269,6 +269,7 @@ model Zone {
   hotspots          Hotspot[]
   historicalEvents  HistoricalEvent[]
   simulationResults SimulationResult[]
+  weatherSnapshots  WeatherSnapshot[]
 
   @@index([riskLevel])
 }
@@ -319,6 +320,7 @@ model Hazard {
   windSpeed       Float?
   durationMinutes Int?
   source          HazardSource @default(OPERATOR)
+  dataQuality     String       @default("SYNTHETIC_DEMO") // LIVE_OBSERVED | FORECAST | MODELED | ESTIMATED | SYNTHETIC_DEMO
   startedAt       DateTime     @default(now())
   endedAt         DateTime?
   status          HazardStatus @default(ACTIVE)
@@ -610,4 +612,27 @@ model Notification {
   createdAt DateTime @default(now())
 
   @@index([userId, read])
+}
+
+// Live weather observations polled/fetched per location (provider-backed history)
+model WeatherSnapshot {
+  id               String    @id @default(cuid())
+  zoneId           String?
+  zone             Zone?     @relation(fields: [zoneId], references: [id])
+  latitude         Float
+  longitude        Float
+  provider         String
+  dataQuality      String    @default("LIVE_OBSERVED")
+  temperatureC     Float?
+  precipitationMm  Float?
+  rainfallMmPerHour Float?
+  windSpeedKmh     Float?
+  windDirectionDeg Float?
+  weatherCode      Int?
+  weatherCondition String?
+  observedAt       DateTime?
+  createdAt        DateTime  @default(now())
+
+  @@index([zoneId, createdAt])
+  @@index([createdAt])
 }

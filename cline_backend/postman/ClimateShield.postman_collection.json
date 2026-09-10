@@ -626,6 +626,27 @@
           }
         }
       ]
+    },
+    {
+      "name": "16 Live Weather",
+      "item": [
+        {
+          "name": "Current weather at lat/lng (LIVE Open-Meteo)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/weather/current?latitude=16.5062&longitude=80.648&forecastHours=3",
+            "description": "Authenticated. Live Open-Meteo data (no API key, no seed required). Returns provider, dataQuality LIVE_OBSERVED, observedAt, freshnessSeconds, temperature/precipitation/rainfall/wind/WMO condition, optional FORECAST hours, MODELED severity derivation, zone match (synthetic boundaries) and waterDepthM: null (no live flood source). Cached WEATHER_CACHE_SECONDS."
+          }
+        },
+        {
+          "name": "Weather snapshot history (background poller)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/weather/history?limit=20",
+            "description": "Authenticated. WeatherSnapshot rows persisted by the background zone poller (WEATHER_POLL_INTERVAL_MINUTES). Filter by zoneId."
+          }
+        }
+      ]
     }
   ]
 }

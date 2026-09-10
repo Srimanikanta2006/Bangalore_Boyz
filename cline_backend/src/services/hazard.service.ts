@@ -53,6 +53,7 @@ export async function listHazards(query: HazardQuery) {
     type: h.type,
     severity: h.severity,
     status: h.status,
+    dataQuality: h.dataQuality,
     zone: h.zone,
     rainfallRate: h.rainfallRate,
     waterDepth: h.waterDepth,
@@ -96,6 +97,7 @@ export async function createHazard(input: CreateHazardInput, user: AuthUser) {
       windSpeed: input.windSpeed,
       durationMinutes: input.durationMinutes,
       source: (input.source ?? 'OPERATOR') as never,
+      dataQuality: 'ESTIMATED', // operator-submitted reports are unverified estimates, not observations
       startedAt: input.startedAt ?? new Date(),
       status: 'ACTIVE',
     },

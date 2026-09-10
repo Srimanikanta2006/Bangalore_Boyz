@@ -15,6 +15,11 @@ const envSchema = z.object({
   JWT_EXPIRES_IN: z.string().default('12h'),
   CORS_ORIGIN: z.string().default('*'),
   DEMO_USER_PASSWORD: z.string().min(8).default('DemoGov@2024'),
+  // --- live weather (Open-Meteo needs no API key; variable reserved for future providers) ---
+  WEATHER_PROVIDER: z.enum(['OPEN_METEO']).default('OPEN_METEO'),
+  WEATHER_API_KEY: z.string().default(''),
+  WEATHER_CACHE_SECONDS: z.coerce.number().int().min(0).max(86400).default(300),
+  WEATHER_POLL_INTERVAL_MINUTES: z.coerce.number().int().min(0).max(1440).default(10),
 });
 
 const parsed = envSchema.safeParse(process.env);

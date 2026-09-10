@@ -560,6 +560,49 @@ Query: `page` `limit` `action` `entityType` `entityId` `userId`. Returns the imm
 
 ---
 
+## Live Weather (location-aware)
+
+### GET /api/weather/current?latitude=&longitude=&forecastHours= — authenticated
+
+Calls the Open-Meteo live provider (no API key). **No seed/DB dependency** — the provider is authoritative for current observations. Served from a short-lived in-memory cache (`WEATHER_CACHE_SECONDS`, key = coords rounded to ~110 m). Validate `latitude` ∈ [-90, 90], `longitude` ∈ [-180, 180], `forecastHours` ∈ [0, 24].
+
+```json
+{
+  "success": true,
+  "data": {
+    "location": { "latitude": 16.5062, "longitude": 80.648 },
+    "provider": "Open-Meteo",
+    "dataQuality": "LIVE_OBSERVED",
+    "observedAt": "2026-09-10T16:15:00.000Z",
+    "fetchedAt": "2026-09-10T16:19:36.000Z",
+    "freshnessSeconds": 278,
+    "temperatureC": 28.8, "apparentTemperatureC": 34.0, "humidityPercent": 76,
+    "precipitationMm": 0, "rainfallMmPerHour": 0,
+    "windSpeedKmh": 6, "windDirectionDeg": 342, "windDirectionCardinal": "NNW",
+    "weatherCode": 3, "weatherCondition": "Overcast", "isDay": true,
+    "forecast": [ { "time": "...", "dataQuality": "FORECAST", "temperatureC": 28.1, "precipitationMm": 0.2, "rainfallMmPerHour": 0.2 } ],
+    "derivedAssessment": {
+      "dataQuality": "MODELED",
+      "floodSeverity": null, "heatSeverity": null, "windSeverity": null, "overallSeverity": null,
+      "explanation": "No hazard driver exceeds documented thresholds; modeled severity is null."
+    },
+    "zone": { "id": "zone_...", "name": "...", "code": "...", "boundaryDataQuality": "SYNTHETIC_DEMO" },
+    "waterDepthM": null,
+    "notes": ["Live flood-depth source unavailable: waterDepth is null (no accessible gauge/hydrology provider integrated). Rainfall is live independently."]
+  }
+}
+```
+
+Rules: missing provider fields are `null` (never invented); `weatherCondition` uses the provider's documented WMO-code table (unknown codes → `null`); `derivedAssessment` uses deterministic thresholds (rain mm/hr ≥70/50/30, temp °C ≥45/40/35, wind km/h ≥90/70/60) and is explicitly `MODELED`, never an observation; zone resolution only uses stored (synthetic) boundary polygons and returns `null` when unmatched.
+
+Errors: `400 VALIDATION_ERROR` · `401` · `502 WEATHER_PROVIDER_ERROR / WEATHER_PROVIDER_UNAVAILABLE`.
+
+### GET /api/weather/history?zoneId=&page=&limit= — authenticated
+
+Persisted `WeatherSnapshot` rows written by the background zone poller (`WEATHER_POLL_INTERVAL_MINUTES`; disabled in test env, `0` disables). Items include provider, `dataQuality: LIVE_OBSERVED`, measurements, `observedAt`, zone info.
+
+---
+
 ## Reference — enums & policies
 
 **Roles**: `ADMIN` `GOVERNMENT_OPERATOR` `DISPATCHER` `FIELD_OPERATOR` `ANALYST`

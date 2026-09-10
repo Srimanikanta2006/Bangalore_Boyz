@@ -101,6 +101,10 @@ npm run build && npm start
 | `NODE_ENV` | no | `development` / `test` / `production` |
 | `CORS_ORIGIN` | no | Comma-separated frontend origins, or `*` for dev |
 | `DEMO_USER_PASSWORD` | no | Password assigned to all seeded demo accounts (default `DemoGov@2024`) |
+| `WEATHER_PROVIDER` | no | Live weather provider (default `OPEN_METEO` — no API key required) |
+| `WEATHER_API_KEY` | no | Reserved for future key-based providers (unused by Open-Meteo) |
+| `WEATHER_CACHE_SECONDS` | no | In-memory cache TTL for live weather (default `300`; `0` disables) |
+| `WEATHER_POLL_INTERVAL_MINUTES` | no | Background zone polling for snapshot history (default `10`; `0` disables) |
 
 **No external API keys are needed.** The MVP is fully self-contained; the `WEATHER_API` hazard source enum is reserved for a future live-weather integration (seeded hazards are synthetic). The only credentials you must supply are your own Supabase database URLs + a generated `JWT_SECRET`.
 
@@ -163,6 +167,25 @@ npm test                         # 68 unit + integration tests
 6. Field operator: `PATCH /api/tasks/:id/status` `ACKNOWLEDGED → IN_PROGRESS → COMPLETED` (invalid skips → `422 INVALID_STATUS_TRANSITION`; completing releases the unit).
 7. Government: `POST /api/tasks/:id/verify` → verified + audited.
 8. `GET /api/tasks/:id/history` + `GET /api/audit` show the complete operational chain.
+
+## Live weather (location-aware, real provider)
+
+`GET /api/weather/current?latitude=<lat>&longitude=<lng>&forecastHours=<0-24>` — authenticated. Calls **Open-Meteo live** (no API key, no seed/DB dependency for current data), normalizes the provider payload, applies a short in-memory cache (`WEATHER_CACHE_SECONDS`) and returns honest metadata. The frontend never talks to the provider directly.
+
+Data provenance (every payload labels its own quality):
+
+| Provider | Data | Status |
+|---|---|---|
+| Open-Meteo (current) | temperature, precipitation/rainfall, wind speed/direction, WMO condition, humidity | `LIVE_OBSERVED` |
+| Open-Meteo (hourly) | requested forecast hours | `FORECAST` |
+| Threshold classification | hazard severity derived from live observations (documented thresholds) | `MODELED` |
+| Risk engine | calculated risk | `MODELED` |
+| Cascade engine | dependency impact | `MODELED` |
+| Flood/hydrology provider | water level / flood depth | **NOT INTEGRATED** — `waterDepth` is always `null` ("Live flood-depth source unavailable") |
+| OSM/Overpass | geographic infrastructure | not integrated (seeded assets remain `SYNTHETIC_DEMO`) |
+| Seeded hazards/incidents/history | demo operational data | `SYNTHETIC_DEMO` (hazard `dataQuality` column; never auto-seeded in production) |
+
+Notes: coordinates resolve to a seeded zone only via its (explicitly synthetic) boundary polygon — otherwise `zone: null`; nothing is invented. Background polling (`WEATHER_POLL_INTERVAL_MINUTES`) persists `WeatherSnapshot` history rows for dashboard readiness — visible via `GET /api/weather/history`.
 
 ## Deterministic engines (no AI)
 
