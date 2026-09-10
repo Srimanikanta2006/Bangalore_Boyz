@@ -25,13 +25,35 @@ test("uses the deterministic fallback when no API key is configured", async () =
 test("accepts valid Gemini JSON without contacting the network", async () => {
   const modelResponse = {
     incidentId: "INC-001",
-    explanation: "Heavy rainfall threatens Drain D07 and hospital access.",
-    impactSummary: "Hospital A access may be disrupted.",
+    situationSummary: "Compound risk: heavy rainfall threatens Drain D07 and hospital access.",
+    causalChains: [
+      { path: ["Drain D07", "Hospital A"], impact: "Access disruption", etaMinutes: 25 },
+    ],
+    keyImpacts: [
+      { assetId: "Hospital-A", assetName: "Hospital A", description: "Access disruption", severity: "critical" },
+    ],
     recommendedActions: [
       { actionId: "dispatch_drainage_team", priority: "critical", reason: "Drain D07 is high risk." },
       { actionId: "notify_facility", priority: "high", reason: "Hospital access is at risk." },
     ],
+    actionDependencies: [
+      { actionId: "dispatch_drainage_team", rule: "Dispatch drainage team immediately." },
+    ],
+    uncertainties: [
+      { statement: "Inundation rate is modeled.", requiredCheck: "Verify with field gauge within 15 min." },
+    ],
+    dataFreshness: [
+      { source: "Rain Gauge", status: "fresh" },
+    ],
+    roleSpecificBriefings: {
+      operator: "Prioritize Drain D07 clearance.",
+      hospitalManager: "Hospital access may be impacted in 25 minutes.",
+      fieldTeam: "Clear Drain D07 to protect hospital access.",
+      public: "Avoid local low-lying roads.",
+    },
     confidence: 0.88,
+    explanation: "Heavy rainfall threatens Drain D07 and hospital access.",
+    impactSummary: "Hospital A access may be disrupted.",
   };
   const fetchFn: typeof fetch = async () =>
     new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: JSON.stringify(modelResponse) }] } }] }), {
@@ -55,12 +77,17 @@ test("falls back when Gemini proposes an unapproved action", async () => {
                 {
                   text: JSON.stringify({
                     incidentId: "INC-001",
-                    explanation: "Unsafe output.",
-                    impactSummary: "Unsafe output.",
+                    situationSummary: "Unsafe output.",
                     recommendedActions: [
                       { actionId: "shut_down_city", priority: "critical", reason: "Not in catalog." },
                     ],
                     confidence: 0.8,
+                    roleSpecificBriefings: {
+                      operator: "op",
+                      hospitalManager: "hm",
+                      fieldTeam: "ft",
+                      public: "pub",
+                    },
                   }),
                 },
               ],
@@ -75,4 +102,3 @@ test("falls back when Gemini proposes an unapproved action", async () => {
   assert.equal(result.usedFallback, true);
   assert.equal(result.fallbackReason, "invalid_model_response");
 });
-

@@ -1,12 +1,18 @@
 import { isAllowedActionPriority, isValidAction } from "./actionCatalog.ts";
 import type {
+  ActionDependency,
   AffectedAsset,
   AssetType,
+  CausalChain,
+  DataFreshnessItem,
   ExplainRequest,
   ExplainResponse,
   HazardType,
+  KeyImpact,
   RecommendedAction,
   RiskLevel,
+  RoleSpecificBriefings,
+  UncertaintyItem,
 } from "./schemas.ts";
 
 export type ValidationResult<T> =
@@ -20,6 +26,9 @@ const HAZARD_TYPES: HazardType[] = [
   "poor_air_quality",
   "cold",
   "snowfall",
+  "cyclone",
+  "high_tide",
+  "storm_surge",
 ];
 
 const RISK_LEVELS: RiskLevel[] = ["low", "medium", "high", "critical"];
@@ -30,6 +39,7 @@ const ASSET_TYPES: AssetType[] = [
   "hospital",
   "school",
   "utility",
+  "substation",
   "building",
   "industrial_site",
 ];
@@ -80,6 +90,148 @@ function validateAffectedAssets(value: unknown, errors: string[]): AffectedAsset
   return assets;
 }
 
+function validateCausalChainsList(value: unknown, errors: string[]): CausalChain[] {
+  if (!Array.isArray(value)) {
+    errors.push("causalChains must be an array.");
+    return [];
+  }
+  const chains: CausalChain[] = [];
+  value.forEach((item, index) => {
+    if (!isRecord(item)) {
+      errors.push(`causalChains[${index}] must be an object.`);
+      return;
+    }
+    if (!Array.isArray(item.path) || item.path.length === 0 || !item.path.every(isNonEmptyString)) {
+      errors.push(`causalChains[${index}].path must be a non-empty array of strings.`);
+    }
+    if (!isNonEmptyString(item.impact)) {
+      errors.push(`causalChains[${index}].impact must be a non-empty string.`);
+    }
+    if (item.etaMinutes !== undefined && (typeof item.etaMinutes !== "number" || item.etaMinutes < 0)) {
+      errors.push(`causalChains[${index}].etaMinutes must be a non-negative number.`);
+    }
+    if (
+      Array.isArray(item.path) &&
+      item.path.length > 0 &&
+      item.path.every(isNonEmptyString) &&
+      isNonEmptyString(item.impact)
+    ) {
+      const chain: CausalChain = {
+        path: item.path as string[],
+        impact: item.impact,
+      };
+      if (typeof item.etaMinutes === "number") chain.etaMinutes = item.etaMinutes;
+      chains.push(chain);
+    }
+  });
+  return chains;
+}
+
+function validateKeyImpactsList(value: unknown, errors: string[]): KeyImpact[] {
+  if (!Array.isArray(value)) {
+    errors.push("keyImpacts must be an array.");
+    return [];
+  }
+  const impacts: KeyImpact[] = [];
+  value.forEach((item, index) => {
+    if (!isRecord(item)) {
+      errors.push(`keyImpacts[${index}] must be an object.`);
+      return;
+    }
+    if (!isNonEmptyString(item.assetName)) errors.push(`keyImpacts[${index}].assetName must be a non-empty string.`);
+    if (!isNonEmptyString(item.description)) errors.push(`keyImpacts[${index}].description must be a non-empty string.`);
+    if (!isRiskLevel(item.severity)) errors.push(`keyImpacts[${index}].severity is not supported.`);
+    if (item.timeHorizonMinutes !== undefined && (typeof item.timeHorizonMinutes !== "number" || item.timeHorizonMinutes < 0)) {
+      errors.push(`keyImpacts[${index}].timeHorizonMinutes must be a non-negative number.`);
+    }
+
+    if (isNonEmptyString(item.assetName) && isNonEmptyString(item.description) && isRiskLevel(item.severity)) {
+      const impact: KeyImpact = {
+        assetName: item.assetName,
+        description: item.description,
+        severity: item.severity,
+      };
+      if (typeof item.assetId === "string") impact.assetId = item.assetId;
+      if (typeof item.timeHorizonMinutes === "number") impact.timeHorizonMinutes = item.timeHorizonMinutes;
+      impacts.push(impact);
+    }
+  });
+  return impacts;
+}
+
+function validateActionDependenciesList(value: unknown, errors: string[]): ActionDependency[] {
+  if (!Array.isArray(value)) {
+    errors.push("actionDependencies must be an array.");
+    return [];
+  }
+  const deps: ActionDependency[] = [];
+  value.forEach((item, index) => {
+    if (!isRecord(item)) {
+      errors.push(`actionDependencies[${index}] must be an object.`);
+      return;
+    }
+    if (!isNonEmptyString(item.actionId)) errors.push(`actionDependencies[${index}].actionId must be a non-empty string.`);
+    if (!isNonEmptyString(item.rule)) errors.push(`actionDependencies[${index}].rule must be a non-empty string.`);
+
+    if (isNonEmptyString(item.actionId) && isNonEmptyString(item.rule)) {
+      const dep: ActionDependency = {
+        actionId: item.actionId,
+        rule: item.rule,
+      };
+      if (typeof item.dependsOnActionId === "string") dep.dependsOnActionId = item.dependsOnActionId;
+      deps.push(dep);
+    }
+  });
+  return deps;
+}
+
+function validateUncertaintiesList(value: unknown, errors: string[]): UncertaintyItem[] {
+  if (!Array.isArray(value)) {
+    errors.push("uncertainties must be an array.");
+    return [];
+  }
+  const items: UncertaintyItem[] = [];
+  value.forEach((item, index) => {
+    if (!isRecord(item)) {
+      errors.push(`uncertainties[${index}] must be an object.`);
+      return;
+    }
+    if (!isNonEmptyString(item.statement)) errors.push(`uncertainties[${index}].statement must be a non-empty string.`);
+    if (!isNonEmptyString(item.requiredCheck)) errors.push(`uncertainties[${index}].requiredCheck must be a non-empty string.`);
+
+    if (isNonEmptyString(item.statement) && isNonEmptyString(item.requiredCheck)) {
+      items.push({ statement: item.statement, requiredCheck: item.requiredCheck });
+    }
+  });
+  return items;
+}
+
+function validateRoleSpecificBriefingsObj(value: unknown, errors: string[]): RoleSpecificBriefings | undefined {
+  if (!isRecord(value)) {
+    errors.push("roleSpecificBriefings must be an object.");
+    return undefined;
+  }
+  if (!isNonEmptyString(value.operator)) errors.push("roleSpecificBriefings.operator must be a non-empty string.");
+  if (!isNonEmptyString(value.hospitalManager)) errors.push("roleSpecificBriefings.hospitalManager must be a non-empty string.");
+  if (!isNonEmptyString(value.fieldTeam)) errors.push("roleSpecificBriefings.fieldTeam must be a non-empty string.");
+  if (!isNonEmptyString(value.public)) errors.push("roleSpecificBriefings.public must be a non-empty string.");
+
+  if (
+    isNonEmptyString(value.operator) &&
+    isNonEmptyString(value.hospitalManager) &&
+    isNonEmptyString(value.fieldTeam) &&
+    isNonEmptyString(value.public)
+  ) {
+    return {
+      operator: value.operator,
+      hospitalManager: value.hospitalManager,
+      fieldTeam: value.fieldTeam,
+      public: value.public,
+    };
+  }
+  return undefined;
+}
+
 /** Validates untrusted incident input before it reaches P4 explanation logic. */
 export function validateExplainRequest(input: unknown): ValidationResult<ExplainRequest> {
   const errors: string[] = [];
@@ -110,33 +262,62 @@ export function validateExplainRequest(input: unknown): ValidationResult<Explain
 
   const affectedAssets = validateAffectedAssets(input.affectedAssets, errors);
 
-  const cascade = isRecord(input.cascade) ? input.cascade : undefined;
-  if (!cascade || !Array.isArray(cascade.path) || cascade.path.length === 0 || !cascade.path.every(isNonEmptyString)) {
-    errors.push("cascade.path must be a non-empty array of asset IDs.");
+  // Validate cascade or causalChains (must provide at least one)
+  const hasCascade = isRecord(input.cascade) && Array.isArray(input.cascade.path);
+  const hasChains = Array.isArray(input.causalChains) && input.causalChains.length > 0;
+
+  if (!hasCascade && !hasChains) {
+    errors.push("Either cascade or causalChains must be provided with valid paths.");
   }
-  if (cascade?.etaMinutes !== undefined && (typeof cascade.etaMinutes !== "number" || cascade.etaMinutes < 0)) {
-    errors.push("cascade.etaMinutes must be a non-negative number when provided.");
+
+  let cascadeObj = undefined;
+  if (isRecord(input.cascade)) {
+    if (!Array.isArray(input.cascade.path) || input.cascade.path.length === 0 || !input.cascade.path.every(isNonEmptyString)) {
+      errors.push("cascade.path must be a non-empty array of asset IDs.");
+    }
+    if (input.cascade.etaMinutes !== undefined && (typeof input.cascade.etaMinutes !== "number" || input.cascade.etaMinutes < 0)) {
+      errors.push("cascade.etaMinutes must be a non-negative number when provided.");
+    }
+    if (Array.isArray(input.cascade.path) && input.cascade.path.every(isNonEmptyString)) {
+      cascadeObj = {
+        path: input.cascade.path as string[],
+        etaMinutes: typeof input.cascade.etaMinutes === "number" ? input.cascade.etaMinutes : undefined,
+        impact: typeof input.cascade.impact === "string" ? input.cascade.impact : undefined,
+      };
+    }
+  }
+
+  let causalChainsList = undefined;
+  if (input.causalChains !== undefined) {
+    causalChainsList = validateCausalChainsList(input.causalChains, errors);
   }
 
   if (!Array.isArray(input.evidence) || input.evidence.length === 0 || !input.evidence.every(isNonEmptyString)) {
     errors.push("evidence must be a non-empty array of non-empty strings.");
   }
 
-  if (errors.length > 0 || !hazard || !risk || !affectedAssets || !cascade) {
+  let uncertaintiesList = undefined;
+  if (input.uncertainties !== undefined) {
+    uncertaintiesList = validateUncertaintiesList(input.uncertainties, errors);
+  }
+
+  if (errors.length > 0 || !hazard || !risk || !affectedAssets) {
     return { success: false, errors };
   }
 
-  return {
-    success: true,
-    data: {
-      incidentId: input.incidentId as string,
-      hazard: { type: hazard.type as HazardType, severity: hazard.severity as RiskLevel },
-      risk: { score: risk.score as number, level: risk.level as RiskLevel, confidence: risk.confidence as number },
-      affectedAssets,
-      cascade: { path: cascade.path as string[], etaMinutes: cascade.etaMinutes as number | undefined },
-      evidence: input.evidence as string[],
-    },
+  const req: ExplainRequest = {
+    incidentId: input.incidentId as string,
+    hazard: { type: hazard.type as HazardType, severity: hazard.severity as RiskLevel },
+    risk: { score: risk.score as number, level: risk.level as RiskLevel, confidence: risk.confidence as number },
+    affectedAssets,
+    evidence: input.evidence as string[],
   };
+  if (cascadeObj) req.cascade = cascadeObj;
+  if (causalChainsList) req.causalChains = causalChainsList;
+  if (uncertaintiesList) req.uncertainties = uncertaintiesList;
+  if (Array.isArray(input.dataFreshness)) req.dataFreshness = input.dataFreshness as DataFreshnessItem[];
+
+  return { success: true, data: req };
 }
 
 /** Validates untrusted model output before it is displayed or handed to P1. */
@@ -158,8 +339,19 @@ export function validateRecommendedActions(input: unknown): ValidationResult<Rec
     }
     if (!isNonEmptyString(item.reason)) errors.push(`recommendedActions[${index}].reason must be a non-empty string.`);
 
-    if (isNonEmptyString(item.actionId) && isRiskLevel(item.priority) && isNonEmptyString(item.reason) && isAllowedActionPriority(item.actionId, item.priority)) {
-      actions.push({ actionId: item.actionId, priority: item.priority, reason: item.reason });
+    if (
+      isNonEmptyString(item.actionId) &&
+      isRiskLevel(item.priority) &&
+      isNonEmptyString(item.reason) &&
+      isAllowedActionPriority(item.actionId, item.priority)
+    ) {
+      const act: RecommendedAction = {
+        actionId: item.actionId,
+        priority: item.priority,
+        reason: item.reason,
+      };
+      if (typeof item.targetAssetId === "string") act.targetAssetId = item.targetAssetId;
+      actions.push(act);
     }
   });
   return errors.length ? { success: false, errors } : { success: true, data: actions };
@@ -170,24 +362,52 @@ export function validateExplainResponse(input: unknown): ValidationResult<Explai
 
   const errors: string[] = [];
   if (!isNonEmptyString(input.incidentId)) errors.push("incidentId must be a non-empty string.");
-  if (!isNonEmptyString(input.explanation)) errors.push("explanation must be a non-empty string.");
-  if (!isNonEmptyString(input.impactSummary)) errors.push("impactSummary must be a non-empty string.");
+
+  const situationSummary = isNonEmptyString(input.situationSummary)
+    ? input.situationSummary
+    : isNonEmptyString(input.explanation)
+    ? input.explanation
+    : undefined;
+
+  if (!situationSummary) errors.push("situationSummary must be a non-empty string.");
+
   if (typeof input.confidence !== "number" || input.confidence < 0 || input.confidence > 1) {
     errors.push("confidence must be a number from 0 to 1.");
   }
+
   const actions = validateRecommendedActions(input.recommendedActions);
   if (!actions.success) errors.push(...actions.errors);
 
-  if (errors.length || !actions.success) return { success: false, errors };
+  const causalChains = validateCausalChainsList(input.causalChains ?? [], errors);
+  const keyImpacts = validateKeyImpactsList(input.keyImpacts ?? [], errors);
+  const actionDependencies = validateActionDependenciesList(input.actionDependencies ?? [], errors);
+  const uncertainties = validateUncertaintiesList(input.uncertainties ?? [], errors);
+  const roleSpecificBriefings = validateRoleSpecificBriefingsObj(input.roleSpecificBriefings, errors);
+
+  if (errors.length || !actions.success || !situationSummary || !roleSpecificBriefings) {
+    return { success: false, errors };
+  }
+
+  const explanation = isNonEmptyString(input.explanation) ? input.explanation : situationSummary;
+  const impactSummary = isNonEmptyString(input.impactSummary)
+    ? input.impactSummary
+    : keyImpacts.map((k) => `${k.assetName}: ${k.description}`).join(" | ");
+
   return {
     success: true,
     data: {
       incidentId: input.incidentId as string,
-      explanation: input.explanation as string,
-      impactSummary: input.impactSummary as string,
+      situationSummary,
+      causalChains,
+      keyImpacts,
       recommendedActions: actions.data,
+      actionDependencies,
+      uncertainties,
+      dataFreshness: Array.isArray(input.dataFreshness) ? (input.dataFreshness as DataFreshnessItem[]) : [],
+      roleSpecificBriefings,
       confidence: input.confidence as number,
+      explanation,
+      impactSummary,
     },
   };
 }
-

@@ -25,20 +25,50 @@ const DEFAULT_MODEL = "gemini-2.0-flash";
 const DEFAULT_TIMEOUT_MS = 8_000;
 
 function createPrompt(request: ExplainRequest): string {
-  return `You are ClimateShield's operator-assistance component. Use ONLY the verified incident facts below.
+  return `You are ClimateShield's compound cascade explanation and operator-assistance layer.
+Use ONLY the verified incident facts below. Do not invent assets, measurements, unverified causal links, or action IDs.
 
-Do not calculate risk, add assets, add measurements, add cascade relationships, or create action IDs. Do not say that an action has been executed. Recommend only these action IDs: dispatch_drainage_team, close_road, open_alternate_route, pre_position_ambulance, notify_facility, issue_local_advisory.
+Your job is to organize the verified facts into:
+1. Competing cascade paths and which impact happens first
+2. Which asset is most critical (especially compound dual vulnerabilities)
+3. Safest sequence of human-approved actions from the controlled catalog
+4. Explicit operational dependencies between actions (e.g., do not close road until alternate route is verified)
+5. Uncertainties and required verification checks
+6. Distinct role-specific briefings tailored to Operator, Hospital Manager, Field Drainage Team, and the Public
+
+Controlled action IDs: dispatch_drainage_team, close_road, open_alternate_route, pre_position_ambulance, notify_facility, issue_local_advisory.
 
 Return only JSON with this exact shape:
 {
   "incidentId": "string",
+  "situationSummary": "string",
+  "causalChains": [
+    { "path": ["string"], "impact": "string", "etaMinutes": 0 }
+  ],
+  "keyImpacts": [
+    { "assetId": "string", "assetName": "string", "description": "string", "timeHorizonMinutes": 0, "severity": "low|medium|high|critical" }
+  ],
+  "recommendedActions": [
+    { "actionId": "string", "priority": "low|medium|high|critical", "reason": "string", "targetAssetId": "string" }
+  ],
+  "actionDependencies": [
+    { "actionId": "string", "dependsOnActionId": "string", "rule": "string" }
+  ],
+  "uncertainties": [
+    { "statement": "string", "requiredCheck": "string" }
+  ],
+  "roleSpecificBriefings": {
+    "operator": "string",
+    "hospitalManager": "string",
+    "fieldTeam": "string",
+    "public": "string"
+  },
+  "confidence": 0,
   "explanation": "string",
-  "impactSummary": "string",
-  "recommendedActions": [{ "actionId": "string", "priority": "low|medium|high|critical", "reason": "string" }],
-  "confidence": 0
+  "impactSummary": "string"
 }
 
-The incidentId must match the input. confidence must be between 0 and the supplied risk confidence. Be concise and operator-facing.
+The incidentId must match "${request.incidentId}". confidence must be between 0 and ${request.risk.confidence}.
 
 Verified incident facts:
 ${JSON.stringify(request)}`;
@@ -58,8 +88,9 @@ function extractText(payload: unknown): string | undefined {
 }
 
 /**
- * Calls Gemini only after verified facts exist. Provider failures and malformed
- * responses always return the deterministic fallback instead of failing the incident.
+ * Calls Gemini to synthesize compound cascade explanations, action dependencies,
+ * and role-specific briefings. Returns deterministic fallback if API key is missing
+ * or response fails validation.
  */
 export async function explainWithGeminiOrFallback(
   request: ExplainRequest,
@@ -85,7 +116,7 @@ export async function explainWithGeminiOrFallback(
         signal: controller.signal,
         body: JSON.stringify({
           systemInstruction: {
-            parts: [{ text: "You explain verified climate-risk facts and return safe JSON only." }],
+            parts: [{ text: "You explain verified compound climate-risk cascades and return safe JSON only." }],
           },
           contents: [{ role: "user", parts: [{ text: createPrompt(request) }] }],
           generationConfig: { responseMimeType: "application/json", temperature: 0.1 },
@@ -137,4 +168,3 @@ export async function explainWithGeminiOrFallback(
     clearTimeout(timeout);
   }
 }
-
