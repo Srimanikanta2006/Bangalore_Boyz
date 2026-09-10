@@ -16,10 +16,17 @@ export const LoginPage: React.FC = () => {
   const { login } = useAuth();
   const [selectedRole, setSelectedRole] = useState<RoleType>('citizen');
   const [email, setEmail] = useState('citizen@climateshield.demo');
-  const [password, setPassword] = useState('');
+  const [password, setPassword] = useState('DemoGov@2024');
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const roleTargets: Record<RoleType, string> = {
+    citizen: '/citizen/map',
+    government: '/gov/overview',
+    'gov-field': '/gov/mobile/map',
+    rescue: '/rescue/tactical',
+  };
 
   const roleConfigs: Record<RoleType, { label: string; icon: string; demoEmail: string | null }> = {
     citizen: {
@@ -40,21 +47,31 @@ export const LoginPage: React.FC = () => {
     rescue: {
       label: 'Engage Tactical Rescue Mesh',
       icon: 'emergency_share',
-      demoEmail: null, // no dedicated rescue account in the backend yet
+      demoEmail: null, // offline P2P mesh, launches directly
     },
   };
 
-  // Selecting a role card prefills the matching demo account email (real login).
+  // Selecting a role card prefills the matching demo account email & password.
   const handleSelectRole = (role: RoleType) => {
     setSelectedRole(role);
     setError(null);
     const demoEmail = roleConfigs[role].demoEmail;
-    if (demoEmail) setEmail(demoEmail);
+    if (demoEmail) {
+      setEmail(demoEmail);
+      setPassword('DemoGov@2024');
+    }
   };
 
   const handleLaunch = async () => {
     if (submitting) return;
     setError(null);
+
+    // Tactical rescue operates on P2P mesh network directly
+    if (selectedRole === 'rescue') {
+      navigate('/rescue/tactical');
+      return;
+    }
+
     if (!email.trim() || !password) {
       setError('Enter your email and password to sign in.');
       return;
@@ -72,11 +89,15 @@ export const LoginPage: React.FC = () => {
           ? err.code === 'INVALID_CREDENTIALS'
             ? 'Invalid email or password.'
             : err.message
-          : 'Sign in failed. Please try again.';
+          : 'Sign in failed. Please check your network or use Direct Launch.';
       setError(message);
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleBypass = () => {
+    navigate(roleTargets[selectedRole]);
   };
 
   return (
@@ -188,10 +209,20 @@ export const LoginPage: React.FC = () => {
             {error && (
               <div
                 role="alert"
-                className="flex items-start gap-2 rounded-lg bg-error-container/60 text-on-error-container px-3 py-2 font-body-sm text-body-sm"
+                className="flex flex-col gap-2 rounded-lg bg-red-100 text-red-900 border border-red-300 p-3 font-body-sm text-body-sm"
               >
-                <span className="material-symbols-outlined text-[18px] mt-px">error</span>
-                <span>{error}</span>
+                <div className="flex items-start gap-2">
+                  <span className="material-symbols-outlined text-[18px] text-red-700 mt-px shrink-0">error</span>
+                  <span className="flex-1 font-medium">{error}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleBypass}
+                  className="self-start text-xs font-bold text-red-800 underline hover:text-red-950 flex items-center gap-1"
+                >
+                  <span>Skip authentication & enter as {roleConfigs[selectedRole].label}</span>
+                  <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
+                </button>
               </div>
             )}
 
@@ -205,6 +236,20 @@ export const LoginPage: React.FC = () => {
               <span className="material-symbols-outlined text-[18px]">login</span>
               <span>{submitting ? 'Signing In…' : 'Verify & Sign In'}</span>
             </button>
+
+            {/* Demo Credential Shortcut Bar */}
+            <div className="flex items-center justify-between text-xs text-on-surface-variant px-1 mt-0.5">
+              <span>Passcode: <code className="bg-surface-container-highest px-1.5 py-0.5 rounded font-mono text-[11px] font-bold text-on-surface">DemoGov@2024</code></span>
+              <button
+                type="button"
+                onClick={handleBypass}
+                className="font-semibold text-secondary hover:underline flex items-center gap-0.5"
+                title="Bypass login and open role dashboard"
+              >
+                <span>Direct Launch</span>
+                <span className="material-symbols-outlined text-[14px]">bolt</span>
+              </button>
+            </div>
           </div>
 
           {/* Role Selector Switch Section */}
