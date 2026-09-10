@@ -1,14 +1,14 @@
 # Development & Onboarding Guide
 
 ## Overview
-Welcome to the `Bangalore_Boyz` project! This guide explains how to set up your local development environment, work with our shared Supabase backend, follow our Git workflow, and collaborate securely across different AI coding tools.
+Welcome to the `Bangalore_Boyz` project! This guide explains how to set up your local development environment, run the Docker PostgreSQL database, follow our Git workflow, and collaborate securely across different AI coding tools.
 
 ---
 
 ## Prerequisites
 - **Git** installed and configured
 - **Node.js** (v18+ recommended) or **Python** (v3.10+ recommended) depending on chosen tech stack
-- **Supabase Account**: Ensure your account has been added as a collaborator to the team's shared Supabase project.
+- **Docker Desktop / Docker Engine**: Required for the local PostgreSQL service.
 
 ---
 
@@ -28,29 +28,24 @@ cp .env.example .env
 Fill in your project-specific values in `.env`.
 
 > [!WARNING]
-> Never commit your `.env` file or any real API keys, passwords, or Supabase service-role secrets to Git!
+> Never commit your `.env` file or any real API keys, passwords, database URLs, or JWT secrets to Git!
 
 ---
 
-## Supabase Team Authentication Model
+## Local Docker PostgreSQL
 
-```text
-GitHub Repository
-        │
-        ├──────────────────────┐
-        ▼                      ▼
-     Teammate A             Teammate B
-        │                      │
- Own Supabase Account   Own Supabase Account
-        │                      │
-        └──────────┬───────────┘
-                   ▼
-         Shared Supabase Project (Database / Services)
+From the `cline_backend/` directory, start and initialise the database:
+
+```bash
+cp .env.example .env
+docker compose up -d
+npm install
+npm run prisma:deploy
+npm run prisma:seed
+npm run dev
 ```
 
-1. Each teammate logs in with their own Supabase credentials.
-2. The repository `.env.example` provides required key names (`SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`).
-3. Each developer keeps personal access tokens and service-role keys in their local `.env` or local tool configuration.
+The API uses `DATABASE_URL=postgresql://postgres:postgres@localhost:5432/climateshield` by default. The named Docker volume preserves data between restarts. `docker compose down -v` deletes that local data and should only be used when an intentional reset is required.
 
 ---
 

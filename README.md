@@ -23,7 +23,7 @@ Bangalore_Boyz/
 │   ├── API_CONTRACT.md     # API specifications & agent output schemas
 │   ├── CURRENT_STATE.md    # Active status dashboard & completed tasks
 │   ├── DECISIONS.md        # Architectural Decision Records (ADRs)
-│   └── DEVELOPMENT.md      # Onboarding guide, Git workflow & Supabase setup
+│   └── DEVELOPMENT.md      # Onboarding guide, Git workflow & Docker PostgreSQL setup
 └── .agents/                # Team agent skills & local customizations
 ```
 
@@ -40,9 +40,9 @@ Bangalore_Boyz/
    cp .env.example .env
    ```
 
-3. **Supabase Collaboration**:
-   - Authenticate with your own Supabase account assigned to the shared team project.
-   - Never commit personal access tokens or service-role keys.
+3. **Local database**:
+   - Start the bundled Docker PostgreSQL service from `cline_backend/`.
+   - Keep credentials and API keys in local `.env` files; never commit them.
 
 4. **Git Workflow**:
    - Create feature branches for all new work: `git switch -c feature/<short-description>`

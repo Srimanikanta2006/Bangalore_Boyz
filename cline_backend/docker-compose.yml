@@ -1,5 +1,5 @@
 # ClimateShield backend - local PostgreSQL (Docker)
-# Replaces the hosted Supabase database for local development.
+# Local development database. The Express API connects through Prisma.
 #
 # Quick start:
 #   docker compose up -d           # start Postgres on localhost:5432

@@ -1,40 +1,91 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GovHqLayout } from '../../components/stitch/GovHqLayout';
-import { fetchGovernmentOverview } from '../../services/api';
+import {
+  fetchGovernmentOverview, fetchLiveWeather, fetchLocationOverview,
+  type LiveWeather, type LocationOverview,
+} from '../../services/api';
+import { useOperatorLocation } from '../../hooks/useOperatorLocation';
 import { 
   AlertTriangle, Radio, Download, Send, TrendingUp, 
   Waves, Thermometer, Zap, Hospital, Building2, 
-  Navigation, CheckCircle2, ChevronRight, Layers, Maximize2
+  Navigation, CheckCircle2, ChevronRight, Layers, Maximize2, MapPin, Crosshair
 } from 'lucide-react';
 
 const POLL_INTERVAL_MS = 15000;
+const WEATHER_POLL_INTERVAL_MS = 60000;
 
 export const GovCommandCenterPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useOperatorLocation();
   const [alertBroadcasted, setAlertBroadcasted] = useState(false);
   const [overview, setOverview] = useState<any | null>(null);
+  const [liveWeather, setLiveWeather] = useState<LiveWeather | null>(null);
+  const [locationData, setLocationData] = useState<LocationOverview | null>(null);
+  const [liveError, setLiveError] = useState<string | null>(null);
+  const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null);
 
-  // (b) Live KPIs from GET /api/government/overview, refreshed every 15s.
+  // PostgreSQL operational state refreshes every 15s. Provider weather + the
+  // location overview (live weather + nearby assets + weather-derived risk for
+  // the OPERATOR'S ACTUAL COORDINATES) refresh every minute.
   useEffect(() => {
+    // Wait until geolocation has resolved (to GPS or fallback) before fetching.
+    if (location.source === 'pending') return;
+    const { latitude, longitude } = location;
     let active = true;
-    const load = async () => {
+    const loadOverview = async () => {
       try {
         const data = await fetchGovernmentOverview();
-        if (active) setOverview(data);
-      } catch {
-        // Backend may be unreachable (401/offline) — keep last-known UI.
+        if (active) {
+          setOverview(data);
+          setLastSyncedAt(new Date().toISOString());
+        }
+      } catch (err) {
+        if (active) setLiveError(err instanceof Error ? err.message : 'PostgreSQL dashboard data is unavailable');
       }
     };
-    load();
-    const timer = setInterval(load, POLL_INTERVAL_MS);
+    const loadWeather = async () => {
+      try {
+        const [weather, loc] = await Promise.all([
+          fetchLiveWeather(latitude, longitude),
+          fetchLocationOverview(latitude, longitude, 5).catch(() => null),
+        ]);
+        if (active) {
+          setLiveWeather(weather);
+          if (loc) setLocationData(loc);
+          setLiveError(null);
+          setLastSyncedAt(new Date().toISOString());
+        }
+      } catch (err) {
+        if (active) setLiveError(err instanceof Error ? err.message : 'Live weather is unavailable');
+      }
+    };
+    void loadOverview();
+    void loadWeather();
+    const overviewTimer = setInterval(() => void loadOverview(), POLL_INTERVAL_MS);
+    const weatherTimer = setInterval(() => void loadWeather(), WEATHER_POLL_INTERVAL_MS);
     return () => {
       active = false;
-      clearInterval(timer);
+      clearInterval(overviewTimer);
+      clearInterval(weatherTimer);
     };
-  }, []);
+  }, [location.source, location.latitude, location.longitude]);
 
   const fmtLevel = (level?: string) => (level ? level.replace(/_/g, ' ') : 'MODERATE CAUTION');
+  const numberOrDash = (value: number | null | undefined, digits = 1) =>
+    value == null ? '—' : value.toFixed(digits);
+
+  // Live, location-derived values (from /api/location/overview for the operator's coords).
+  const derived = locationData?.weather?.derivedAssessment;
+  const liveSeverity = derived?.overallSeverity ?? null;
+  const nearbyAssetCount = locationData?.nearbyAssets?.length ?? null;
+  const resolvedZoneName = locationData?.zone?.name ?? null;
+  const locLabel = location.source === 'gps'
+    ? `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`
+    : `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)} (demo)`;
+  const syncLabel = lastSyncedAt
+    ? new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit', second: '2-digit' }).format(new Date(lastSyncedAt))
+    : 'Connecting…';
 
   const handleBroadcast = () => {
     setAlertBroadcasted(true);
@@ -55,11 +106,18 @@ export const GovCommandCenterPage: React.FC = () => {
             </div>
             <div className="hidden sm:block w-px h-4 bg-[#dce9ff]" />
             <div className="flex items-center gap-1.5 text-xs text-[#0b1c30] font-semibold">
-              <span className="text-[#0051d5]">Sector 4-South Coastal Basin (EOC Grid #109)</span>
+              {location.source === 'gps'
+                ? <Crosshair className="w-3.5 h-3.5 text-emerald-600" />
+                : <MapPin className="w-3.5 h-3.5 text-[#d97706]" />}
+              <span className="text-[#0051d5]">{resolvedZoneName ?? 'Operator Location'}</span>
+              <span className="font-mono text-[10px] text-[#45464d]">{locLabel}</span>
+              <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${location.source === 'gps' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                {location.source === 'gps' ? 'GPS LIVE' : 'DEMO LOC'}
+              </span>
             </div>
             <div className="hidden md:flex items-center gap-1.5 text-[11px] font-mono px-2 py-0.5 rounded bg-[#eff4ff] text-[#45464d]">
-              <span>UTC 14:48:22</span>
-              <span className="text-[#0051d5] font-bold">• LEO Sync OK</span>
+              <span>SYNC {syncLabel}</span>
+              <span className={`font-bold ${liveError ? 'text-[#dc2626]' : 'text-[#0051d5]'}`}>• {liveError ? 'DATA DEGRADED' : 'POSTGRES + WEATHER OK'}</span>
             </div>
           </div>
 
@@ -108,7 +166,7 @@ export const GovCommandCenterPage: React.FC = () => {
                     <span className="text-[10px] text-[#76777d]">12h Trend Delta</span>
                     <div className="flex items-center justify-end gap-0.5 text-[#b91c1c] text-xs font-bold font-mono">
                       <TrendingUp className="w-3.5 h-3.5" />
-                      <span>+14.2% Risk</span>
+                      <span>{overview?.resilienceTrend?.description ?? 'Awaiting PostgreSQL data'}</span>
                     </div>
                   </div>
                 </div>
@@ -126,25 +184,23 @@ export const GovCommandCenterPage: React.FC = () => {
               <div className="grid grid-cols-4 gap-2 pt-2 bg-[#eff4ff] rounded-xl p-2.5 border border-[#d3e4fe] text-xs">
                 <div className="flex flex-col">
                   <span className="text-[10px] text-[#76777d]">Precipitation</span>
-                  <span className="font-mono font-bold text-[#0b1c30]">{overview?.precipitation?.value ?? 42} {overview?.precipitation?.unit ?? 'mm/h'}</span>
-                  <span className="text-[10px] text-[#dc2626] font-semibold mt-0.5">Peak</span>
+                  <span className="font-mono font-bold text-[#0b1c30]">{numberOrDash(liveWeather?.rainfallMmPerHour)} mm/h</span>
+                  <span className="text-[10px] text-[#0051d5] font-semibold mt-0.5">{liveWeather?.dataQuality ?? 'CONNECTING'}</span>
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-[10px] text-[#76777d]">Drain Sat.</span>
-                  <span className="font-mono font-bold text-[#0b1c30]">74%</span>
-                  <div className="w-full h-1 bg-[#dce9ff] rounded-full mt-1.5 overflow-hidden">
-                    <div className="w-3/4 h-full bg-[#d97706] rounded-full" />
-                  </div>
+                  <span className="text-[10px] text-[#76777d]">Temperature</span>
+                  <span className="font-mono font-bold text-[#0b1c30]">{numberOrDash(liveWeather?.temperatureC)} °C</span>
+                  <span className="text-[10px] text-[#0051d5] font-semibold mt-0.5">Open-Meteo</span>
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-[10px] text-[#76777d]">Barometric Δ</span>
-                  <span className="font-mono font-bold text-[#0b1c30]">994.2 hPa</span>
-                  <span className="text-[10px] text-[#76777d] mt-0.5">Falling</span>
+                  <span className="text-[10px] text-[#76777d]">Wind</span>
+                  <span className="font-mono font-bold text-[#0b1c30]">{numberOrDash(liveWeather?.windSpeedKmh)} km/h</span>
+                  <span className="text-[10px] text-[#76777d] mt-0.5">{liveWeather?.windDirectionCardinal ?? '—'}</span>
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-[10px] text-[#76777d]">Active Alerts</span>
-                  <span className="font-mono font-bold text-[#dc2626]">2 Coastal</span>
-                  <span className="text-[10px] text-[#dc2626] font-semibold mt-0.5">Surge Watch</span>
+                  <span className="text-[10px] text-[#76777d]">DB Threats</span>
+                  <span className="font-mono font-bold text-[#dc2626]">{overview?.activeThreats ?? '—'} active</span>
+                  <span className="text-[10px] text-[#76777d] font-semibold mt-0.5">PostgreSQL state</span>
                 </div>
               </div>
             </div>
@@ -152,25 +208,32 @@ export const GovCommandCenterPage: React.FC = () => {
             {/* KPI 2: Active Hazards */}
             <div className="rounded-2xl bg-white p-4 shadow-sm border border-[#e5eeff] flex flex-col justify-between">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] uppercase font-bold text-[#76777d] tracking-wider">ACTIVE THREAT MATRIX</span>
-                <span className="px-2 py-0.5 rounded-full bg-[#fee2e2] text-[#b91c1c] text-[10px] font-bold">{overview?.activeThreats ?? 4} ACTIVE</span>
+                <span className="text-[10px] uppercase font-bold text-[#76777d] tracking-wider">LIVE THREAT (YOUR AREA)</span>
+                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                  liveSeverity === 'CRITICAL' ? 'bg-[#fee2e2] text-[#b91c1c]'
+                  : liveSeverity === 'HIGH' ? 'bg-[#ffedd5] text-[#c2410c]'
+                  : liveSeverity === 'MODERATE' ? 'bg-[#fef3c7] text-[#b45309]'
+                  : liveSeverity === 'LOW' ? 'bg-emerald-100 text-emerald-700'
+                  : 'bg-[#eff4ff] text-[#0051d5]'}`}>
+                  {liveSeverity ?? 'NOMINAL'}
+                </span>
               </div>
               <div className="my-1">
-                <span className="text-3xl font-extrabold text-[#0b1c30]">{overview?.monitoredZones ?? 4}</span>
-                <span className="text-xs text-[#76777d] block">Monitored Zones</span>
+                <span className="text-3xl font-extrabold text-[#0b1c30]">{nearbyAssetCount ?? '—'}</span>
+                <span className="text-xs text-[#76777d] block">Real assets within 5 km</span>
               </div>
               <div className="space-y-1.5 text-xs">
                 <div className="flex items-center justify-between px-2 py-1 rounded-lg bg-[#eff4ff]">
-                  <span className="font-semibold text-[#0b1c30]">Flash Inundation</span>
-                  <span className="font-mono text-[#dc2626] font-bold">Zone 4A</span>
+                  <span className="font-semibold text-[#0b1c30]">Live rainfall</span>
+                  <span className="font-mono text-[#0051d5] font-bold">{numberOrDash(liveWeather?.rainfallMmPerHour)} mm/h</span>
                 </div>
                 <div className="flex items-center justify-between px-2 py-1 rounded-lg bg-[#eff4ff]">
-                  <span className="font-semibold text-[#0b1c30]">Heat Anomalies</span>
-                  <span className="font-mono text-[#d97706] font-bold">39.4°C</span>
+                  <span className="font-semibold text-[#0b1c30]">Live temperature</span>
+                  <span className="font-mono text-[#d97706] font-bold">{numberOrDash(liveWeather?.temperatureC)}°C</span>
                 </div>
                 <div className="flex items-center justify-between px-2 py-1 rounded-lg bg-[#eff4ff]">
-                  <span className="font-semibold text-[#0b1c30]">Grid Feeder #11</span>
-                  <span className="font-mono text-[#76777d] font-bold">DOWN</span>
+                  <span className="font-semibold text-[#0b1c30]">Weather condition</span>
+                  <span className="font-mono text-[#76777d] font-bold">{liveWeather?.weatherCondition ?? '—'}</span>
                 </div>
               </div>
             </div>
@@ -182,24 +245,47 @@ export const GovCommandCenterPage: React.FC = () => {
                 <Hospital className="w-4 h-4 text-[#dc2626]" />
               </div>
               <div className="my-1">
-                <span className="text-2xl font-extrabold text-[#0b1c30]">{overview?.criticalInfrastructure?.compromised ?? 2} <span className="text-sm font-semibold text-[#dc2626]">Compromised</span></span>
-                <span className="text-xs text-[#76777d] block">{overview?.criticalInfrastructure?.total ?? 14} Inspected / Normal</span>
+                {locationData?.nearbyAssets?.length ? (
+                  <>
+                    <span className="text-2xl font-extrabold text-[#0b1c30]">{nearbyAssetCount} <span className="text-sm font-semibold text-[#0051d5]">Nearby</span></span>
+                    <span className="text-xs text-[#76777d] block">Real infrastructure ≤ 5 km (OSM/DB)</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-2xl font-extrabold text-[#0b1c30]">{overview?.criticalInfrastructure?.compromised ?? 2} <span className="text-sm font-semibold text-[#dc2626]">Compromised</span></span>
+                    <span className="text-xs text-[#76777d] block">{overview?.criticalInfrastructure?.total ?? 14} Inspected / Normal</span>
+                  </>
+                )}
               </div>
               <div className="space-y-1.5 text-xs">
-                <div className="p-2 rounded-lg bg-[#fff7ed] flex items-center justify-between">
-                  <div>
-                    <span className="font-bold text-[#0b1c30] block truncate">Memorial Hospital</span>
-                    <span className="text-[10px] text-[#76777d]">Arterial Access Blocked</span>
-                  </div>
-                  <span className="px-1.5 py-0.5 rounded bg-[#ffedd5] text-[#c2410c] text-[9px] font-bold">HEAT/FLOOD</span>
-                </div>
-                <div className="p-2 rounded-lg bg-[#eff4ff] flex items-center justify-between">
-                  <div>
-                    <span className="font-bold text-[#0b1c30] block truncate">Substation #9</span>
-                    <span className="text-[10px] text-[#76777d]">Runoff Threshold Exceeded</span>
-                  </div>
-                  <span className="px-1.5 py-0.5 rounded bg-[#fef3c7] text-[#b45309] text-[9px] font-bold">MONITOR</span>
-                </div>
+                {locationData?.nearbyAssets?.length ? (
+                  locationData.nearbyAssets.slice(0, 2).map((a) => (
+                    <div key={a.id} className="p-2 rounded-lg bg-[#eff4ff] flex items-center justify-between">
+                      <div className="min-w-0">
+                        <span className="font-bold text-[#0b1c30] block truncate">{a.name}</span>
+                        <span className="text-[10px] text-[#76777d]">{a.distanceKm} km • {a.operationalStatus}</span>
+                      </div>
+                      <span className="px-1.5 py-0.5 rounded bg-[#d3e4fe] text-[#0051d5] text-[9px] font-bold shrink-0">{a.type}</span>
+                    </div>
+                  ))
+                ) : (
+                  <>
+                    <div className="p-2 rounded-lg bg-[#fff7ed] flex items-center justify-between">
+                      <div>
+                        <span className="font-bold text-[#0b1c30] block truncate">Memorial Hospital</span>
+                        <span className="text-[10px] text-[#76777d]">Arterial Access Blocked</span>
+                      </div>
+                      <span className="px-1.5 py-0.5 rounded bg-[#ffedd5] text-[#c2410c] text-[9px] font-bold">HEAT/FLOOD</span>
+                    </div>
+                    <div className="p-2 rounded-lg bg-[#eff4ff] flex items-center justify-between">
+                      <div>
+                        <span className="font-bold text-[#0b1c30] block truncate">Substation #9</span>
+                        <span className="text-[10px] text-[#76777d]">Runoff Threshold Exceeded</span>
+                      </div>
+                      <span className="px-1.5 py-0.5 rounded bg-[#fef3c7] text-[#b45309] text-[9px] font-bold">MONITOR</span>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
 
