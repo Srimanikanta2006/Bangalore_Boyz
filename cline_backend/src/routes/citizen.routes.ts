@@ -21,4 +21,17 @@ router.get(
   citizenController.nearby,
 );
 
+/**
+ * GET /api/citizen/alerts?latitude=&longitude=&radiusKm=
+ * Computed nearby advisories (flood/heat/storm/corridor) from live hazards,
+ * modeled weather severity and road closures. CITIZEN-only.
+ */
+router.get(
+  '/citizen/alerts',
+  authenticate,
+  requireRole(...CITIZEN_ROLES),
+  validate(citizenNearbyQuerySchema, 'query'),
+  citizenController.alerts,
+);
+
 export default router;

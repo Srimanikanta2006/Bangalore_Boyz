@@ -107,3 +107,37 @@ export function fetchCitizenNearby(params: NearbyParams): Promise<CitizenNearby>
   }).toString();
   return api.get<CitizenNearby>(`/citizen/nearby?${q}`, { signal: params.signal });
 }
+
+export type AlertCategory = 'FLOOD' | 'HEAT' | 'STORM' | 'WEATHER' | 'CORRIDOR';
+
+export interface CitizenAlert {
+  id: string;
+  category: AlertCategory;
+  severity: Severity;
+  title: string;
+  description: string;
+  source: string;
+  dataQuality: DataQuality;
+  issuedAt: string;
+  freshnessMinutes: number | null;
+  tags: string[];
+}
+
+export interface CitizenAlerts {
+  location: { latitude: number; longitude: number };
+  radiusKm: number;
+  generatedAt: string;
+  ward: { id: string; name: string; code: string } | null;
+  count: number;
+  alerts: CitizenAlert[];
+  note: string;
+}
+
+export function fetchCitizenAlerts(params: NearbyParams): Promise<CitizenAlerts> {
+  const q = new URLSearchParams({
+    latitude: String(params.latitude),
+    longitude: String(params.longitude),
+    radiusKm: String(params.radiusKm ?? 5),
+  }).toString();
+  return api.get<CitizenAlerts>(`/citizen/alerts?${q}`, { signal: params.signal });
+}

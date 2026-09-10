@@ -225,3 +225,165 @@ export async function getCitizenNearby(
     ],
   };
 }
+
+// ============================ CITIZEN ALERTS ============================
+
+export type AlertCategory = 'FLOOD' | 'HEAT' | 'STORM' | 'WEATHER' | 'CORRIDOR';
+
+export interface CitizenAlert {
+  id: string;
+  category: AlertCategory;
+  severity: Severity;
+  title: string;
+  description: string;
+  source: string;
+  dataQuality: string;
+  issuedAt: string;
+  freshnessMinutes: number | null;
+  tags: string[];
+}
+
+function hazardCategory(type: string): AlertCategory {
+  if (FLOOD_HAZARD_TYPES.includes(type)) return 'FLOOD';
+  if (type === 'EXTREME_HEAT') return 'HEAT';
+  if (type === 'STORM' || type === 'HIGH_WIND') return 'STORM';
+  return 'WEATHER';
+}
+
+function tagsFor(category: AlertCategory, severity: Severity): string[] {
+  const tags: string[] = [];
+  if (severity === 'HIGH' || severity === 'CRITICAL') tags.push('high');
+  if (category === 'CORRIDOR') tags.push('corridors');
+  else tags.push('weather');
+  return tags;
+}
+
+/**
+ * Computed nearby advisories from live active hazards, modeled weather severity
+ * and nearby road/bridge closures. Public-safety info only — no deployments,
+ * SLAs, or internal boards.
+ */
+export async function getCitizenAlerts(
+  input: CitizenNearbyQuery,
+  fetchers: { weather?: WeatherFetcher } = {},
+) {
+  const { latitude, longitude } = input;
+  const radiusKm = Math.min(25, Math.max(0.5, input.radiusKm ?? 5));
+  const now = Date.now();
+
+  const weather = await getCurrentWeather({ latitude, longitude, forecastHours: 6 }, fetchers.weather);
+  const zone = weather.zone;
+
+  const activeHazards = zone
+    ? await prisma.hazard.findMany({ where: { zoneId: zone.id, status: 'ACTIVE' }, orderBy: { startedAt: 'desc' } })
+    : [];
+
+  const alerts: CitizenAlert[] = [];
+
+  // 1) Active hazard advisories.
+  for (const h of activeHazards) {
+    const category = hazardCategory(h.type);
+    alerts.push({
+      id: `hazard-${h.id}`,
+      category,
+      severity: h.severity,
+      title: `${prettyLabel(h.type)} advisory${zone ? ` — ${zone.name}` : ''}`,
+      description: describeHazard(h),
+      source: h.source,
+      dataQuality: h.dataQuality,
+      issuedAt: new Date(h.startedAt).toISOString(),
+      freshnessMinutes: freshnessMinutes(h.startedAt, now),
+      tags: tagsFor(category, h.severity),
+    });
+  }
+
+  // 2) Modeled live-weather advisory (only if it adds signal beyond existing hazards).
+  const wx = weather.derivedAssessment;
+  if (wx.overallSeverity) {
+    const category: AlertCategory = wx.floodSeverity ? 'FLOOD' : wx.heatSeverity ? 'HEAT' : 'STORM';
+    const rainMin = rainArrivalMinutes(weather.forecast, now);
+    alerts.push({
+      id: 'weather-modeled',
+      category,
+      severity: wx.overallSeverity,
+      title: `Live weather advisory: ${category === 'FLOOD' ? 'heavy rainfall' : category === 'HEAT' ? 'extreme heat' : 'high winds'}`,
+      description:
+        `${wx.explanation}` + (rainMin != null ? ` Rain expected in ~${rainMin} min.` : ''),
+      source: 'WEATHER_API',
+      dataQuality: 'MODELED',
+      issuedAt: weather.observedAt ?? weather.fetchedAt,
+      freshnessMinutes: weather.freshnessSeconds != null ? Math.round(weather.freshnessSeconds / 60) : null,
+      tags: tagsFor(category, wx.overallSeverity),
+    });
+  }
+
+  // 3) Nearby road/bridge closures -> corridor advisories.
+  if (zone) {
+    const latDelta = radiusKm / 111;
+    const lonDelta = radiusKm / (111 * Math.max(0.2, Math.cos((latitude * Math.PI) / 180)));
+    const roads = await prisma.infrastructureAsset.findMany({
+      where: {
+        type: { in: ['ROAD', 'BRIDGE'] as never },
+        operationalStatus: { not: 'OPERATIONAL' },
+        latitude: { gte: latitude - latDelta, lte: latitude + latDelta },
+        longitude: { gte: longitude - lonDelta, lte: longitude + lonDelta },
+      },
+      take: 50,
+    });
+    for (const r of roads) {
+      const blocked = r.operationalStatus === 'COMPROMISED' || r.operationalStatus === 'OFFLINE';
+      const severity: Severity = blocked ? 'HIGH' : 'MODERATE';
+      alerts.push({
+        id: `corridor-${r.id}`,
+        category: 'CORRIDOR',
+        severity,
+        title: `${blocked ? 'Road closed' : 'Road disrupted'}: ${r.name}`,
+        description: `${r.name} is currently ${prettyLabel(r.operationalStatus)}. Consider an alternate route.`,
+        source: r.source,
+        dataQuality: r.dataQuality,
+        issuedAt: new Date(r.updatedAt).toISOString(),
+        freshnessMinutes: freshnessMinutes(r.updatedAt, now),
+        tags: tagsFor('CORRIDOR', severity),
+      });
+    }
+  }
+
+  alerts.sort(
+    (a, b) => SEVERITY_RANK[b.severity] - SEVERITY_RANK[a.severity] || (a.freshnessMinutes ?? 1e9) - (b.freshnessMinutes ?? 1e9),
+  );
+
+  return {
+    location: { latitude, longitude },
+    radiusKm,
+    generatedAt: new Date().toISOString(),
+    ward: zone ? { id: zone.id, name: zone.name, code: zone.code } : null,
+    count: alerts.length,
+    alerts,
+    note: 'Computed from live hazards, modeled weather severity, and road status. No official IMD/CWC/DMA push feed is integrated; absent data is never invented.',
+  };
+}
+
+function prettyLabel(value: string): string {
+  return value
+    .toLowerCase()
+    .split('_')
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ');
+}
+
+function describeHazard(h: {
+  type: string;
+  severity: string;
+  rainfallRate: number | null;
+  waterDepth: number | null;
+  temperature: number | null;
+  windSpeed: number | null;
+}): string {
+  const bits: string[] = [];
+  if (h.rainfallRate != null) bits.push(`rainfall ${h.rainfallRate} mm/hr`);
+  if (h.waterDepth != null) bits.push(`water depth ${h.waterDepth} m`);
+  if (h.temperature != null) bits.push(`temperature ${h.temperature}°C`);
+  if (h.windSpeed != null) bits.push(`wind ${h.windSpeed} km/h`);
+  const measured = bits.length ? ` (${bits.join(', ')})` : '';
+  return `${h.severity} ${prettyLabel(h.type)} conditions reported${measured}. Follow local guidance and avoid affected areas.`;
+}
