@@ -59,41 +59,37 @@ export function createApp() {
   // depth; government writes are already fail-closed via requireRole).
   app.use(blockCitizenFromInternal);
 
-  // --- URL rewrite middleware: tolerate requests sent without the /api prefix ---
-  app.use((req, _res, next) => {
-    if (!req.path.startsWith('/api') && !req.path.startsWith(EVIDENCE_URL_PREFIX)) {
-      req.url = `/api${req.url}`;
-    }
-    next();
-  });
+  // --- API router (mounted at both /api and / for total resilience) ---
+  const apiRouter = express.Router();
+  apiRouter.use(globalApiLimiter);
+  apiRouter.use(healthRoutes);
+  apiRouter.use(authRoutes);
+  apiRouter.use(overviewRoutes);
+  apiRouter.use(incidentRoutes);
+  apiRouter.use(responseRoutes);
+  apiRouter.use(taskRoutes);
+  apiRouter.use(unitRoutes);
+  apiRouter.use(infrastructureRoutes);
+  apiRouter.use(hazardRoutes);
+  apiRouter.use(mapRoutes);
+  apiRouter.use(simulatorRoutes);
+  apiRouter.use(analyticsRoutes);
+  apiRouter.use(hotspotRoutes);
+  apiRouter.use(departmentRoutes);
+  apiRouter.use(zoneRoutes);
+  apiRouter.use(cascadeRoutes);
+  apiRouter.use(auditRoutes);
+  apiRouter.use(weatherRoutes);
+  apiRouter.use(locationRoutes);
+  apiRouter.use(explainRoutes);
+  apiRouter.use(orchestrateRoutes);
+  apiRouter.use(notificationRoutes);
+  apiRouter.use(citizenRoutes);
+  apiRouter.use(billingRoutes);
+  apiRouter.use(phase2ExtensionsRoutes);
 
-  // --- API rate limiting & routes (all mounted under /api) ---
-  app.use('/api', globalApiLimiter);
-  app.use('/api', healthRoutes);
-  app.use('/api', authRoutes);
-  app.use('/api', overviewRoutes);
-  app.use('/api', incidentRoutes);
-  app.use('/api', responseRoutes);
-  app.use('/api', taskRoutes);
-  app.use('/api', unitRoutes);
-  app.use('/api', infrastructureRoutes);
-  app.use('/api', hazardRoutes);
-  app.use('/api', mapRoutes);
-  app.use('/api', simulatorRoutes);
-  app.use('/api', analyticsRoutes);
-  app.use('/api', hotspotRoutes);
-  app.use('/api', departmentRoutes);
-  app.use('/api', zoneRoutes);
-  app.use('/api', cascadeRoutes);
-  app.use('/api', auditRoutes);
-  app.use('/api', weatherRoutes);
-  app.use('/api', locationRoutes);
-  app.use('/api', explainRoutes);
-  app.use('/api', orchestrateRoutes);
-  app.use('/api', notificationRoutes);
-  app.use('/api', citizenRoutes);
-  app.use('/api', billingRoutes);
-  app.use('/api', phase2ExtensionsRoutes);
+  app.use('/api', apiRouter);
+  app.use('/', apiRouter);
 
   // --- 404 + central error handler (must be last) ---
   app.use(notFoundHandler);
