@@ -158,7 +158,7 @@ export async function createSosEvent(user: AuthUser, input: CreateSosInput, idem
     });
 
     return sos;
-  });
+  }, { timeout: 20000 });
 
   return { ...toSosDto(created), _deduplicated: false };
 }

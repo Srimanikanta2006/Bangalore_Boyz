@@ -190,7 +190,7 @@ export async function createCitizenReport(
     });
 
     return report;
-  });
+  }, { timeout: 20000 });
 
   return { ...toReportDto(created), _deduplicated: false };
 }
