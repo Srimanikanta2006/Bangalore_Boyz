@@ -2,6 +2,18 @@ import type { RiskLevel } from '@prisma/client';
 import { prisma } from '../db/prisma';
 import { Errors } from '../utils/errors';
 import { buildPaginated, resolvePagination } from '../utils/pagination';
+import { AuditActions, recordAudit } from './audit.service';
+import type { AuthUser } from '../types/auth';
+
+/**
+ * Alert Delivery Lifecycle (Batch 3):
+ * QUEUED -> SENT -> DELIVERED -> ACKNOWLEDGED
+ * Operators can mark sent alerts as ACKNOWLEDGED or ESCALATED.
+ */
+
+/** Valid alert status progression (linear, non-reversible). */
+const ALERT_STATUS_ORDER = ['QUEUED', 'SENT', 'DELIVERED', 'ACKNOWLEDGED', 'ESCALATED'] as const;
+type AlertStatus = typeof ALERT_STATUS_ORDER[number];
 
 export interface SimulatedSmsResult {
   success: boolean;
@@ -189,4 +201,67 @@ export async function listSentAlerts(query: NotificationQuery) {
   }));
 
   return buildPaginated(items, total, page, limit);
+}
+
+/**
+ * Mark a SentAlert as ACKNOWLEDGED or ESCALATED.
+ * Enforces lifecycle progression: QUEUED -> SENT -> DELIVERED -> ACKNOWLEDGED.
+ * Idempotent: re-acknowledging an already-acknowledged alert is a no-op (200).
+ */
+export async function acknowledgeAlert(
+  alertId: string,
+  action: 'ACKNOWLEDGED' | 'ESCALATED',
+  note: string | undefined,
+  user: AuthUser,
+) {
+  const alert = await prisma.sentAlert.findUnique({
+    where: { id: alertId },
+    include: { zone: { select: { id: true, name: true, code: true } } },
+  });
+  if (!alert) throw Errors.notFound('Alert', alertId);
+
+  const currentStatus = alert.status as AlertStatus;
+  const currentIdx = ALERT_STATUS_ORDER.indexOf(currentStatus);
+
+  // Idempotent: if already in target or further state, return as-is
+  if (currentStatus === action || currentStatus === 'ACKNOWLEDGED' || currentStatus === 'ESCALATED') {
+    return {
+      id: alert.id,
+      status: alert.status,
+      oldStatus: currentStatus,
+      newStatus: currentStatus,
+      idempotent: true,
+    };
+  }
+
+  // Update to new status
+  const updated = await prisma.sentAlert.update({
+    where: { id: alertId },
+    data: { status: action },
+  });
+
+  await recordAudit({
+    userId: user.id,
+    action: 'ALERT_STATUS_CHANGED',
+    entityType: 'SENT_ALERT',
+    entityId: alertId,
+    metadata: {
+      alertId,
+      zone: alert.zone.name,
+      from: currentStatus,
+      to: action,
+      note: note ?? null,
+      // Batch 3: explicit oldState/newState for audit trail
+      oldState: currentStatus,
+      newState: action,
+    },
+  });
+
+  return {
+    id: updated.id,
+    status: updated.status,
+    oldStatus: currentStatus,
+    newStatus: action,
+    idempotent: false,
+  };
 }

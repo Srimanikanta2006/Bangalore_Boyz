@@ -17,7 +17,10 @@ const API_BASE = import.meta.env.VITE_API_URL || '/api';
 // JWT header hook: if localStorage has 'cs_token', attach it as a Bearer token
 // to every outgoing request. No login UI this round.
 function authHeaders(): Record<string, string> {
-  const token = typeof localStorage !== 'undefined' ? localStorage.getItem('cs_token') : null;
+  const token =
+    typeof localStorage !== 'undefined'
+      ? localStorage.getItem('cs_auth_token') || localStorage.getItem('cs_token')
+      : null;
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
@@ -28,7 +31,11 @@ async function apiFetch(input: string, init: RequestInit = {}): Promise<Response
     ...(init.headers as Record<string, string> | undefined),
     ...authHeaders(),
   };
-  return fetch(input, { ...init, headers });
+  const res = await fetch(input, { ...init, headers });
+  if (res.status === 401 && typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('cs:session_expired'));
+  }
+  return res;
 }
 
 export async function fetchStats(): Promise<CitySummaryStats> {
@@ -277,7 +284,8 @@ export interface LoginResult {
 
 export async function login(email: string, password: string): Promise<LoginResult> {
   const data = await requestEnvelope<LoginResult>('/auth/login', jsonInit('POST', { email, password }));
-  if (data?.token) {
+  if (data?.token && typeof localStorage !== 'undefined') {
+    localStorage.setItem('cs_auth_token', data.token);
     localStorage.setItem('cs_token', data.token);
   }
   return data;

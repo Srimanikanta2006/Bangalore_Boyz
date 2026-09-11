@@ -47,7 +47,7 @@ export const LoginPage: React.FC = () => {
     rescue: {
       label: 'Engage Tactical Rescue Mesh',
       icon: 'emergency_share',
-      demoEmail: null, // offline P2P mesh, launches directly
+      demoEmail: 'field@climateshield.demo',
     },
   };
 
@@ -66,12 +66,6 @@ export const LoginPage: React.FC = () => {
     if (submitting) return;
     setError(null);
 
-    // Tactical rescue operates on P2P mesh network directly
-    if (selectedRole === 'rescue') {
-      navigate('/rescue/tactical');
-      return;
-    }
-
     if (!email.trim() || !password) {
       setError('Enter your email and password to sign in.');
       return;
@@ -79,14 +73,14 @@ export const LoginPage: React.FC = () => {
     setSubmitting(true);
     try {
       const user = await login(email.trim(), password);
-      // Synchronize both token storage keys so both RequireGovernmentLogin and RequireAuth are satisfied
-      const token = getAuthToken();
-      if (token && typeof window !== 'undefined') {
-        localStorage.setItem('cs_token', token);
-      }
       // Prefer the originally-requested location when it matches the user's role.
       const from = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname;
-      const target = from && user.role === 'CITIZEN' && from.startsWith('/citizen') ? from : homeForRole(user.role);
+      const target =
+        from &&
+        ((user.role === 'CITIZEN' && from.startsWith('/citizen')) ||
+         (user.role !== 'CITIZEN' && !from.startsWith('/citizen')))
+          ? from
+          : homeForRole(user.role);
       navigate(target, { replace: true });
     } catch (err) {
       const message =
@@ -101,8 +95,27 @@ export const LoginPage: React.FC = () => {
     }
   };
 
-  const handleBypass = () => {
-    navigate(roleTargets[selectedRole]);
+  const handleBypass = async () => {
+    if (submitting) return;
+    setSubmitting(true);
+    setError(null);
+
+    try {
+      const demoEmail = roleConfigs[selectedRole].demoEmail ?? 'citizen@climateshield.demo';
+      const user = await login(demoEmail, 'DemoGov@2024');
+      const from = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname;
+      const target =
+        from &&
+        ((user.role === 'CITIZEN' && from.startsWith('/citizen')) ||
+         (user.role !== 'CITIZEN' && !from.startsWith('/citizen')))
+          ? from
+          : roleTargets[selectedRole];
+      navigate(target, { replace: true });
+    } catch {
+      setError('Direct Launch could not authenticate with backend. Please verify backend service is running.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (

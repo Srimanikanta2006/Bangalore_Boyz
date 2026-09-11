@@ -7,6 +7,7 @@ import { citizenNearbyQuerySchema } from '../validators/citizen.schema';
 import { createCitizenReportSchema } from '../validators/citizenReport.schema';
 import { createSosSchema } from '../validators/sos.schema';
 import { scoreRoutesSchema } from '../validators/routeScoring.schema';
+import { reportLimiter, sosLimiter } from '../middleware/rateLimiter';
 import * as citizenController from '../controllers/citizen.controller';
 
 const router = Router();
@@ -55,6 +56,7 @@ router.post(
   '/citizen/reports',
   authenticate,
   requireRole(...CITIZEN_ROLES),
+  reportLimiter,
   evidenceUpload,
   validate(createCitizenReportSchema, 'body'),
   citizenController.submitReport,
@@ -71,10 +73,20 @@ router.get('/citizen/reports/:id', authenticate, requireRole(...CITIZEN_ROLES), 
  * linked Incident + notifies GOVERNMENT_ROLES operators (internal alert only,
  * no external 911/112 dispatch integration).
  */
-router.post('/citizen/sos', authenticate, requireRole(...CITIZEN_ROLES), validate(createSosSchema, 'body'), citizenController.submitSos);
+router.post(
+  '/citizen/sos',
+  authenticate,
+  requireRole(...CITIZEN_ROLES),
+  sosLimiter,
+  validate(createSosSchema, 'body'),
+  citizenController.submitSos,
+);
 
 /** GET /api/citizen/sos - own SOS history only. */
 router.get('/citizen/sos', authenticate, requireRole(...CITIZEN_ROLES), citizenController.mySos);
+
+/** GET /api/citizen/sos/:id - own SOS detail only (404 on foreign/unauthorized id). */
+router.get('/citizen/sos/:id', authenticate, requireRole(...CITIZEN_ROLES), citizenController.mySosDetail);
 
 /**
  * POST /api/citizen/routes/score

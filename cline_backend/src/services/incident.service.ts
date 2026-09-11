@@ -5,6 +5,7 @@ import { buildPaginated, resolvePagination } from '../utils/pagination';
 import { minutesUntil, slaDeadlineFor } from '../utils/dates';
 import { nextIncidentCode } from '../utils/ids';
 import { canTransition, INCIDENT_TRANSITIONS } from '../utils/state';
+import { createOutboxEvent } from './outbox.service';
 import { AuditActions, recordAudit } from './audit.service';
 import { cascadeFromAsset, getIncidentCascade, mostSevereActiveHazard, persistCascadeEvents } from './cascade.service';
 import { assessAssetRisk } from './risk.service';
@@ -191,6 +192,13 @@ export async function createIncident(input: CreateIncidentInput, user: AuthUser)
     metadata: { incidentCode, severity: input.severity, type: input.type, zone: zone.name },
   });
 
+  // Fire outbox event for async downstream processing (best-effort, non-blocking)
+  await createOutboxEvent(prisma, {
+    eventType: 'INCIDENT_CREATED',
+    payload: { incidentId: created.id, incidentCode, severity: input.severity, type: input.type, zoneId: zone.id },
+    idempotencyKey: `INCIDENT_CREATED:${created.id}`,
+  }).catch(() => { /* never block incident creation on outbox failure */ });
+
   const full = await prisma.incident.findUnique({ where: { id: created.id }, include: incidentInclude });
   return toSummary(full!);
 }
@@ -253,7 +261,15 @@ export async function updateIncidentStatus(
     action: AuditActions.INCIDENT_STATUS_CHANGED,
     entityType: 'INCIDENT',
     entityId: incident.id,
-    metadata: { incidentCode: incident.incidentCode, from: incident.status, to: status, note: note ?? null },
+    metadata: {
+      incidentCode: incident.incidentCode,
+      from: incident.status,
+      to: status,
+      note: note ?? null,
+      // Batch 3: explicit oldState/newState for audit trail completeness
+      oldState: incident.status,
+      newState: status,
+    },
   });
   return updated;
 }

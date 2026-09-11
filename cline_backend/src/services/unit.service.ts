@@ -93,7 +93,15 @@ export async function updateUnitStatus(idOrCode: string, status: UnitStatus, not
       action: AuditActions.UNIT_STATUS_CHANGED,
       entityType: 'RESPONSE_UNIT',
       entityId: unit.id,
-      metadata: { callsign: unit.callsign, from: unit.status, to: status, note: note ?? null },
+      metadata: {
+        callsign: unit.callsign,
+        from: unit.status,
+        to: status,
+        note: note ?? null,
+        // Batch 3: explicit oldState/newState for audit trail completeness
+        oldState: unit.status,
+        newState: status,
+      },
     });
     return updated;
   });

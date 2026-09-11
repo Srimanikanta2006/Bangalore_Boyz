@@ -11,21 +11,36 @@
 
 const API_BASE = (import.meta.env?.VITE_API_URL as string) || '/api';
 
-const TOKEN_STORAGE_KEY = 'cs_auth_token';
+const CANONICAL_TOKEN_KEY = 'cs_auth_token';
+const LEGACY_TOKEN_KEY = 'cs_token';
 
 /** In-memory token, hydrated from localStorage on load and kept in sync by the auth store. */
-let authToken: string | null =
-  typeof localStorage !== 'undefined' ? localStorage.getItem(TOKEN_STORAGE_KEY) : null;
+let authToken: string | null = null;
+if (typeof localStorage !== 'undefined') {
+  authToken = localStorage.getItem(CANONICAL_TOKEN_KEY) || localStorage.getItem(LEGACY_TOKEN_KEY);
+  if (authToken && !localStorage.getItem(CANONICAL_TOKEN_KEY)) {
+    localStorage.setItem(CANONICAL_TOKEN_KEY, authToken);
+  }
+}
 
 export function setAuthToken(token: string | null): void {
   authToken = token;
   if (typeof localStorage === 'undefined') return;
-  if (token) localStorage.setItem(TOKEN_STORAGE_KEY, token);
-  else localStorage.removeItem(TOKEN_STORAGE_KEY);
+  if (token) {
+    localStorage.setItem(CANONICAL_TOKEN_KEY, token);
+    localStorage.setItem(LEGACY_TOKEN_KEY, token);
+  } else {
+    localStorage.removeItem(CANONICAL_TOKEN_KEY);
+    localStorage.removeItem(LEGACY_TOKEN_KEY);
+  }
 }
 
 export function getAuthToken(): string | null {
-  return authToken;
+  if (authToken) return authToken;
+  if (typeof localStorage !== 'undefined') {
+    return localStorage.getItem(CANONICAL_TOKEN_KEY) || localStorage.getItem(LEGACY_TOKEN_KEY);
+  }
+  return null;
 }
 
 export class ApiError extends Error {
@@ -52,7 +67,8 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
   const headers: Record<string, string> = {};
   // FormData: let the browser set Content-Type (with multipart boundary) itself.
   if (options.body !== undefined && !isFormData) headers['Content-Type'] = 'application/json';
-  if (!options.anonymous && authToken) headers.Authorization = `Bearer ${authToken}`;
+  const currentToken = getAuthToken();
+  if (!options.anonymous && currentToken) headers.Authorization = `Bearer ${currentToken}`;
 
   let res: Response;
   try {
@@ -75,6 +91,12 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
   }
 
   const envelope = json as { success?: boolean; data?: T; error?: { code?: string; message?: string } } | null;
+
+  if (res.status === 401 && !options.anonymous) {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('cs:session_expired'));
+    }
+  }
 
   if (!res.ok || envelope?.success === false) {
     const code = envelope?.error?.code ?? `HTTP_${res.status}`;

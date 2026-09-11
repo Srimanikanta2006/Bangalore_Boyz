@@ -22,7 +22,7 @@ All screens dynamically adapt data, maps, telemetry sensors, and active incident
 2. **Safe Route Calculation**: Citizens can enter custom start/destination locations or select presets (e.g. Nepal Kathmandu flood bypass). The routing engine calculates safe-elevation pathways avoiding active inundation zones.
 3. **One-Touch SOS Emergency**: Broadcasts citizen location, victim count, and water depth directly to the Government Command Center and nearest Rescue Units.
 
-### B. Government HQ Command Center (`/gov/overview`, `/gov/incidents`, `/gov/zone-cascade/:id`, `/gov/critical-assets`, `/gov/simulator`)
+### B. Government HQ Command Center (`/gov/overview`, `/gov/incidents`, `/gov/zone-cascade/:id`, `/gov/critical-assets`, `/gov/simulator`, `/gov/commercial`)
 1. **Live Map & Cascade Intelligence (`/gov/zone-cascade/:id`)**:
    - Renders street-following polylines along real road curves (no straight lines across buildings).
    - Features zero-overlap HUD element stacking: Top bar displays Grid Status & Weather; bottom-left shows compromise cards; bottom-right hosts the Map Style Switcher (`Street`, `Esri City`, `Dark`).
@@ -34,32 +34,28 @@ All screens dynamically adapt data, maps, telemetry sensors, and active incident
    - **Export SITREP**: Generates situational report JSON payload for emergency agency sharing.
 4. **CAD Disaster Simulator (`/gov/simulator`)**:
    - Simulates 100-Yr Atmospheric River scenarios and stress-tests drainage throughput.
+5. **Business Expansion & Commercial Revenue Hub (`/gov/commercial`)**:
+   - Tiered INR (₹) subscription plans (₹1,499 / ₹3,999 / ₹11,990), usage sliders, partner risk API generator, and ISO-14090 ESG compliance export.
 
 ### C. Rescue Tactical Operations (`/rescue/tactical`, `/rescue/navigate/:id`, `/rescue/console`)
 1. **Department Credential Verification**: Displays `Dept Verified: Fire & Emergency #FR-8821` security seals to verify officer identity.
 2. **Department Vehicle Units**: Specialized callouts for Fire Rigs 🚛, Police Patrol Cruisers 🚓, and ALS Ambulances 🚑.
-3. **Turn-by-Turn Active Navigation**: Displays street-following route polyline directions with real-time hazard warnings (e.g. *Bagmati River breach +2.1m*).
+3. **Turn-by-Turn Active Navigation**: Displays street-following route polyline directions with real-time hazard warnings.
 4. **Un-Congested Action Layout**: Guaranteed right-padding spacing (`pr-14`) between primary action buttons (`Mark Arrived On Scene`) and floating `NAV` FABs.
-
-### D. Business Expansion & Commercial Revenue Hub (`/gov/commercial`)
-1. **Tiered Subscription Plans (INR ₹)**:
-   - **Municipal Core**: **₹1,499 / mo** (Single EOC, 25 critical assets, citizen alerts).
-   - **Statewide Operational**: **₹3,999 / mo** (Unlimited EOCs, AI cascade risk engine, 150 hydro sensors).
-   - **Enterprise & InsurTech**: **₹11,990 / mo** (Certified ESG climate reports, partner risk APIs, white-label branding).
-2. **Usage-Based Telemetry Metering (INR ₹)**:
-   - **Critical Assets**: **₹35 / asset / mo**
-   - **IoT Hydro-Sensors**: **₹9.50 / sensor / mo**
-   - **Partner Risk API Queries**: **₹40 / 1,000 queries**
-   - **Live Revenue Meter**: Sliders dynamically calculate Monthly Recurring Revenue (MRR) and Annual Recurring Revenue (ARR) in Indian Rupees.
-3. **InsurTech Partner API Marketplace**: REST API endpoint (`POST /v1/risk/evaluate-route`) with API Key generation for delivery fleets (Amazon, Uber) and insurance underwriters.
-4. **Certified ESG Compliance Generator**: One-click download of ISO-14090 compliance audit reports with physical damage avoidance cost estimates (e.g., ₹35 Crores INR).
 
 ---
 
-## 3. System Verification & Build Integrity
+## 3. Phase 3 & Integration Deliverables
+- [x] **Phase 3 Batch 1: Security Foundation** — Tiered rate limiting (`express-rate-limit`), object-level auth on citizen reports/SOS, sanitized error handlers, hardened Helmet headers, seamless role sync.
+- [x] **Phase 3 Batches 2 & 3: Reliability & Integrity** — External API resilience (Open-Meteo retry/fallback with freshness flags), rolling-window deduplication & `Idempotency-Key` headers, atomic Prisma transactions, audit logging (`AuditLog.metadata`), and alert delivery lifecycle.
+- [x] **Phase 3 Batches 4 & 5: Observability & Async Event Outbox** — Trace ID propagation, `/health/live`, `/health/ready`, `/metrics`, and transactional `EventOutbox` worker.
+- [x] **Supabase PostgreSQL & Cloud Deployment** — Supabase transaction pooler setup, Prisma 5/5 migrations applied, complete synthetic seed applied, Render backend blueprint (`render.yaml`), Vercel SPA routing (`client/vercel.json`), and 12/12 E2E integration audit passed.
+
+---
+
+## 4. System Verification & Build Integrity
 - **Vite & TypeScript Compilation**: 100% clean production build (`npm --prefix client run build`) with **0 errors**.
 - **Backend Unit & Integration Tests**: 21/21 test files passed, 163/163 executable tests passed.
 - **End-to-End Audit**: 12/12 steps passed (100% success rate).
-- **Phase 2 Modules**: Preparedness Plans, Escalation Workflows, Recovery Tracking, Configurable Thresholds, Role/Permission Hardening, Multi-Tenant Organizations, and Commercialization API.
+- **Supabase Database**: Connected & Seeded via `aws-0-ap-northeast-1.pooler.supabase.com:6543`.
 - **Git Branch**: All enhancements committed to `feature/climateshield-mvp`.
-
