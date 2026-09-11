@@ -795,3 +795,45 @@ model SentAlert {
   @@index([subscriberId])
 }
 
+// ========================= EVENT OUTBOX =========================
+
+enum OutboxStatus {
+  PENDING
+  PROCESSING
+  RETRY_WAIT
+  COMPLETED
+  FAILED
+  DEAD_LETTER
+}
+
+enum OutboxEventType {
+  WEATHER_UPDATED
+  HAZARD_DETECTED
+  RISK_THRESHOLD_CROSSED
+  INCIDENT_CREATED
+  INCIDENT_ESCALATED
+  ALERT_CREATED
+  TASK_CREATED
+  TASK_COMPLETED
+}
+
+model EventOutbox {
+  id             String          @id @default(uuid())
+  eventType      OutboxEventType
+  payload        Json
+  status         OutboxStatus    @default(PENDING)
+  attempts       Int             @default(0)
+  maxAttempts    Int             @default(3)
+  nextAttemptAt  DateTime        @default(now())
+  processedAt    DateTime?
+  lastError      String?
+  idempotencyKey String?         @unique
+  traceId        String?
+  requestId      String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  @@index([status, nextAttemptAt])
+  @@index([eventType])
+}
+

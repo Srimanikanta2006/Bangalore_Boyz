@@ -324,7 +324,15 @@ export async function updateTaskStatus(taskKey: string, status: TaskStatus, note
       : AuditActions.TASK_CANCELLED;
     await createAudit(tx, {
       userId: user.id, action, entityType: 'TASK', entityId: task.id,
-      metadata: { taskCode: task.taskCode, from: task.status, to: status, note: note ?? null },
+      metadata: {
+        taskCode: task.taskCode,
+        from: task.status,
+        to: status,
+        note: note ?? null,
+        // Batch 3: explicit oldState/newState for audit trail completeness
+        oldState: task.status,
+        newState: status,
+      },
     });
 
     return updated;

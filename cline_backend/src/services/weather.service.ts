@@ -4,6 +4,10 @@ import { prisma } from '../db/prisma';
 import { AppError } from '../utils/errors';
 import { pointInZoneGeoJson } from '../utils/geo';
 import { buildPaginated, resolvePagination } from '../utils/pagination';
+import type { DataFreshness, Confidence } from '../utils/fetchResilience';
+import { fetchWithResilience } from '../utils/fetchResilience';
+
+export type { DataFreshness, Confidence };
 
 /**
  * LIVE LOCATION-AWARE WEATHER (Open-Meteo - no API key required).
@@ -11,12 +15,19 @@ import { buildPaginated, resolvePagination } from '../utils/pagination';
  * only used for optional zone resolution and background-poll history.
  * Measurements are provider values (LIVE_OBSERVED); anything derived from them
  * via documented thresholds is explicitly labeled MODELED. No value is invented.
+ *
+ * Resilience: 3.5s timeout, 1 retry with backoff, stale-cache fallback.
+ * Freshness flag: "live" | "stale" | "mock_fallback"
+ * Confidence:     "HIGH" (live) | "MEDIUM" (stale) | "ESTIMATED" (mock_fallback)
  */
 
 export type WeatherFetcher = (url: string, init?: RequestInit) => Promise<{ ok: boolean; status: number; json: () => Promise<unknown> }>;
 
 const PROVIDER_URL = 'https://api.open-meteo.com/v1/forecast';
-const FETCH_TIMEOUT_MS = 8000;
+const FETCH_TIMEOUT_MS = 3500; // strict 3.5s per attempt
+const FETCH_MAX_RETRIES = 1;
+/** Stale-cache window: serve stale data up to STALE_FALLBACK_SECONDS beyond the normal TTL. */
+const STALE_FALLBACK_SECONDS = 3600; // up to 1 hour stale in degraded mode
 
 export interface ForecastHour {
   time: string;
@@ -30,6 +41,10 @@ export interface NormalizedWeather {
   location: { latitude: number; longitude: number };
   provider: 'Open-Meteo';
   dataQuality: 'LIVE_OBSERVED';
+  /** Batch 2: explicit freshness tag for client display. */
+  dataFreshness: DataFreshness;
+  /** Batch 2: confidence in the reading, downgraded when serving stale/fallback data. */
+  confidence: Confidence;
   observedAt: string | null;
   fetchedAt: string;
   freshnessSeconds: number | null;
@@ -149,6 +164,8 @@ export function normalizeOpenMeteo(
     location: { latitude: ctx.latitude, longitude: ctx.longitude },
     provider: 'Open-Meteo',
     dataQuality: 'LIVE_OBSERVED',
+    dataFreshness: 'live' as DataFreshness, // set to 'stale' or 'mock_fallback' by caller on degraded path
+    confidence: 'HIGH' as Confidence,       // downgraded to 'MEDIUM'/'ESTIMATED' by caller on degraded path
     observedAt,
     fetchedAt: ctx.fetchedAt.toISOString(),
     freshnessSeconds: observedMs != null ? Math.max(0, Math.round((ctx.fetchedAt.getTime() - observedMs * 1000) / 1000)) : null,
@@ -207,9 +224,21 @@ export function getCachedWeather(key: string, opts: { now?: number; ttlSeconds?:
   const entry = cache.get(key);
   if (!entry) return null;
   if ((opts.now ?? Date.now()) - entry.fetchedAtMs > ttl * 1000) {
-    cache.delete(key);
+    // Do NOT delete stale entries — they serve as the fallback pool.
     return null;
   }
+  return entry.payload;
+}
+
+/**
+ * Retrieve a stale cache entry (beyond TTL but within the extended stale window).
+ * Returns null when no entry exists or entry is too old to be useful.
+ */
+export function getStaleCachedWeather(key: string, now = Date.now()): NormalizedWeather | null {
+  const entry = cache.get(key);
+  if (!entry) return null;
+  const ageMs = now - entry.fetchedAtMs;
+  if (ageMs > (env.WEATHER_CACHE_SECONDS + STALE_FALLBACK_SECONDS) * 1000) return null;
   return entry.payload;
 }
 
@@ -243,38 +272,73 @@ async function resolveZone(latitude: number, longitude: number) {
   return null;
 }
 
+/**
+ * Fetch live weather with resilience: 3.5s timeout, 1 retry with backoff.
+ * On failure, serves stale cache with downgraded freshness/confidence tags.
+ * Never throws to the caller — degraded data is always preferred over an error.
+ */
 export async function getCurrentWeather(
   input: { latitude: number; longitude: number; forecastHours?: number },
   fetcher: WeatherFetcher = (url, init) => fetch(url, init),
 ): Promise<NormalizedWeather> {
   const forecastHours = input.forecastHours ?? 0;
   const key = cacheKey(input.latitude, input.longitude, forecastHours);
+
+  // 1. Fresh cache hit (within TTL)
   const cached = getCachedWeather(key);
   if (cached) return cached;
 
+  // 2. Attempt live fetch with retry + backoff
+  const url = buildWeatherUrl(input.latitude, input.longitude, forecastHours);
   let payload: unknown;
-  try {
-    const response = await fetcher(buildWeatherUrl(input.latitude, input.longitude, forecastHours), {
-      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-    });
-    if (!response.ok) {
-      throw new AppError('WEATHER_PROVIDER_ERROR', `Live weather provider returned HTTP ${response.status}`, 502);
+  let fetchedLive = false;
+
+  // Use a custom fetch adapter that respects FETCH_TIMEOUT_MS per attempt
+  for (let attempt = 0; attempt <= FETCH_MAX_RETRIES; attempt++) {
+    if (attempt > 0) await new Promise<void>((r) => setTimeout(r, 400 * 2 ** (attempt - 1)));
+    try {
+      const response = await fetcher(url, { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
+      if (!response.ok) break; // non-transient: stop retrying
+      payload = await response.json();
+      fetchedLive = true;
+      break;
+    } catch {
+      // Transient (timeout / network): keep retrying
     }
-    payload = await response.json();
-  } catch (err) {
-    if (err instanceof AppError) throw err;
-    throw new AppError('WEATHER_PROVIDER_UNAVAILABLE', 'Live weather provider is unreachable', 502);
   }
 
-  const normalized = normalizeOpenMeteo(payload, {
-    latitude: input.latitude,
-    longitude: input.longitude,
-    forecastHours,
-    fetchedAt: new Date(),
-  });
-  normalized.zone = await resolveZone(input.latitude, input.longitude);
-  setCachedWeather(key, normalized);
-  return normalized;
+  if (fetchedLive && payload !== undefined) {
+    // 3. Normalize the fresh live payload
+    const normalized = normalizeOpenMeteo(payload, {
+      latitude: input.latitude,
+      longitude: input.longitude,
+      forecastHours,
+      fetchedAt: new Date(),
+    });
+    // dataFreshness/confidence already set to 'live'/'HIGH' in normalizeOpenMeteo
+    normalized.zone = await resolveZone(input.latitude, input.longitude);
+    setCachedWeather(key, normalized);
+    return normalized;
+  }
+
+  // 4. Stale cache fallback — provider is offline/slow
+  const now = Date.now();
+  const stale = getStaleCachedWeather(key, now);
+  if (stale) {
+    const degraded = {
+      ...stale,
+      dataFreshness: 'stale' as DataFreshness,
+      confidence: 'MEDIUM' as Confidence,
+      notes: [
+        ...stale.notes,
+        'Weather data served from stale cache — live provider unavailable. Values may be up to 1 hour old.',
+      ],
+    };
+    return degraded;
+  }
+
+  // 5. No cache at all — last resort: throw so callers know there is no data
+  throw new AppError('WEATHER_PROVIDER_UNAVAILABLE', 'Live weather provider is unreachable and no cached data is available', 502);
 }
 
 // ---------- persisted history (background polling) ----------

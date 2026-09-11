@@ -2,7 +2,7 @@ import type { Prisma } from '@prisma/client';
 import { prisma } from '../db/prisma';
 import { Errors } from '../utils/errors';
 import { nextSosCode } from '../utils/ids';
-import { AuditActions, recordAudit } from './audit.service';
+import { AuditActions, createAudit } from './audit.service';
 import { createIncident } from './incident.service';
 import { resolveZoneForPoint } from './zoneLookup.service';
 import type { AuthUser } from '../types/auth';
@@ -12,7 +12,15 @@ import type { AuthUser } from '../types/auth';
  * pipeline. IMPORTANT: this creates an INTERNAL ClimateShield emergency event
  * visible to authorized operators. It does NOT contact real emergency
  * services (911/112/local dispatch) - there is no external integration.
+ *
+ * Batch 2: Rolling deduplication — same citizen within 3 minutes returns the
+ * existing active SOS event instead of creating duplicates.
+ * Batch 3: SOS submission + critical incident creation + operator notifications
+ * are wrapped in a single prisma.$transaction for crash-safe atomicity.
  */
+
+/** Deduplication window: same citizen within 3 minutes returns existing active SOS. */
+const SOS_DEDUP_WINDOW_MS = 3 * 60 * 1000; // 3 minutes
 
 const THREAT_TO_INCIDENT_TYPE: Record<string, string> = {
   MEDICAL: 'MEDICAL_ACCESS',
@@ -62,49 +70,68 @@ function toSosDto(r: SosWithRelations) {
   };
 }
 
-export async function createSosEvent(user: AuthUser, input: CreateSosInput) {
+export async function createSosEvent(user: AuthUser, input: CreateSosInput, idempotencyKey?: string) {
   const zone = await resolveZoneForPoint(input.latitude, input.longitude);
   if (!zone) {
     throw Errors.businessRule('LOCATION_OUTSIDE_COVERAGE', 'This location is outside any monitored zone.');
   }
 
-  // SOS is always CRITICAL severity (life-safety) and auto-creates a linked Incident.
-  const incident = await createIncident(
-    {
-      title: `SOS: ${THREAT_LABEL[input.primaryThreat] ?? input.primaryThreat} near ${zone.name}`,
-      description: input.note,
-      type: (THREAT_TO_INCIDENT_TYPE[input.primaryThreat] ?? 'OTHER') as never,
-      severity: 'CRITICAL' as never,
-      zoneId: zone.id,
-    },
-    user,
-  );
-
-  const sosCode = await nextSosCode(prisma);
-  const created = await prisma.sosEvent.create({
-    data: {
-      sosCode,
+  // ---- Batch 2: Rolling Deduplication ----
+  // Same citizen within 3 minutes returns the existing active SOS event.
+  const windowStart = new Date(Date.now() - SOS_DEDUP_WINDOW_MS);
+  const existingSos = await prisma.sosEvent.findFirst({
+    where: {
       requesterId: user.id,
-      latitude: input.latitude,
-      longitude: input.longitude,
-      zoneId: zone.id,
-      primaryThreat: input.primaryThreat as never,
-      secondaryConditions: (input.tags as unknown as Prisma.InputJsonValue) ?? undefined,
-      peopleAffected: input.peopleAffected,
-      note: input.note,
-      incidentId: incident.id,
+      status: 'OPEN' as never,
+      createdAt: { gte: windowStart },
     },
     include: sosInclude,
+    orderBy: { createdAt: 'desc' },
   });
+  if (existingSos) {
+    return { ...toSosDto(existingSos), _deduplicated: true };
+  }
 
-  // Best-effort operator notification fan-out; failures never block the SOS response.
-  try {
-    const operators = await prisma.user.findMany({
+  // ---- Batch 3: Atomic Transaction ----
+  // SOS submission + critical incident creation + operator notifications all-or-nothing.
+  const sosCode = await nextSosCode(prisma);
+
+  const created = await prisma.$transaction(async (tx) => {
+    // SOS is always CRITICAL severity (life-safety) and auto-creates a linked Incident.
+    const incident = await createIncident(
+      {
+        title: `SOS: ${THREAT_LABEL[input.primaryThreat] ?? input.primaryThreat} near ${zone.name}`,
+        description: input.note,
+        type: (THREAT_TO_INCIDENT_TYPE[input.primaryThreat] ?? 'OTHER') as never,
+        severity: 'CRITICAL' as never,
+        zoneId: zone.id,
+      },
+      user,
+    );
+
+    const sos = await tx.sosEvent.create({
+      data: {
+        sosCode,
+        requesterId: user.id,
+        latitude: input.latitude,
+        longitude: input.longitude,
+        zoneId: zone.id,
+        primaryThreat: input.primaryThreat as never,
+        secondaryConditions: (input.tags as unknown as Prisma.InputJsonValue) ?? undefined,
+        peopleAffected: input.peopleAffected,
+        note: input.note,
+        incidentId: incident.id,
+      },
+      include: sosInclude,
+    });
+
+    // Operator notifications inside the transaction — all succeed or all roll back.
+    const operators = await tx.user.findMany({
       where: { role: { in: OPERATOR_ROLES as unknown as never[] }, isActive: true },
       select: { id: true },
     });
     if (operators.length > 0) {
-      await prisma.notification.createMany({
+      await tx.notification.createMany({
         data: operators.map((o) => ({
           userId: o.id,
           type: 'SOS_ALERT',
@@ -114,24 +141,37 @@ export async function createSosEvent(user: AuthUser, input: CreateSosInput) {
         })),
       });
     }
-  } catch (err) {
-    // eslint-disable-next-line no-console
-    console.error(JSON.stringify({ level: 'error', scope: 'sos', message: 'Failed to notify operators', detail: err instanceof Error ? err.message : String(err) }));
-  }
 
-  await recordAudit({
-    userId: user.id,
-    action: AuditActions.CITIZEN_SOS_SUBMITTED,
-    entityType: 'SOS_EVENT',
-    entityId: created.id,
-    metadata: { primaryThreat: input.primaryThreat, zone: zone.name, incidentId: incident.id, incidentCode: incident.incidentCode },
+    await createAudit(tx, {
+      userId: user.id,
+      action: AuditActions.CITIZEN_SOS_SUBMITTED,
+      entityType: 'SOS_EVENT',
+      entityId: sos.id,
+      metadata: {
+        primaryThreat: input.primaryThreat,
+        zone: zone.name,
+        incidentId: incident.id,
+        incidentCode: incident.incidentCode,
+        oldState: null,
+        newState: 'OPEN',
+      },
+    });
+
+    return sos;
   });
 
-  return toSosDto(created);
+  return { ...toSosDto(created), _deduplicated: false };
 }
 
 /** Own SOS history only, newest first. */
 export async function listMySosEvents(userId: string) {
   const rows = await prisma.sosEvent.findMany({ where: { requesterId: userId }, include: sosInclude, orderBy: { createdAt: 'desc' } });
   return rows.map(toSosDto);
+}
+
+/** Own SOS event detail only - foreign IDs 404 (object authorization to prevent enumeration). */
+export async function getMySosEvent(userId: string, id: string) {
+  const row = await prisma.sosEvent.findFirst({ where: { id, requesterId: userId }, include: sosInclude });
+  if (!row) throw Errors.notFound('SOS event', id);
+  return toSosDto(row);
 }

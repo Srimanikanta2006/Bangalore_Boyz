@@ -85,6 +85,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setToken(null);
   }, []);
 
+  // Listen for 401 session expiry from api requests and cleanly clear state
+  useEffect(() => {
+    const onSessionExpired = () => logout();
+    if (typeof window !== 'undefined') {
+      window.addEventListener('cs:session_expired', onSessionExpired);
+      return () => window.removeEventListener('cs:session_expired', onSessionExpired);
+    }
+  }, [logout]);
+
   const value = useMemo<AuthContextValue>(
     () => ({
       user,

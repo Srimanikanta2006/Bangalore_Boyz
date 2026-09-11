@@ -2,6 +2,7 @@ import { createApp } from './app';
 import { env } from './config/env';
 import { prisma } from './db/prisma';
 import { startWeatherPoller, stopWeatherPoller } from './services/weather.poller';
+import { startWorker, stopWorker } from './services/outboxWorker.service';
 
 const app = createApp();
 const server = app.listen(env.PORT, () => {
@@ -14,12 +15,14 @@ const server = app.listen(env.PORT, () => {
     }),
   );
   startWeatherPoller();
+  startWorker();
 });
 
 async function shutdown(signal: string): Promise<void> {
   // eslint-disable-next-line no-console
   console.log(JSON.stringify({ level: 'info', message: `Received ${signal}, shutting down gracefully` }));
   stopWeatherPoller();
+  stopWorker();
   server.close(async () => {
     await prisma.$disconnect();
     process.exit(0);

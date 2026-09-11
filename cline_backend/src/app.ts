@@ -5,6 +5,7 @@ import { env } from './config/env';
 import { EVIDENCE_DIR, EVIDENCE_URL_PREFIX } from './middleware/upload';
 import { requestLogger } from './middleware/requestLogger';
 import { blockCitizenFromInternal } from './middleware/auth';
+import { globalApiLimiter } from './middleware/rateLimiter';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 
 import healthRoutes from './routes/health.routes';
@@ -56,7 +57,8 @@ export function createApp() {
   // depth; government writes are already fail-closed via requireRole).
   app.use(blockCitizenFromInternal);
 
-  // --- API routes (all mounted under /api) ---
+  // --- API rate limiting & routes (all mounted under /api) ---
+  app.use('/api', globalApiLimiter);
   app.use('/api', healthRoutes);
   app.use('/api', authRoutes);
   app.use('/api', overviewRoutes);

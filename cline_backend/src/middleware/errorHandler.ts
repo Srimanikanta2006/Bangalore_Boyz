@@ -54,13 +54,20 @@ export function errorHandler(
     }
   }
 
+function sanitizeErrorMessage(raw: string): string {
+  let clean = raw.replace(/\/[a-zA-Z0-9_.-]+(\/[a-zA-Z0-9_.-]+)+/g, '[path]');
+  clean = clean.replace(/postgres(ql)?:\/\/[^\s]+/gi, '[database-url]');
+  clean = clean.replace(/Bearer\s+[a-zA-Z0-9_.-]+/gi, 'Bearer [token]');
+  return clean;
+}
+
   // Unknown error: log server-side, never leak internals in production.
   // eslint-disable-next-line no-console
   console.error(JSON.stringify({
     level: 'error',
     scope: 'unhandled',
     name: err instanceof Error ? err.name : typeof err,
-    message: err instanceof Error ? err.message : String(err),
+    message: err instanceof Error ? sanitizeErrorMessage(err.message) : String(err),
     stack: env.isProd ? undefined : err instanceof Error ? err.stack : undefined,
   }));
 
@@ -68,7 +75,7 @@ export function errorHandler(
     success: false,
     error: {
       code: 'INTERNAL_ERROR',
-      message: env.isProd ? 'Internal server error' : err instanceof Error ? err.message : String(err),
+      message: env.isProd ? 'Internal server error' : err instanceof Error ? sanitizeErrorMessage(err.message) : 'Internal server error',
     },
   });
 }

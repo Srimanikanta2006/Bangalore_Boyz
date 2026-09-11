@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../../auth/AuthContext';
+import { getAuthToken } from '../../lib/api';
 
 export const ScreenSwitcher: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user, login } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
 
   const screens = [
@@ -74,9 +77,33 @@ export const ScreenSwitcher: React.FC = () => {
                     </span>
                   )}
                   <button
-                    onClick={() => {
-                      navigate(screen.path);
+                    onClick={async () => {
                       setIsOpen(false);
+                      // If switching to citizen screens while not citizen (or not logged in), auto-sync citizen demo
+                      if (screen.path.startsWith('/citizen') && user?.role !== 'CITIZEN') {
+                        try {
+                          await login('citizen@climateshield.demo', 'DemoGov@2024');
+                        } catch {
+                          // fallback handled gracefully
+                        }
+                      }
+                      // If switching to government HQ while citizen (or not logged in), auto-sync government demo
+                      else if (screen.path.startsWith('/gov') && !screen.path.startsWith('/gov/mobile') && (!user || user.role === 'CITIZEN')) {
+                        try {
+                          await login('government@climateshield.demo', 'DemoGov@2024');
+                        } catch {
+                          // fallback handled gracefully
+                        }
+                      }
+                      // If switching to rescue or mobile field while citizen (or not logged in), auto-sync field demo
+                      else if ((screen.path.startsWith('/rescue') || screen.path.startsWith('/gov/mobile')) && (!user || user.role === 'CITIZEN')) {
+                        try {
+                          await login('field@climateshield.demo', 'DemoGov@2024');
+                        } catch {
+                          // fallback handled gracefully
+                        }
+                      }
+                      navigate(screen.path);
                     }}
                     className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-left transition-colors ${
                       isActive

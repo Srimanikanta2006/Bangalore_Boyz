@@ -39,14 +39,45 @@ import { ScreenSwitcher } from './components/stitch/ScreenSwitcher';
 
 // Auth
 import { RequireAuth } from './auth/RequireAuth';
+import { useAuth } from './auth/AuthContext';
+import { homeForRole } from './auth/types';
 
 /** Wraps a citizen page in the CITIZEN-only route guard. */
 const Citizen = (element: React.ReactNode) => <RequireAuth roles={['CITIZEN']}>{element}</RequireAuth>;
 
-/** Government API routes require the JWT issued by the local Express API. */
-const RequireGovernmentLogin: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const token = typeof window !== 'undefined' ? (localStorage.getItem('cs_token') || localStorage.getItem('cs_auth_token')) : null;
-  return token ? <>{children}</> : <Navigate to="/login" replace />;
+/** Wraps a Government HQ Desktop page in the Gov-only route guard. */
+const GovHq = (element: React.ReactNode) => (
+  <RequireAuth roles={['GOVERNMENT_OPERATOR', 'DISPATCHER', 'ADMIN', 'ANALYST']}>{element}</RequireAuth>
+);
+
+/** Wraps a Government Mobile Field page in the Field Operator route guard. */
+const GovField = (element: React.ReactNode) => (
+  <RequireAuth roles={['FIELD_OPERATOR', 'DISPATCHER', 'GOVERNMENT_OPERATOR', 'ADMIN']}>{element}</RequireAuth>
+);
+
+/** Wraps Tactical Rescue in the tactical response route guard. */
+const Rescue = (element: React.ReactNode) => (
+  <RequireAuth roles={['FIELD_OPERATOR', 'DISPATCHER', 'GOVERNMENT_OPERATOR', 'ADMIN']}>{element}</RequireAuth>
+);
+
+/**
+ * Root and Fallback Route:
+ * - Unauthenticated -> /login
+ * - Authenticated -> role-specific home (Citizen -> /citizen/map, Gov -> /gov/overview, Field -> /gov/mobile/map)
+ */
+const RootLanding: React.FC = () => {
+  const { user, isAuthenticated, initializing } = useAuth();
+  if (initializing) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-surface text-on-surface-variant">
+        <span className="font-body-md text-body-md">Restoring session…</span>
+      </div>
+    );
+  }
+  if (!isAuthenticated || !user) {
+    return <Navigate to="/login" replace />;
+  }
+  return <Navigate to={homeForRole(user.role)} replace />;
 };
 
 export const App: React.FC = () => {
@@ -56,8 +87,8 @@ export const App: React.FC = () => {
       <ScreenSwitcher />
 
       <Routes>
-        {/* Default Landing: Government HQ Command Center */}
-        <Route path="/" element={<RequireGovernmentLogin><GovCommandCenterPage /></RequireGovernmentLogin>} />
+        {/* Default Landing: Dynamic Role Home or /login */}
+        <Route path="/" element={<RootLanding />} />
 
         {/* 1. Shared Gateway */}
         <Route path="/login" element={<LoginPage />} />
@@ -71,33 +102,34 @@ export const App: React.FC = () => {
         <Route path="/citizen/sos" element={Citizen(<SosEmergencyPage />)} />
         <Route path="/citizen/report" element={Citizen(<HazardReportPage />)} />
 
-        {/* 3. Rescue Tactical Routes */}
-        <Route path="/rescue/tactical" element={<RescueTacticalMapPage />} />
-        <Route path="/rescue/mission/:id" element={<RescueMissionDossierPage />} />
-        <Route path="/rescue/navigate/:id" element={<RescueActiveNavPage />} />
-        <Route path="/rescue/hazard/:id" element={<RescueHazardDetailPage />} />
-        <Route path="/rescue/report/:id" element={<RescueStatusReportPage />} />
-        <Route path="/rescue/console" element={<RescueCommandConsolePage />} />
+        {/* 3. Rescue Tactical Routes (Field / Dispatch / Gov guarded) */}
+        <Route path="/rescue/tactical" element={Rescue(<RescueTacticalMapPage />)} />
+        <Route path="/rescue/mission/:id" element={Rescue(<RescueMissionDossierPage />)} />
+        <Route path="/rescue/navigate/:id" element={Rescue(<RescueActiveNavPage />)} />
+        <Route path="/rescue/hazard/:id" element={Rescue(<RescueHazardDetailPage />)} />
+        <Route path="/rescue/report/:id" element={Rescue(<RescueStatusReportPage />)} />
+        <Route path="/rescue/console" element={Rescue(<RescueCommandConsolePage />)} />
 
-        {/* 4. Government Mobile Field Routes */}
-        <Route path="/gov/mobile/map" element={<GovMobileMapPage />} />
-        <Route path="/gov/mobile/triage" element={<GovMobileTriagePage />} />
-        <Route path="/gov/mobile/tasks" element={<GovMobileTasksPage />} />
+        {/* 4. Government Mobile Field Routes (Field / Dispatch / Gov guarded) */}
+        <Route path="/gov/mobile/map" element={GovField(<GovMobileMapPage />)} />
+        <Route path="/gov/mobile/triage" element={GovField(<GovMobileTriagePage />)} />
+        <Route path="/gov/mobile/tasks" element={GovField(<GovMobileTasksPage />)} />
 
-        {/* 5. Government HQ Desktop Routes */}
-        <Route path="/gov/overview" element={<RequireGovernmentLogin><GovCommandCenterPage /></RequireGovernmentLogin>} />
-        <Route path="/gov/critical-assets" element={<RequireGovernmentLogin><GovCriticalAssetMonitorPage /></RequireGovernmentLogin>} />
-        <Route path="/gov/incidents" element={<RequireGovernmentLogin><GovIncidentsPage /></RequireGovernmentLogin>} />
-        <Route path="/gov/zone-cascade/:id" element={<RequireGovernmentLogin><GovZoneCascadePage /></RequireGovernmentLogin>} />
-        <Route path="/gov/simulator" element={<RequireGovernmentLogin><GovSimulatorPage /></RequireGovernmentLogin>} />
-        <Route path="/gov/response-center" element={<RequireGovernmentLogin><GovResponseCenterPage /></RequireGovernmentLogin>} />
+        {/* 5. Government HQ Desktop Routes (Gov Operator / Dispatcher / Analyst / Admin guarded) */}
+        <Route path="/gov/overview" element={GovHq(<GovCommandCenterPage />)} />
+        <Route path="/gov/critical-assets" element={GovHq(<GovCriticalAssetMonitorPage />)} />
+        <Route path="/gov/incidents" element={GovHq(<GovIncidentsPage />)} />
+        <Route path="/gov/zone-cascade/:id" element={GovHq(<GovZoneCascadePage />)} />
+        <Route path="/gov/simulator" element={GovHq(<GovSimulatorPage />)} />
+        <Route path="/gov/response-center" element={GovHq(<GovResponseCenterPage />)} />
 
         {/* Legacy / Console Redirects */}
-        <Route path="/console" element={<Navigate to="/gov/overview" replace />} />
-        <Route path="/console/*" element={<Navigate to="/gov/overview" replace />} />
+        <Route path="/console" element={<RootLanding />} />
+        <Route path="/console/*" element={<RootLanding />} />
+        <Route path="/gov" element={<Navigate to="/gov/overview" replace />} />
 
-        {/* Fallback to Overview */}
-        <Route path="*" element={<Navigate to="/gov/overview" replace />} />
+        {/* Fallback to dynamic role landing */}
+        <Route path="*" element={<RootLanding />} />
       </Routes>
     </BrowserRouter>
   );

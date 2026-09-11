@@ -6,6 +6,7 @@ import {
   Building2, BarChart3, History, Users, Satellite, LogOut
 } from 'lucide-react';
 import { getActiveRegion, setActiveRegion, type RegionKey } from '../../citizen/geo';
+import { useAuth } from '../../auth/AuthContext';
 
 interface GovHqLayoutProps {
   children: React.ReactNode;
@@ -15,6 +16,7 @@ interface GovHqLayoutProps {
 export const GovHqLayout: React.FC<GovHqLayoutProps> = ({ children, activePath }) => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { logout } = useAuth();
   const current = activePath || location.pathname;
 
   const [region, setRegionState] = useState<RegionKey>(getActiveRegion());
@@ -116,10 +118,10 @@ export const GovHqLayout: React.FC<GovHqLayoutProps> = ({ children, activePath }
 
             <button 
               onClick={() => {
-                localStorage.removeItem('cs_token');
-                navigate('/login');
+                logout();
+                navigate('/login', { replace: true });
               }}
-              title="Switch role"
+              title="Sign out"
               className="p-1.5 rounded-lg text-[#45464d] hover:text-[#0b1c30] hover:bg-[#eff4ff] transition-colors"
             >
               <LogOut className="w-4 h-4" />
