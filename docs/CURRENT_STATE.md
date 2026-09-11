@@ -63,6 +63,7 @@ This file acts as the live status dashboard for the project. Every team member a
 - [x] Run PostgreSQL schema migrations and seed data through Docker Compose
 - [x] Wire `agents/`+`orchestration/` into `cline_backend` as `POST /api/incidents/:id/orchestrate`
 - [x] Add notification pipeline for risk threshold crossings (`POST /api/zones/:id/notify` and `GET /api/notifications`)
+- [x] **Phase 3 Batches 4 & 5 Completed** — Observability (traceId propagation, /health/live, /health/ready, /metrics, in-process metrics service) + Async Event Outbox (EventOutbox Prisma model, outbox worker with retry/backoff/DLQ, incident creation fires INCIDENT_CREATED event). 193/197 tests pass (4 skipped).
 - [ ] Finalize hackathon demo presentation and live stream verification
 - [ ] Confirm shared database environment variables
 - [ ] Government team: continue overview/response-center/simulator work in parallel; Rescue team: continue tactical/mission workflow in parallel (both unaffected by the citizen branch — no shared file conflicts, additive schema only)
