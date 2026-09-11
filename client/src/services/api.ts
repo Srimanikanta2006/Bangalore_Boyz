@@ -12,7 +12,14 @@ import {
   DataQualityStatus,
 } from '../types';
 
-const API_BASE = import.meta.env.VITE_API_URL || '/api';
+function getApiBase(): string {
+  const raw = (import.meta.env.VITE_API_URL as string | undefined)?.trim();
+  if (!raw) return '/api';
+  const clean = raw.replace(/\/+$/, '');
+  return clean.endsWith('/api') ? clean : `${clean}/api`;
+}
+
+const API_BASE = getApiBase();
 
 // JWT header hook: if localStorage has 'cs_token', attach it as a Bearer token
 // to every outgoing request. No login UI this round.
