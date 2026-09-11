@@ -43,14 +43,8 @@
     "helmet": "^8.0.0",
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.3.0",
-<<<<<<< HEAD
     "razorpay": "^2.9.8",
-    "zod": "^3.24.1"
-  },
-  "devDependencies": {
-=======
     "zod": "^3.24.1",
->>>>>>> 003e2a997810ecf36cc81360993c189517d59b10
     "@types/bcryptjs": "^2.4.6",
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
