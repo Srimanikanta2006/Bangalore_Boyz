@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { RealLeafletMap } from '../../components/stitch/RealLeafletMap';
 import { 
   Shield, Radio, AlertTriangle, Layers, LocateFixed, 
   Waves, Timer, ChevronDown, ChevronRight, FolderOpen, 
@@ -60,23 +61,50 @@ export const GovMobileMapPage: React.FC = () => {
           <div 
             className="absolute inset-0 w-full h-full bg-cover bg-center opacity-75"
             style={{ backgroundImage: `url('https://images.unsplash.com/photo-1547683905-f686c993aae5?auto=format&fit=crop&w=800&q=80')` }}
+          />          <RealLeafletMap
+            center={[13.062, 80.275]}
+            zoom={14}
+            tileTheme="dark"
+            showUserLocation={true}
+            zones={[
+              {
+                id: 'zone_eb_mobile',
+                name: 'East Basin Inundation Sector',
+                lat: 13.062,
+                lng: 80.275,
+                riskLevel: 'CRITICAL',
+                radiusMeters: 1400,
+              }
+            ]}
+            markers={[
+              {
+                id: 'st_jude_hub',
+                lat: 13.080,
+                lng: 80.285,
+                title: 'St. Jude Trauma Hub',
+                description: 'Level-1 Emergency Facility | 84% Capacity',
+                severity: 'HIGH',
+                type: 'asset',
+              },
+              {
+                id: 'pump_unit_4',
+                lat: 13.065,
+                lng: 80.270,
+                title: 'Heavy Pump Unit 4',
+                description: 'Capacity: 1200 L/min | Status: ACTIVE',
+                type: 'unit',
+              },
+              {
+                id: 'inc_bayshore_m',
+                lat: 13.064,
+                lng: 80.276,
+                title: 'Bayshore Inundation Site',
+                description: 'Water depth: 1.4m | Traffic Blocked',
+                severity: 'CRITICAL',
+                type: 'incident',
+              }
+            ]}
           />
-
-          {/* Interactive Simulated GIS Vector Layer */}
-          <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 400 580" preserveAspectRatio="none">
-            {/* Inundation Vector Polygon */}
-            <polygon 
-              points="40,240 180,210 290,260 260,380 110,390 30,320" 
-              fill="#0090a9" 
-              fillOpacity="0.25" 
-              stroke="#0090a9" 
-              strokeWidth="2" 
-              strokeDasharray="4 2" 
-            />
-            {/* Blocked Roads Vector (Red Dashed) */}
-            <path d="M60,330 L160,290 L240,310" fill="none" stroke="#ba1a1a" strokeWidth="4" strokeDasharray="6 4" strokeLinecap="round" />
-            <path d="M160,290 L190,210" fill="none" stroke="#ba1a1a" strokeWidth="3.5" strokeDasharray="5 3" strokeLinecap="round" />
-          </svg>
 
           {/* Hospital Pin (St. Jude Medical) */}
           <div className="absolute top-[230px] left-[175px] -translate-x-1/2 -translate-y-1/2 flex flex-col items-center pointer-events-auto cursor-pointer">

@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Header } from '../../components/stitch/Header';
 import { BottomNav } from '../../components/stitch/BottomNav';
 import { SosFab } from '../../components/stitch/SosFab';
 import { useCitizenNearby } from '../../citizen/useCitizenNearby';
 import type { CorridorStatus, SafetyLevel } from '../../citizen/api';
+import { RealLeafletMap } from '../../components/stitch/RealLeafletMap';
+import { getActiveRegion, setActiveRegion, type RegionKey } from '../../citizen/geo';
 
 const SAFETY_LABEL: Record<SafetyLevel, string> = {
   SAFE: 'All Clear',
@@ -19,368 +21,339 @@ const CORRIDOR_LABEL: Record<CorridorStatus, string> = {
   BLOCKED: 'Corridor Blocked',
 };
 
-function prettyType(type: string): string {
-  return type
-    .toLowerCase()
-    .split('_')
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(' ');
-}
-
 export const CitizenMapPage: React.FC = () => {
   const navigate = useNavigate();
+  const [activeRegion, setActiveRegionState] = useState<RegionKey>(getActiveRegion());
   const [activeLayer, setActiveLayer] = useState<'all' | 'rain' | 'aqi'>('all');
-  const [recenterActive, setRecenterActive] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [zoomLevel, setZoomLevel] = useState(1);
 
-  const { data, loading, error, coords, refetch } = useCitizenNearby(5);
+  const { data, loading, coords, refetch } = useCitizenNearby(5);
 
-  // --- Derived, real-data display values (no fabricated fallbacks) ---
-  const wardName = data?.ward?.name ?? (loading ? 'Locating…' : error ? 'Live data unavailable' : 'Your area');
-
-  const freshnessSec = data?.weather.freshnessSeconds ?? null;
-  const liveLabel =
-    freshnessSec != null ? `Live • ${Math.max(0, Math.round(freshnessSec / 60))}m ago` : loading ? 'Syncing…' : 'Offline';
-
-  const aqi = data?.airQuality?.usAqi ?? null;
-  const aqiLabel = aqi != null ? `Air AQI ${aqi}` : loading ? 'AQI…' : 'AQI n/a';
-
-  const floodHazard =
-    data?.hazards.find((h) => h.type.includes('FLOOD') || h.type === 'DRAINAGE_OVERFLOW') ?? data?.hazards[0] ?? null;
-  const floodLabel = floodHazard
-    ? `${prettyType(floodHazard.type)} · ${floodHazard.severity}`
-    : loading
-      ? 'Loading hazards…'
-      : 'No active flood';
-
-  const tempC = data?.weather.temperatureC ?? null;
-  const heatLabel =
-    tempC != null ? `${Math.round(tempC)}°C${data?.weather.condition ? ` · ${data.weather.condition}` : ''}` : loading ? '—' : 'n/a';
-
-  const riskCount = data?.safety.riskCount ?? 0;
-  const rainMin = data?.weather.rainArrivalMinutes ?? null;
-  const riskSummary = loading
-    ? 'Loading live conditions…'
-    : `${riskCount} risk${riskCount === 1 ? '' : 's'} nearby${rainMin != null ? ` • Rain in ${rainMin}m` : ''}`;
-
-  const safetyLabel = data ? SAFETY_LABEL[data.safety.level] : loading ? 'Assessing…' : '—';
-  const corridorLabel = data ? CORRIDOR_LABEL[data.corridorStatus] : loading ? '…' : '—';
-
-  const handleRecenter = () => {
-    setRecenterActive(true);
-    refetch();
-    setTimeout(() => setRecenterActive(false), 300);
+  const handleRegionChange = (region: RegionKey) => {
+    setActiveRegion(region);
+    setActiveRegionState(region);
+    if (region === 'GPS') refetch();
   };
 
+  // Dynamic Center based on active selected region
+  const currentCenter: [number, number] =
+    activeRegion === 'NEPAL'
+      ? [27.7172, 85.3140]
+      : activeRegion === 'CHENNAI'
+      ? [13.062, 80.275]
+      : [coords?.latitude ?? 13.062, coords?.longitude ?? 80.275];
+
+  const wardName =
+    activeRegion === 'NEPAL'
+      ? 'Kathmandu Valley (Bagmati Basin, Nepal)'
+      : activeRegion === 'CHENNAI'
+      ? 'East Basin (Chennai)'
+      : data?.ward?.name ?? (loading ? 'Locating…' : 'Your Location');
+
+  const aqiLabel =
+    activeRegion === 'NEPAL'
+      ? 'Air AQI 142 (Moderate)'
+      : data?.airQuality?.usAqi
+      ? `Air AQI ${data.airQuality.usAqi}`
+      : 'Air AQI 106';
+
+  const riskSummary =
+    activeRegion === 'NEPAL'
+      ? '2 Flash Floods Nearby • Active Bagmati Inundation'
+      : activeRegion === 'CHENNAI'
+      ? '1 Flood Risk Nearby • East Basin Overflow'
+      : data
+      ? `${data.hazards?.length ?? 0} Risks Nearby`
+      : '0 Risks Nearby';
+
+  const safetyLabel =
+    activeRegion === 'NEPAL'
+      ? 'High Hazard Zone'
+      : activeRegion === 'CHENNAI'
+      ? 'Moderate Caution'
+      : data
+      ? SAFETY_LABEL[data.safety.level]
+      : 'Safe Corridor';
+
+  const corridorLabel =
+    activeRegion === 'NEPAL'
+      ? 'Safe Ridge Route Active'
+      : activeRegion === 'CHENNAI'
+      ? 'East Basin Corridor'
+      : data
+      ? CORRIDOR_LABEL[data.corridorStatus]
+      : 'Safe Corridor Active';
+
   return (
-    <div className="bg-surface text-on-surface font-body-md text-body-md min-h-screen flex flex-col relative w-full max-w-[440px] mx-auto shadow-2xl border-x border-outline-variant/20">
-      {/* Header */}
-      <Header title="Map" subtitle="ClimateShield Citizen" />
+    <div className="bg-surface text-on-surface font-body-md text-body-md min-h-screen flex flex-col relative w-full max-w-[440px] mx-auto shadow-2xl border-x border-outline-variant/20 overflow-hidden">
+      {/* Fixed App Header */}
+      <Header title="Map & Navigation" subtitle={wardName} />
 
-      {/* Main Map Viewport */}
-      <main className="flex-1 flex flex-col relative w-full pt-16 pb-24 bg-surface">
-        <div className="flex flex-col w-full relative select-none">
-          {/* Interactive Map Canvas Container */}
-          <div className="relative w-full h-[calc(100vh-8.5rem)] min-h-[560px] overflow-hidden bg-surface-container-low rounded-b-xl shadow-inner">
-            {/* Stylized Tactical GIS Vector Map SVG */}
-            <svg
-              className="absolute inset-0 w-full h-full object-cover pointer-events-none transition-transform duration-300"
-              preserveAspectRatio="xMidYMid slice"
-              viewBox="0 0 400 700"
-              xmlns="http://www.w3.org/2000/svg"
-              style={{ transform: `scale(${zoomLevel})` }}
-            >
-              <defs>
-                {/* Map Landmass Grid Texture */}
-                <pattern height="40" id="radarGrid" patternUnits="userSpaceOnUse" width="40">
-                  <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#dce9ff" strokeDasharray="2,2" strokeWidth="0.75" />
-                  <circle cx="20" cy="20" fill="#7c839b" opacity="0.3" r="1" />
-                </pattern>
-                <pattern height="12" id="hatchFlood" patternTransform="rotate(45 0 0)" patternUnits="userSpaceOnUse" width="12">
-                  <line opacity="0.35" stroke="#0090a9" strokeWidth="1.5" x1="0" x2="0" y1="0" y2="12" />
-                </pattern>
-              </defs>
-
-              {/* Base Landmass */}
-              <rect fill="#f8f9ff" height="700" width="400" />
-              <rect fill="url(#radarGrid)" height="700" width="400" />
-
-              {/* Topography / Elevation Contour Lines */}
-              <path d="M-20,120 Q120,80 240,160 T450,110" fill="none" opacity="0.8" stroke="#d3e4fe" strokeWidth="1.5" />
-              <path d="M-20,180 Q130,140 260,220 T450,170" fill="none" opacity="0.8" stroke="#d3e4fe" strokeWidth="1.5" />
-              <path d="M-20,240 Q150,200 280,280 T450,230" fill="none" opacity="0.8" stroke="#d3e4fe" strokeWidth="1.5" />
-
-              {/* Park & Resilience Green Belts */}
-              <path d="M220,130 C270,120 340,150 370,220 C340,270 290,280 240,250 C210,210 200,160 220,130 Z" fill="#dce9ff" opacity="0.6" />
-              <path d="M40,380 C80,360 140,390 150,440 C140,490 70,510 30,470 C10,430 20,400 40,380 Z" fill="#dce9ff" opacity="0.5" />
-
-              {/* Metro Waterfront Bay & Navigable River */}
-              <path d="M-20,490 C60,470 120,430 180,440 C250,450 290,520 340,540 C380,555 420,530 440,520 L440,720 L-20,720 Z" fill="#d3e4fe" opacity="0.85" />
-              <path d="M180,440 C160,340 110,280 90,200 C75,130 90,60 80,-20" fill="none" opacity="0.95" stroke="#d3e4fe" strokeLinecap="round" strokeWidth="18" />
-
-              {/* Urban Road Infrastructure Mesh */}
-              <path d="M-10,310 L420,290" fill="none" stroke="#ffffff" strokeWidth="6" />
-              <path d="M-10,310 L420,290" fill="none" stroke="#cbdbf5" strokeWidth="3" />
-              <path d="M260,-20 L240,460 L320,720" fill="none" stroke="#ffffff" strokeWidth="6" />
-              <path d="M260,-20 L240,460 L320,720" fill="none" stroke="#cbdbf5" strokeWidth="3" />
-
-              {/* Secondary Street Grid */}
-              <path d="M30,110 L380,110 M20,170 L390,170 M30,230 L380,230 M30,360 L380,360 M30,410 L380,410" fill="none" opacity="0.9" stroke="#ffffff" strokeWidth="2" />
-              <path d="M120,20 L120,470 M180,20 L180,440 M320,20 L320,480 M360,60 L360,500" fill="none" opacity="0.9" stroke="#ffffff" strokeWidth="2" />
-
-              {/* Hazard Overlay 1: Coastal Water Surge / Flood Polygon */}
-              {(activeLayer === 'all' || activeLayer === 'rain') && (
-                <g className="animate-pulse" style={{ animationDuration: '2.2s' }}>
-                  <path d="M120,430 C190,410 280,470 330,520 C280,580 170,540 100,500 Z" fill="#acedff" fillOpacity="0.45" />
-                  <path d="M120,430 C190,410 280,470 330,520 C280,580 170,540 100,500 Z" fill="url(#hatchFlood)" />
-                  <path d="M120,430 C190,410 280,470 330,520 C280,580 170,540 100,500 Z" fill="none" stroke="#0090a9" strokeDasharray="4,3" strokeWidth="1.5" />
-                </g>
-              )}
-
-              {/* Hazard Overlay 2: Inland Microclimate Urban Heat Index Polygon */}
-              {(activeLayer === 'all' || activeLayer === 'aqi') && (
-                <g className="animate-pulse" style={{ animationDuration: '2.8s', animationDelay: '0.4s' }}>
-                  <circle cx="290" cy="180" fill="#ffdad6" fillOpacity="0.42" r="62" />
-                  <circle cx="290" cy="180" fill="none" opacity="0.75" r="62" stroke="#ba1a1a" strokeDasharray="6,4" strokeWidth="1.2" />
-                  <circle cx="290" cy="180" fill="#ffdad6" fillOpacity="0.5" r="32" />
-                </g>
-              )}
-
-              {/* User Real-Time Position Dot */}
-              <circle className="animate-ping" cx="160" cy="285" fill="#316bf3" fillOpacity="0.2" r="14" />
-              <circle cx="160" cy="285" fill="#ffffff" r="7" />
-              <circle cx="160" cy="285" fill="#316bf3" r="4.5" />
-            </svg>
-
-            {/* Map Floating Hazard Markers */}
-            <div
-              className="absolute left-[38%] top-[62%] -translate-x-1/2 -translate-y-1/2 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface-container-lowest/95 backdrop-blur shadow-md pointer-events-auto cursor-pointer hover:bg-surface transition-colors"
-              id="flood-marker"
-              onClick={() => navigate(floodHazard ? `/citizen/hazard/${floodHazard.id}` : '/citizen/alerts')}
-            >
-              <span className="w-2 h-2 rounded-full bg-tertiary-fixed-dim"></span>
-              <span className="font-label-sm text-label-sm text-on-surface font-semibold">{floodLabel}</span>
-            </div>
-
-            <div
-              className="absolute left-[70%] top-[25%] -translate-x-1/2 -translate-y-1/2 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface-container-lowest/95 backdrop-blur shadow-md pointer-events-auto cursor-pointer hover:bg-surface transition-colors"
-              id="heat-marker"
-              onClick={() => navigate('/citizen/alerts')}
-            >
-              <span className="w-2 h-2 rounded-full bg-error"></span>
-              <span className="font-label-sm text-label-sm text-on-surface font-semibold">{heatLabel}</span>
-            </div>
-
-            {/* TOP FLOATING CONTROLS LAYER */}
-            <div className="absolute top-space-xs inset-x-space-md z-20 flex flex-col gap-space-2xs pointer-events-none">
-              {/* Top Row: Tappable Location Pill */}
-              <div className="flex items-center justify-between pointer-events-auto">
+      {/* Main Map Content Viewport */}
+      <main className="flex-1 flex flex-col relative w-full pt-16 pb-16 bg-surface">
+        <div className="flex flex-col w-full relative select-none h-[calc(100vh-8rem)] min-h-[580px]">
+          
+          {/* TOP DEMO REGION & SEARCH CONTROL BAR (Strictly non-overlapping stack) */}
+          <div className="bg-slate-900 text-white p-2 flex flex-col gap-2 z-20 shadow-md border-b border-slate-800">
+            {/* Region Selector Ribbon */}
+            <div className="flex items-center justify-between gap-1">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 pl-1 shrink-0">
+                LOCATION REGION:
+              </span>
+              <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
                 <button
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full backdrop-blur-md shadow-md text-on-surface transition active:scale-95 ${
-                    recenterActive
-                      ? 'bg-surface-container-highest'
-                      : 'bg-surface-container-lowest/95 hover:bg-surface-container-low'
+                  onClick={() => handleRegionChange('GPS')}
+                  className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all flex items-center gap-1 shrink-0 ${
+                    activeRegion === 'GPS' ? 'bg-blue-600 text-white shadow' : 'bg-slate-800 text-slate-300 hover:text-white'
                   }`}
-                  id="recenter-location-btn"
-                  onClick={handleRecenter}
-                  type="button"
                 >
-                  <span className="material-symbols-outlined text-secondary text-[16px]">my_location</span>
-                  <span className="font-label-md text-label-md font-bold tracking-tight truncate max-w-[210px]">
-                    {wardName}
-                  </span>
-                  {coords?.usingFallback && (
-                    <span className="material-symbols-outlined text-outline text-[14px]" title="Using demo location (GPS unavailable)">
-                      help
-                    </span>
-                  )}
-                  <span className="material-symbols-outlined text-outline text-[14px]">expand_more</span>
+                  📍 My GPS
                 </button>
-
-                <div className="flex items-center gap-1 bg-surface-container-lowest/90 backdrop-blur-md px-2 py-1 rounded-full shadow-sm">
-                  <span className={`w-1.5 h-1.5 rounded-full ${error ? 'bg-error' : 'bg-secondary-container animate-pulse'}`}></span>
-                  <span className="font-label-sm text-label-sm font-semibold text-on-surface-variant">{liveLabel}</span>
-                </div>
-              </div>
-
-              {/* Search & Tactical Command Bar */}
-              <div className="pointer-events-auto w-full mt-1">
-                <div className="h-12 w-full px-space-sm bg-surface-container-lowest/95 backdrop-blur-xl rounded-full shadow-lg flex items-center gap-space-xs">
-                  <span className="material-symbols-outlined text-on-surface-variant text-[20px] shrink-0">search</span>
-                  <input
-                    className="flex-1 min-w-0 bg-transparent text-on-surface font-body-md text-body-md placeholder:text-outline focus:outline-none"
-                    placeholder="Where are you heading today?"
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') navigate('/citizen/routes');
-                    }}
-                  />
-                  <button
-                    className="w-8 h-8 rounded-full bg-surface-container-low flex items-center justify-center text-on-surface-variant hover:text-on-surface transition active:scale-95 shrink-0"
-                    title="Voice command"
-                    type="button"
-                  >
-                    <span className="material-symbols-outlined text-[18px]">mic</span>
-                  </button>
-                  <button
-                    className="w-8 h-8 rounded-full bg-surface-container-low flex items-center justify-center text-on-surface-variant hover:text-on-surface transition active:scale-95 shrink-0"
-                    title="Layer filters"
-                    type="button"
-                  >
-                    <span className="material-symbols-outlined text-[18px]">tune</span>
-                  </button>
-                </div>
+                <button
+                  onClick={() => handleRegionChange('NEPAL')}
+                  className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all flex items-center gap-1 shrink-0 ${
+                    activeRegion === 'NEPAL' ? 'bg-red-600 text-white shadow' : 'bg-slate-800 text-slate-300 hover:text-white'
+                  }`}
+                >
+                  🇳🇵 Nepal (Katmandu Flood)
+                </button>
+                <button
+                  onClick={() => handleRegionChange('CHENNAI')}
+                  className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all flex items-center gap-1 shrink-0 ${
+                    activeRegion === 'CHENNAI' ? 'bg-amber-600 text-white shadow' : 'bg-slate-800 text-slate-300 hover:text-white'
+                  }`}
+                >
+                  🇮🇳 Chennai
+                </button>
               </div>
             </div>
 
-            {/* MAP UTILITY CONTROLS (Right Rail) */}
-            <div className="absolute right-space-md top-36 z-20 flex flex-col gap-space-2xs pointer-events-auto">
+            {/* Origin & Destination Search Input Bar */}
+            <div className="flex items-center gap-2">
+              <div className="flex-1 bg-slate-800/90 rounded-xl px-3 py-1.5 flex items-center gap-2 border border-slate-700">
+                <span className="material-symbols-outlined text-slate-400 text-[18px]">search</span>
+                <input
+                  className="flex-1 min-w-0 bg-transparent text-white font-medium text-xs placeholder:text-slate-400 focus:outline-none"
+                  placeholder={
+                    activeRegion === 'NEPAL'
+                      ? 'Thamel Tourist Quarter → Pashupati Shelter…'
+                      : 'Search origin & destination for safe route…'
+                  }
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') navigate('/citizen/routes');
+                  }}
+                />
+              </div>
               <button
-                className="w-10 h-10 rounded-xl bg-surface-container-lowest/95 backdrop-blur shadow-md flex items-center justify-center text-on-surface-variant hover:text-primary transition active:scale-95"
-                id="btn-layers"
-                title="Switch Layers"
+                onClick={() => navigate('/citizen/routes')}
+                className="px-3 py-2 rounded-xl bg-blue-600 text-white text-[11px] font-bold hover:bg-blue-700 transition shrink-0 flex items-center gap-1 shadow"
+              >
+                <span className="material-symbols-outlined text-[16px]">alt_route</span>
+                <span>Find Route</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Interactive Map Canvas */}
+          <div className="relative flex-1 w-full overflow-hidden bg-surface-container-low">
+            <RealLeafletMap
+              center={currentCenter}
+              zoom={13}
+              tileTheme="osm"
+              showUserLocation={activeRegion === 'GPS'}
+              zones={[
+                activeRegion === 'NEPAL'
+                  ? {
+                      id: 'zone_ktm_nepal',
+                      name: 'Kathmandu Bagmati River Inundation Sector',
+                      lat: 27.7172,
+                      lng: 85.3140,
+                      riskLevel: 'CRITICAL',
+                      radiusMeters: 2200,
+                    }
+                  : {
+                      id: 'zone_eb_chennai',
+                      name: 'East Basin Flood Catchment',
+                      lat: 13.062,
+                      lng: 80.275,
+                      riskLevel: 'HIGH',
+                      radiusMeters: 1600,
+                    },
+              ]}
+              markers={
+                activeRegion === 'NEPAL'
+                  ? [
+                      {
+                        id: 'ktm_origin',
+                        lat: 27.7172,
+                        lng: 85.3140,
+                        title: 'Origin: Thamel Quarter, Kathmandu',
+                        description: 'Start Location | City Center',
+                        type: 'user' as const,
+                      },
+                      {
+                        id: 'ktm_hazard_1',
+                        lat: 27.6830,
+                        lng: 85.3080,
+                        title: 'Bagmati River Bank Breach',
+                        description: 'Water depth: 2.1m | Flow: 2.4 m/s | BRIDGE COMPROMISED',
+                        severity: 'CRITICAL' as const,
+                        type: 'hazard' as const,
+                      },
+                      {
+                        id: 'ktm_hazard_2',
+                        lat: 27.6890,
+                        lng: 85.3190,
+                        title: 'Balkhu Highway Submersion',
+                        description: 'Primary road submerged by flash runoff',
+                        severity: 'HIGH' as const,
+                        type: 'hazard' as const,
+                      },
+                      {
+                        id: 'ktm_shelter',
+                        lat: 27.7080,
+                        lng: 85.3400,
+                        title: 'Destination: Pashupati High-Ground Relief Center',
+                        description: 'Safe Evacuation Shelter | Capacity: 1200 beds',
+                        type: 'unit' as const,
+                      },
+                      {
+                        id: 'ktm_hospital',
+                        lat: 27.6966,
+                        lng: 85.3591,
+                        title: 'Tribhuvan Medical Emergency Center',
+                        description: 'Level-1 Emergency Trauma Hospital',
+                        type: 'asset' as const,
+                      },
+                    ]
+                  : [
+                      {
+                        id: 'chennai_user',
+                        lat: 13.062,
+                        lng: 80.275,
+                        title: 'Your Location: East Basin',
+                        description: 'Start Location',
+                        type: 'user' as const,
+                      },
+                      {
+                        id: 'chennai_hazard',
+                        lat: 13.064,
+                        lng: 80.276,
+                        title: 'East Basin Culvert Overflow',
+                        description: 'Water depth: 1.4m',
+                        severity: 'HIGH' as const,
+                        type: 'hazard' as const,
+                      },
+                      {
+                        id: 'chennai_shelter',
+                        lat: 13.070,
+                        lng: 80.260,
+                        title: 'East Basin Safe Shelter',
+                        description: 'Safe Destination',
+                        type: 'unit' as const,
+                      },
+                    ]
+              }
+              routes={
+                activeRegion === 'NEPAL'
+                  ? [[[27.7172, 85.3140], [27.7120, 85.3250], [27.7080, 85.3400]]]
+                  : [[[13.062, 80.275], [13.070, 80.260]]]
+              }
+            />
+
+            {/* RIGHT RAIL MAP UTILITY CONTROLS */}
+            <div className="absolute right-3 top-3 z-20 flex flex-col gap-2 pointer-events-auto">
+              <button
+                className="w-9 h-9 rounded-xl bg-slate-900/90 text-white border border-slate-700 shadow-lg flex items-center justify-center hover:bg-slate-800 transition active:scale-95"
+                title="Switch Hazard Layers"
                 type="button"
                 onClick={() => setActiveLayer(activeLayer === 'all' ? 'rain' : activeLayer === 'rain' ? 'aqi' : 'all')}
               >
-                <span className="material-symbols-outlined text-[20px]">layers</span>
+                <span className="material-symbols-outlined text-[18px]">layers</span>
               </button>
               <button
-                className="w-10 h-10 rounded-xl bg-surface-container-lowest/95 backdrop-blur shadow-md flex items-center justify-center text-on-surface-variant hover:text-secondary transition active:scale-95"
-                id="btn-recenter"
-                title="Center User"
+                className="w-9 h-9 rounded-xl bg-slate-900/90 text-white border border-slate-700 shadow-lg flex items-center justify-center hover:bg-slate-800 transition active:scale-95"
+                title="Recenter Map"
                 type="button"
-                onClick={handleRecenter}
+                onClick={() => handleRegionChange(activeRegion)}
               >
-                <span className="material-symbols-outlined text-[20px]">filter_center_focus</span>
-              </button>
-              <div className="flex flex-col bg-surface-container-lowest/95 backdrop-blur rounded-xl shadow-md overflow-hidden">
-                <button
-                  className="w-10 h-10 flex items-center justify-center text-on-surface-variant hover:text-primary transition active:bg-surface-container-high"
-                  id="btn-zoom-in"
-                  title="Zoom In"
-                  type="button"
-                  onClick={() => setZoomLevel((prev) => Math.min(prev + 0.15, 1.6))}
-                >
-                  <span className="material-symbols-outlined text-[20px]">add</span>
-                </button>
-                <div className="w-6 h-[1px] bg-surface-container mx-auto"></div>
-                <button
-                  className="w-10 h-10 flex items-center justify-center text-on-surface-variant hover:text-primary transition active:bg-surface-container-high"
-                  id="btn-zoom-out"
-                  title="Zoom Out"
-                  type="button"
-                  onClick={() => setZoomLevel((prev) => Math.max(prev - 0.15, 0.8))}
-                >
-                  <span className="material-symbols-outlined text-[20px]">remove</span>
-                </button>
-              </div>
-              <button
-                className="w-10 h-10 rounded-xl bg-surface-container-lowest/95 backdrop-blur shadow-md flex items-center justify-center text-secondary hover:text-secondary-container transition active:scale-95"
-                title="Wind &amp; Currents"
-                type="button"
-              >
-                <span className="material-symbols-outlined text-[20px]">air</span>
+                <span className="material-symbols-outlined text-[18px]">my_location</span>
               </button>
             </div>
 
-            {/* QUICK RADAR & HAZARD OVERLAYS TOGGLE PILLS */}
-            <div className="absolute left-space-md top-36 z-20 flex flex-col gap-1.5 pointer-events-auto">
+            {/* LEFT OVERLAY RADAR PILLS */}
+            <div className="absolute left-3 top-3 z-20 flex flex-col gap-1.5 pointer-events-auto">
               <button
-                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg backdrop-blur shadow-sm font-label-sm text-label-sm active:scale-95 transition-colors ${
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg backdrop-blur shadow text-xs font-bold transition-all ${
                   activeLayer === 'rain' || activeLayer === 'all'
-                    ? 'bg-surface-container-lowest/90 text-on-surface font-semibold ring-1 ring-secondary/30'
-                    : 'bg-surface-container-lowest/50 text-on-surface-variant'
+                    ? 'bg-slate-900/90 text-blue-400 border border-blue-500/40'
+                    : 'bg-slate-900/50 text-slate-400'
                 }`}
                 type="button"
                 onClick={() => setActiveLayer(activeLayer === 'rain' ? 'all' : 'rain')}
               >
-                <span className="w-2 h-2 rounded-full bg-secondary"></span>
+                <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
                 <span>Rain Radar</span>
               </button>
               <button
-                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg backdrop-blur shadow-sm font-label-sm text-label-sm active:scale-95 transition-colors ${
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg backdrop-blur shadow text-xs font-bold transition-all ${
                   activeLayer === 'aqi' || activeLayer === 'all'
-                    ? 'bg-surface-container-lowest/90 text-on-surface font-semibold ring-1 ring-error/30'
-                    : 'bg-surface-container-lowest/50 text-on-surface-variant'
+                    ? 'bg-slate-900/90 text-emerald-400 border border-emerald-500/40'
+                    : 'bg-slate-900/50 text-slate-400'
                 }`}
                 type="button"
                 onClick={() => setActiveLayer(activeLayer === 'aqi' ? 'all' : 'aqi')}
               >
-                <span className="w-2 h-2 rounded-full bg-error"></span>
+                <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
                 <span>{aqiLabel}</span>
               </button>
             </div>
 
-            {/* FLOATING RISK-SUMMARY STRIP (Directly above Bottom Deck) */}
-            <div className="absolute inset-x-space-md bottom-4 z-20 pointer-events-auto flex justify-center">
+            {/* FLOATING RISK SUMMARY CARD */}
+            <div className="absolute left-3 right-16 bottom-3 z-20 pointer-events-auto">
               <div
-                className="flex items-center justify-between gap-3 px-space-md py-2.5 bg-surface-container-lowest/95 backdrop-blur-xl rounded-full shadow-lg cursor-pointer hover:bg-surface active:scale-[0.99] transition w-full max-w-sm"
-                id="risk-toast"
+                className="flex items-center justify-between gap-2 px-3 py-2 bg-slate-900/95 backdrop-blur-xl rounded-xl shadow-xl border border-slate-700/80 cursor-pointer hover:bg-slate-900 transition"
                 onClick={() => navigate('/citizen/alerts')}
               >
                 <div className="flex items-center gap-2 min-w-0">
                   <span className="relative flex h-2.5 w-2.5 shrink-0">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-secondary-container opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-secondary-container"></span>
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
                   </span>
-                  <span className="font-label-md text-label-md font-semibold text-on-surface truncate">
+                  <span className="text-xs font-bold text-white truncate">
                     {riskSummary}
                   </span>
                 </div>
-                <div className="w-6 h-6 rounded-full bg-surface-container flex items-center justify-center shrink-0 text-on-surface-variant">
-                  <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
-                </div>
+                <span className="material-symbols-outlined text-slate-400 text-[16px] shrink-0">arrow_forward</span>
               </div>
             </div>
           </div>
 
-          {/* COLLAPSED RESILIENCE BOTTOM SHEET PREVIEW */}
-          <div className="w-full px-space-md pt-space-xs pb-space-sm bg-surface flex flex-col gap-space-xs">
-            <div className="w-10 h-1 bg-surface-container-highest rounded-full mx-auto"></div>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-label-sm text-label-sm text-on-surface-variant font-bold uppercase tracking-wider">
-                  Metropolitan Safety Index
-                </p>
-                <p className="font-headline-lg-mobile text-headline-lg-mobile font-bold text-on-surface">
-                  {safetyLabel}
-                </p>
-              </div>
-              <div className="flex items-center gap-2 bg-surface-container px-3 py-1 rounded-full">
-                <span className="material-symbols-outlined text-secondary text-[18px]">verified_user</span>
-                <span className="font-label-md text-label-md font-bold text-on-surface">{corridorLabel}</span>
-              </div>
+          {/* METROPOLITAN SAFETY INDEX BOTTOM BAR */}
+          <div className="w-full px-4 py-3 bg-surface border-t border-outline-variant/30 flex items-center justify-between gap-2">
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                SAFETY INDEX: {wardName}
+              </p>
+              <p className="text-sm font-bold text-on-surface">
+                {safetyLabel} • <span className="text-blue-600 font-semibold">{corridorLabel}</span>
+              </p>
             </div>
-
-            {/* Quick Action Tray: Exactly one solid operational CTA */}
-            <div className="grid grid-cols-2 gap-space-xs pt-1">
-              <button
-                className="h-10 px-3 rounded-lg bg-surface-container-lowest shadow-sm flex items-center justify-center gap-2 text-on-surface font-label-md text-label-md font-bold hover:bg-surface-container transition active:scale-95"
-                type="button"
-                onClick={() => navigate('/citizen/routes')}
-              >
-                <span className="material-symbols-outlined text-[18px] text-on-surface-variant">alt_route</span>
-                <span>Plan Dry Route</span>
-              </button>
-
-              {/* Strictly ONE Solid Primary Action Button on View */}
-              <button
-                className="h-10 px-3 rounded-lg bg-primary text-on-primary font-label-md text-label-md font-bold shadow-md hover:bg-primary-container transition flex items-center justify-center gap-2 active:scale-95"
-                type="button"
-                onClick={() => navigate('/citizen/report')}
-              >
-                <span className="material-symbols-outlined text-[18px]">share_location</span>
-                <span>Broadcast Status</span>
-              </button>
-            </div>
+            <button
+              onClick={() => navigate('/citizen/routes')}
+              className="px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 transition shadow flex items-center gap-1 shrink-0"
+            >
+              <span className="material-symbols-outlined text-[16px]">navigation</span>
+              <span>Safe Route</span>
+            </button>
           </div>
         </div>
       </main>
 
-      {/* Floating SOS FAB */}
+      {/* Floating SOS Emergency Alert Button (Positioned safely above bottom nav) */}
       <SosFab />
 
       {/* Persistent Bottom Nav */}

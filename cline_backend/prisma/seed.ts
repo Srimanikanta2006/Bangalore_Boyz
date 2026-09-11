@@ -30,6 +30,8 @@ async function wipe(): Promise<void> {
   await prisma.hazard.deleteMany();
   await prisma.dependencyEdge.deleteMany();
   await prisma.responseUnit.deleteMany();
+  await prisma.sosEvent.deleteMany();
+  await prisma.citizenReport.deleteMany();
   await prisma.infrastructureAsset.deleteMany();
   await prisma.user.deleteMany();
   await prisma.zone.deleteMany();

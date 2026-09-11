@@ -32,6 +32,7 @@ import { GovCriticalAssetMonitorPage } from './pages/stitch/GovCriticalAssetMoni
 import { GovZoneCascadePage } from './pages/stitch/GovZoneCascadePage';
 import { GovSimulatorPage } from './pages/stitch/GovSimulatorPage';
 import { GovResponseCenterPage } from './pages/stitch/GovResponseCenterPage';
+import { GovIncidentsPage } from './pages/stitch/GovIncidentsPage';
 
 // Navigation & Screen Switcher
 import { ScreenSwitcher } from './components/stitch/ScreenSwitcher';
@@ -86,6 +87,7 @@ export const App: React.FC = () => {
         {/* 5. Government HQ Desktop Routes */}
         <Route path="/gov/overview" element={<RequireGovernmentLogin><GovCommandCenterPage /></RequireGovernmentLogin>} />
         <Route path="/gov/critical-assets" element={<RequireGovernmentLogin><GovCriticalAssetMonitorPage /></RequireGovernmentLogin>} />
+        <Route path="/gov/incidents" element={<RequireGovernmentLogin><GovIncidentsPage /></RequireGovernmentLogin>} />
         <Route path="/gov/zone-cascade/:id" element={<RequireGovernmentLogin><GovZoneCascadePage /></RequireGovernmentLogin>} />
         <Route path="/gov/simulator" element={<RequireGovernmentLogin><GovSimulatorPage /></RequireGovernmentLogin>} />
         <Route path="/gov/response-center" element={<RequireGovernmentLogin><GovResponseCenterPage /></RequireGovernmentLogin>} />

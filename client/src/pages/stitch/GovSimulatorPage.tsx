@@ -1,12 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { GovHqLayout } from '../../components/stitch/GovHqLayout';
+import { getActiveRegion, type RegionKey } from '../../citizen/geo';
 import { 
   Play, RotateCcw, Sliders, Waves, Thermometer, 
   Droplet, Wind, AlertTriangle, Shield, CheckCircle2, 
-  RefreshCw, TrendingUp, Layers, Compass, ArrowRight
+  RefreshCw, TrendingUp, Layers, Compass, ArrowRight, ChevronRight
 } from 'lucide-react';
 
 export const GovSimulatorPage: React.FC = () => {
+  const [activeRegion, setActiveRegionState] = useState<RegionKey>(getActiveRegion());
   const [selectedPreset, setSelectedPreset] = useState('100-Yr Atmospheric River');
   const [precipRate, setPrecipRate] = useState(65);
   const [stormDuration, setStormDuration] = useState(4.5);
@@ -16,12 +18,27 @@ export const GovSimulatorPage: React.FC = () => {
   const [simulating, setSimulating] = useState(false);
   const [simRunComplete, setSimRunComplete] = useState(false);
 
-  const presets = [
-    { id: '100-Yr Atmospheric River', icon: Waves },
-    { id: 'Heat Dome + Grid Strain', icon: Thermometer },
-    { id: 'Flash Surge + Dam Breach', icon: AlertTriangle },
-    { id: 'Custom Scenario Sandbox', icon: Sliders },
-  ];
+  useEffect(() => {
+    const handleRegionEvent = () => setActiveRegionState(getActiveRegion());
+    window.addEventListener('climateshield_region_changed', handleRegionEvent);
+    return () => window.removeEventListener('climateshield_region_changed', handleRegionEvent);
+  }, []);
+
+  const isNepal = activeRegion === 'NEPAL';
+
+  const presets = isNepal
+    ? [
+        { id: 'Bagmati Monsoonal Flash Surge', icon: Waves },
+        { id: 'Kathmandu Valley Cloudburst', icon: Thermometer },
+        { id: 'Balkhu Highway Dam Breach', icon: AlertTriangle },
+        { id: 'Custom Nepal Sandbox', icon: Sliders },
+      ]
+    : [
+        { id: '100-Yr Atmospheric River', icon: Waves },
+        { id: 'Heat Dome + Grid Strain', icon: Thermometer },
+        { id: 'Flash Surge + Dam Breach', icon: AlertTriangle },
+        { id: 'Custom Scenario Sandbox', icon: Sliders },
+      ];
 
   const handleRunSim = () => {
     setSimulating(true);
@@ -55,11 +72,11 @@ export const GovSimulatorPage: React.FC = () => {
                   Predictive Risk Sandbox & Hydro-Strain Engine
                 </h1>
                 <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-[#ffdad6] text-[#93000a]">
-                  SIM-CAD V4.8 ACTIVE
+                  SIM-CAD V4.8 ACTIVE ({isNepal ? 'NEPAL REGION' : 'CHENNAI REGION'})
                 </span>
               </div>
               <p className="text-xs text-[#45464d] mt-0.5">
-                Stress-testing municipal resilience envelopes under compound extreme climatological events.
+                Stress-testing municipal resilience envelopes under compound extreme climatological events for {isNepal ? 'Kathmandu Valley' : 'East Basin'}.
               </p>
             </div>
           </div>
@@ -95,245 +112,171 @@ export const GovSimulatorPage: React.FC = () => {
             {/* Presets */}
             <div className="space-y-1.5 mt-3">
               <label className="text-[10px] font-bold text-[#76777d] uppercase tracking-wider">
-                Simulation Preset
+                Simulation Preset ({isNepal ? 'Nepal' : 'Chennai'})
               </label>
               <div className="grid grid-cols-1 gap-1">
-                {presets.map(preset => {
-                  const Icon = preset.icon;
-                  const active = selectedPreset === preset.id;
+                {presets.map((p) => {
+                  const Icon = p.icon;
+                  const isSelected = selectedPreset === p.id;
                   return (
                     <button
-                      key={preset.id}
+                      key={p.id}
                       type="button"
-                      onClick={() => setSelectedPreset(preset.id)}
-                      className={`w-full text-left p-2.5 rounded-xl text-xs font-semibold flex items-center justify-between transition-all ${
-                        active 
-                          ? 'bg-[#0f172a] text-white shadow-xs' 
-                          : 'bg-[#eff4ff] text-[#0b1c30] hover:bg-[#e5eeff]'
+                      onClick={() => setSelectedPreset(p.id)}
+                      className={`flex items-center justify-between p-2.5 rounded-xl text-xs font-semibold transition-all ${
+                        isSelected
+                          ? 'bg-[#0f172a] text-white shadow-xs'
+                          : 'bg-[#eff4ff] text-[#45464d] hover:bg-[#e5eeff]'
                       }`}
                     >
                       <div className="flex items-center gap-2">
-                        <Icon className={`w-3.5 h-3.5 ${active ? 'text-[#4cd7f6]' : 'text-[#0051d5]'}`} />
-                        <span>{preset.id}</span>
+                        <Icon className={`w-4 h-4 ${isSelected ? 'text-[#4cd7f6]' : 'text-[#0051d5]'}`} />
+                        <span>{p.id}</span>
                       </div>
-                      {active && <CheckCircle2 className="w-4 h-4 text-emerald-400" />}
+                      <ChevronRight className="w-3.5 h-3.5" />
                     </button>
                   );
                 })}
               </div>
             </div>
 
-            {/* Parametric Sliders */}
-            <div className="flex flex-col gap-3 mt-4">
-              {/* Precipitation */}
-              <div className="bg-[#eff4ff] p-3 rounded-xl border border-[#d3e4fe] flex flex-col gap-1">
-                <div className="flex justify-between items-center text-xs">
-                  <span className="font-semibold text-[#0b1c30]">Precipitation Rate</span>
-                  <span className="font-mono font-bold text-[#ba1a1a] bg-white px-2 py-0.5 rounded border border-[#d3e4fe]">
-                    {precipRate} mm/hr
-                  </span>
+            {/* Sliders */}
+            <div className="space-y-4 mt-4 pt-3 border-t border-[#e5eeff]">
+              <div>
+                <div className="flex justify-between text-xs font-semibold mb-1">
+                  <span className="text-[#0b1c30]">Precipitation Rate</span>
+                  <span className="font-mono text-[#0051d5] font-bold">{precipRate} mm/h</span>
                 </div>
-                <input 
+                <input
                   type="range"
                   min="10"
                   max="120"
                   value={precipRate}
-                  onChange={e => setPrecipRate(Number(e.target.value))}
-                  className="w-full h-1.5 bg-[#dce9ff] rounded-lg appearance-none cursor-pointer accent-[#ba1a1a]"
+                  onChange={(e) => setPrecipRate(Number(e.target.value))}
+                  className="w-full h-1.5 bg-[#e5eeff] rounded-lg appearance-none cursor-pointer accent-[#0051d5]"
                 />
-                <div className="flex justify-between text-[10px] text-[#76777d] mt-0.5">
-                  <span>Historical Avg (24mm)</span>
-                  <span className="text-[#ba1a1a] font-semibold">+35% Extreme Surge</span>
-                </div>
               </div>
 
-              {/* Duration */}
-              <div className="bg-[#eff4ff] p-3 rounded-xl border border-[#d3e4fe] flex flex-col gap-1">
-                <div className="flex justify-between items-center text-xs">
-                  <span className="font-semibold text-[#0b1c30]">Storm Duration</span>
-                  <span className="font-mono font-bold text-[#0051d5] bg-white px-2 py-0.5 rounded border border-[#d3e4fe]">
-                    {stormDuration} Hours
-                  </span>
+              <div>
+                <div className="flex justify-between text-xs font-semibold mb-1">
+                  <span className="text-[#0b1c30]">Storm Duration</span>
+                  <span className="font-mono text-[#0051d5] font-bold">{stormDuration} hrs</span>
                 </div>
-                <input 
+                <input
                   type="range"
                   min="1"
-                  max="18"
+                  max="24"
                   step="0.5"
                   value={stormDuration}
-                  onChange={e => setStormDuration(Number(e.target.value))}
-                  className="w-full h-1.5 bg-[#dce9ff] rounded-lg appearance-none cursor-pointer accent-[#0051d5]"
+                  onChange={(e) => setStormDuration(Number(e.target.value))}
+                  className="w-full h-1.5 bg-[#e5eeff] rounded-lg appearance-none cursor-pointer accent-[#0051d5]"
                 />
-                <div className="flex justify-between text-[10px] text-[#76777d] mt-0.5">
-                  <span>Min: 1.0 hr</span>
-                  <span>Sustained Deluge Band</span>
-                </div>
               </div>
 
-              {/* Drainage */}
-              <div className="bg-[#eff4ff] p-3 rounded-xl border border-[#d3e4fe] flex flex-col gap-1">
-                <div className="flex justify-between items-center text-xs">
-                  <span className="font-semibold text-[#0b1c30]">Drainage Throughput</span>
-                  <span className="font-mono font-bold text-[#0b1c30] bg-white px-2 py-0.5 rounded border border-[#d3e4fe]">
-                    {drainageThroughput}% Nominal
-                  </span>
+              <div>
+                <div className="flex justify-between text-xs font-semibold mb-1">
+                  <span className="text-[#0b1c30]">Sump/Pump Capacity</span>
+                  <span className="font-mono text-[#0051d5] font-bold">{drainageThroughput}%</span>
                 </div>
-                <input 
+                <input
                   type="range"
-                  min="20"
+                  min="10"
                   max="100"
                   value={drainageThroughput}
-                  onChange={e => setDrainageThroughput(Number(e.target.value))}
-                  className="w-full h-1.5 bg-[#dce9ff] rounded-lg appearance-none cursor-pointer accent-[#0f172a]"
+                  onChange={(e) => setDrainageThroughput(Number(e.target.value))}
+                  className="w-full h-1.5 bg-[#e5eeff] rounded-lg appearance-none cursor-pointer accent-[#0051d5]"
                 />
-                <div className="flex justify-between text-[10px] text-[#76777d] mt-0.5">
-                  <span>25% Silt Occlusion</span>
-                  <span>Canal Gate Delta</span>
-                </div>
               </div>
 
-              {/* Tidal Surge */}
-              <div className="bg-[#eff4ff] p-3 rounded-xl border border-[#d3e4fe] flex flex-col gap-1">
-                <div className="flex justify-between items-center text-xs">
-                  <span className="font-semibold text-[#0b1c30]">Tidal Surge Level</span>
-                  <span className="font-mono font-bold text-[#0051d5] bg-white px-2 py-0.5 rounded border border-[#d3e4fe]">
-                    +{tidalSurge}m MSL
-                  </span>
+              <div>
+                <div className="flex justify-between text-xs font-semibold mb-1">
+                  <span className="text-[#0b1c30]">{isNepal ? 'Bagmati River Surge' : 'Tidal Surge Margin'}</span>
+                  <span className="font-mono text-[#0051d5] font-bold">+{tidalSurge} m MSL</span>
                 </div>
-                <input 
+                <input
                   type="range"
-                  min="0"
-                  max="4"
+                  min="0.5"
+                  max="4.0"
                   step="0.1"
                   value={tidalSurge}
-                  onChange={e => setTidalSurge(Number(e.target.value))}
-                  className="w-full h-1.5 bg-[#dce9ff] rounded-lg appearance-none cursor-pointer accent-[#0051d5]"
+                  onChange={(e) => setTidalSurge(Number(e.target.value))}
+                  className="w-full h-1.5 bg-[#e5eeff] rounded-lg appearance-none cursor-pointer accent-[#0051d5]"
                 />
-                <div className="flex justify-between text-[10px] text-[#76777d] mt-0.5">
-                  <span>Astronomical High</span>
-                  <span>King Tide Vector</span>
-                </div>
               </div>
             </div>
 
             {/* Run Button */}
-            <div className="mt-5">
-              <button 
-                type="button"
-                onClick={handleRunSim}
-                disabled={simulating}
-                className={`w-full py-3 rounded-xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm transition-all ${
-                  simRunComplete 
-                    ? 'bg-emerald-600 text-white' 
-                    : simulating 
-                      ? 'bg-[#0051d5] text-white' 
-                      : 'bg-[#0f172a] hover:bg-[#1e293b] text-white'
-                }`}
-              >
-                {simulating ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 animate-spin" />
-                    <span>CALCULATING CASCADE VECTORS...</span>
-                  </>
-                ) : simRunComplete ? (
-                  <>
-                    <CheckCircle2 className="w-4 h-4 text-emerald-300" />
-                    <span>SIMULATION COMPLETE • VECTORS PROJECTED</span>
-                  </>
-                ) : (
-                  <>
-                    <Play className="w-4 h-4 text-[#4cd7f6] fill-current" />
-                    <span>RUN RESILIENCE SIMULATION</span>
-                  </>
-                )}
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={handleRunSim}
+              disabled={simulating}
+              className="mt-6 w-full h-11 rounded-xl bg-[#0f172a] text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-[#1e293b] transition-all shadow-md disabled:opacity-60"
+            >
+              <Play className={`w-4 h-4 text-[#4cd7f6] ${simulating ? 'animate-spin' : ''}`} />
+              <span>{simulating ? 'Running Hydro CAD Engine…' : 'Execute Hydro CAD Simulation'}</span>
+            </button>
           </aside>
 
-          {/* 2. SPLIT VIEW MAP AREA (8 cols) */}
-          <section className="lg:col-span-8 flex flex-col gap-4">
-            {/* Split Comparison Canvas */}
-            <div className="relative w-full h-[460px] rounded-2xl overflow-hidden shadow-sm bg-slate-900 border border-[#1f344d]">
-              <div 
-                className="absolute inset-0 w-full h-full bg-cover bg-center opacity-70"
-                style={{ backgroundImage: `url('https://images.unsplash.com/photo-1547683905-f686c993aae5?auto=format&fit=crop&w=800&q=80')` }}
-              />
-
-              {/* Vector Overlay based on slider */}
-              <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 1000 600" preserveAspectRatio="none">
-                <path d="M 0 320 Q 250 300 480 340 T 1000 310" fill="none" stroke="#0051d5" strokeWidth="24" opacity="0.4" />
-                {/* Simulated Flood Area */}
-                <polygon 
-                  points="200,180 480,210 680,380 540,560 320,520 180,340" 
-                  fill="#0090a9" 
-                  fillOpacity="0.35" 
-                  stroke="#ba1a1a" 
-                  strokeWidth="3" 
-                  strokeDasharray="6 3" 
-                />
-              </svg>
-
-              {/* Top Split Indicators */}
-              <div className="absolute top-4 inset-x-4 flex justify-between z-20 pointer-events-none text-xs font-bold font-mono">
-                <span className="bg-black/80 backdrop-blur px-3 py-1 rounded-full text-white border border-white/10">
-                  BASELINE (CURRENT STATE)
-                </span>
-                <span className="bg-red-950/80 backdrop-blur px-3 py-1 rounded-full text-red-300 border border-red-500/30">
-                  +2.5H SYNTHETIC IMPACT
+          {/* 2. RIGHT PREDICTIVE RESULTS (8 cols) */}
+          <div className="lg:col-span-8 flex flex-col gap-4">
+            {/* Simulation Impact Readout */}
+            <div className="bg-white rounded-2xl p-4 shadow-sm border border-[#e5eeff] flex flex-col gap-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-[#76777d] tracking-wider block">
+                    PROJECTED SIMULATION IMPACT
+                  </span>
+                  <h3 className="font-bold text-base text-[#0b1c30] mt-0.5">
+                    {isNepal
+                      ? 'Kathmandu Bagmati Corridor Hydro Inundation Model'
+                      : 'Bayou Basin Hydro Inundation Model'}
+                  </h3>
+                </div>
+                <span className="px-3 py-1 rounded-full bg-red-100 text-red-700 text-xs font-bold font-mono">
+                  {simRunComplete ? 'SIMULATION RUN COMPLETE ✓' : 'CASCADE PROJECTION'}
                 </span>
               </div>
 
-              {/* Split Slider Bar */}
-              <div 
-                className="absolute top-0 bottom-0 w-1 bg-white cursor-ew-resize z-30 shadow-lg"
-                style={{ left: `${splitPos}%` }}
-              >
-                <div className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-white text-[#0b1c30] shadow-xl flex items-center justify-center font-bold text-xs">
-                  ⇄
+              {/* 3-Column Simulation Telemetry Deck */}
+              <div className="grid grid-cols-3 gap-3 bg-[#eff4ff] p-3 rounded-xl border border-[#d3e4fe] text-center">
+                <div>
+                  <span className="text-[10px] text-[#76777d] uppercase font-bold block">Peak Water Level</span>
+                  <span className="text-xl font-extrabold text-[#ba1a1a]">+{tidalSurge + 0.6}m</span>
+                  <span className="text-[10px] text-[#45464d] block font-semibold">
+                    {isNepal ? 'Bagmati Breach' : 'Bayou Culvert'}
+                  </span>
+                </div>
+                <div className="border-x border-[#d3e4fe]">
+                  <span className="text-[10px] text-[#76777d] uppercase font-bold block">Hospital Isolation SLA</span>
+                  <span className="text-xl font-extrabold text-[#ea580c]">42 min</span>
+                  <span className="text-[10px] text-[#45464d] block font-semibold">
+                    {isNepal ? 'Tribhuvan Trauma Hub' : 'St. Jude Center'}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-[#76777d] uppercase font-bold block">Highline Safety Margin</span>
+                  <span className="text-xl font-extrabold text-emerald-600">+18.2m MSL</span>
+                  <span className="text-[10px] text-[#45464d] block font-semibold">
+                    {isNepal ? 'Pashupati Refuge' : 'Ridge Detour'}
+                  </span>
                 </div>
               </div>
 
-              {/* Hidden Range Input for interactive scrubbing */}
-              <input 
-                type="range"
-                min="10"
-                max="90"
-                value={splitPos}
-                onChange={e => setSplitPos(Number(e.target.value))}
-                className="absolute inset-0 w-full h-full opacity-0 cursor-ew-resize z-40"
-              />
-            </div>
-
-            {/* Impact Prediction Metrics Bento */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div className="p-3 bg-white rounded-2xl shadow-xs border border-[#e5eeff] text-xs">
-                <span className="text-[10px] text-[#76777d] uppercase font-bold">Predicted At-Risk</span>
-                <span className="text-xl font-extrabold text-[#ba1a1a] block mt-1">14 Facilities</span>
-                <span className="text-[10px] text-[#ba1a1a] font-semibold mt-0.5 block">+6 vs baseline</span>
-              </div>
-
-              <div className="p-3 bg-white rounded-2xl shadow-xs border border-[#e5eeff] text-xs">
-                <span className="text-[10px] text-[#76777d] uppercase font-bold">Transit Flow</span>
-                <span className="text-xl font-extrabold text-[#ea580c] block mt-1">-42% Flow</span>
-                <span className="text-[10px] text-[#ea580c] font-semibold mt-0.5 block">3 Arterials Severed</span>
-              </div>
-
-              <div className="p-3 bg-white rounded-2xl shadow-xs border border-[#e5eeff] text-xs">
-                <span className="text-[10px] text-[#76777d] uppercase font-bold">Pop. Exposure</span>
-                <span className="text-xl font-extrabold text-[#0b1c30] block mt-1">24,800 Souls</span>
-                <span className="text-[10px] text-[#0051d5] font-semibold mt-0.5 block">Low ground basin</span>
-              </div>
-
-              <div className="p-3 bg-white rounded-2xl shadow-xs border border-[#e5eeff] text-xs">
-                <span className="text-[10px] text-[#76777d] uppercase font-bold">Peak Water Level</span>
-                <span className="text-xl font-extrabold text-[#ba1a1a] block mt-1">+2.1m Depth</span>
-                <span className="text-[10px] text-[#ba1a1a] font-semibold mt-0.5 block">Underpass 4 culvert</span>
+              {/* Scenario Explanation */}
+              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-700 leading-snug">
+                <span className="font-bold text-slate-900 block mb-1">
+                  Hydro-CAD Simulation Result ({selectedPreset}):
+                </span>
+                {isNepal
+                  ? `Under ${precipRate} mm/h rainfall over ${stormDuration} hours, Bagmati River bank breach incurs severe lowland inundation reaching +${(tidalSurge + 0.6).toFixed(1)}m. Balkhu Highway is rendered impassable within 35 minutes. Safe highline ridge route via Pashupati maintains +18.2m MSL elevation margin.`
+                  : `Under ${precipRate} mm/h rainfall over ${stormDuration} hours, Bayou Drain D07 reaches 100% capacity within 24 minutes. Substation 9 experiences perimeter berm infiltration. Safe corridor via Highline Ridge remains 100% operational.`}
               </div>
             </div>
-          </section>
+          </div>
         </div>
       </div>
     </GovHqLayout>
   );
 };
+
 export default GovSimulatorPage;

@@ -1,14 +1,34 @@
 /**
- * Shared geolocation helper for citizen screens. Falls back to a known Chennai
- * coordinate (East Basin demo zone) so screens always render real backend data
- * even when the browser denies/lacks GPS.
+ * Shared geolocation and active region helper for citizen screens.
  */
+
 export const FALLBACK_COORDS = { latitude: 13.062, longitude: 80.275 };
 
 export interface GeoState {
   latitude: number;
   longitude: number;
   usingFallback: boolean;
+}
+
+export type RegionKey = 'GPS' | 'NEPAL' | 'CHENNAI';
+
+export const REGION_COORDS: Record<RegionKey, { latitude: number; longitude: number; name: string; subtitle: string }> = {
+  GPS: { latitude: 13.062, longitude: 80.275, name: 'Current Location', subtitle: 'GPS Telemetry' },
+  NEPAL: { latitude: 27.7172, longitude: 85.3140, name: 'Kathmandu Valley, Nepal', subtitle: 'Bagmati Basin Flash Flood Zone' },
+  CHENNAI: { latitude: 13.062, longitude: 80.275, name: 'East Basin, Chennai', subtitle: 'Urban Catchment Area' },
+};
+
+export function getActiveRegion(): RegionKey {
+  if (typeof window === 'undefined') return 'GPS';
+  const saved = localStorage.getItem('climateshield_active_region');
+  if (saved === 'NEPAL' || saved === 'CHENNAI' || saved === 'GPS') return saved;
+  return 'GPS';
+}
+
+export function setActiveRegion(region: RegionKey): void {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('climateshield_active_region', region);
+  }
 }
 
 export function getPosition(): Promise<GeolocationPosition> {
@@ -25,12 +45,20 @@ export function getPosition(): Promise<GeolocationPosition> {
   });
 }
 
-/** Resolve the user's coordinates, falling back to the demo location on failure. */
+/** Resolve coordinates based on active selected region or user GPS */
 export async function resolveCoords(): Promise<GeoState> {
+  const active = getActiveRegion();
+  if (active === 'NEPAL') {
+    return { latitude: 27.7172, longitude: 85.3140, usingFallback: true };
+  }
+  if (active === 'CHENNAI') {
+    return { latitude: 13.062, longitude: 80.275, usingFallback: true };
+  }
+
   try {
     const pos = await getPosition();
     return { latitude: pos.coords.latitude, longitude: pos.coords.longitude, usingFallback: false };
   } catch {
-    return { ...FALLBACK_COORDS, usingFallback: true };
+    return { latitude: 13.062, longitude: 80.275, usingFallback: true };
   }
 }

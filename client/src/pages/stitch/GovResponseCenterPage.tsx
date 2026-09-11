@@ -7,13 +7,44 @@ import {
   Zap, Search, ChevronRight, Layers, Bell
 } from 'lucide-react';
 
+import { getActiveRegion } from '../../citizen/geo';
+
 export const GovResponseCenterPage: React.FC = () => {
   const navigate = useNavigate();
 
   const [assignedModal, setAssignedModal] = useState<string | null>(null);
   const [successToast, setSuccessToast] = useState<string | null>(null);
 
-  const incidents = [
+  const activeRegion = getActiveRegion();
+
+  const nepalIncidents = [
+    {
+      id: 'INC-KTM-01',
+      level: 'Critical',
+      tag: 'FLOOD RESCUE',
+      dept: 'Kathmandu Emergency Water Rescue',
+      sla: '02:30 remaining',
+      title: 'Bagmati River Bank Breach — Tribhuvan Trauma Hub Access Blocked',
+      location: 'Kantipath Lowland Route / Bagmati Bridge',
+      unit: 'Kathmandu Rescue Boat Unit 01 En Route',
+      elapsed: '+2m elapsed',
+      color: '#ba1a1a',
+    },
+    {
+      id: 'INC-KTM-02',
+      level: 'Critical',
+      tag: 'HIGHWAY SUBMERSION',
+      dept: 'DPW Road Clearance',
+      sla: '08:15 remaining',
+      title: 'Balkhu Ring Road Interchange Submerged (Water Depth 2.1m)',
+      location: 'Balkhu Highway Corridor',
+      unit: 'High-Pumping Division 03 Assigned',
+      elapsed: '+5m elapsed',
+      color: '#ba1a1a',
+    },
+  ];
+
+  const baseIncidents = [
     {
       id: 'INC-204',
       level: 'Critical',
@@ -24,7 +55,7 @@ export const GovResponseCenterPage: React.FC = () => {
       location: 'Bayshore Blvd at Marker 4A (Trauma Center Route)',
       unit: 'Unit 4 (Heavy Pump 02) En Route',
       elapsed: '+3m elapsed',
-      color: '#ba1a1a'
+      color: '#ba1a1a',
     },
     {
       id: 'INC-202',
@@ -36,33 +67,11 @@ export const GovResponseCenterPage: React.FC = () => {
       location: 'Mission Valley Underpass / 4th St',
       unit: 'Taskforce Alpha-02 Assigned',
       elapsed: '+1m elapsed',
-      color: '#ba1a1a'
+      color: '#ba1a1a',
     },
-    {
-      id: 'INC-198',
-      level: 'High',
-      tag: 'ELECTRICAL UTILITY',
-      dept: 'Power Grid Services',
-      sla: '16:20 remaining',
-      title: 'Downed High-Voltage Line across 7th Ave',
-      location: '7th Ave @ Pine St • Substation 12G',
-      unit: 'Utility Crew Unit 4 En Route',
-      elapsed: '+8m elapsed',
-      color: '#ea580c'
-    },
-    {
-      id: 'INC-195',
-      level: 'Moderate',
-      tag: 'MUNICIPAL FACILITY',
-      dept: 'Facility Maintenance',
-      sla: '42:00 remaining',
-      title: 'Cooling Center Generator Trip',
-      location: 'North Civic Center • Ward 2',
-      unit: 'Eng. R. Chavez on-site',
-      elapsed: '+14m elapsed',
-      color: '#d97706'
-    }
   ];
+
+  const incidents = activeRegion === 'NEPAL' ? [...nepalIncidents, ...baseIncidents] : baseIncidents;
 
   const handleAssign = (id: string) => {
     setAssignedModal(id);

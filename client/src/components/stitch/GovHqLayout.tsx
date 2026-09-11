@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   Shield, Search, Bell, User, LayoutDashboard, 
   Map as MapIcon, AlertTriangle, Radio, PlayCircle, 
   Building2, BarChart3, History, Users, Satellite, LogOut
 } from 'lucide-react';
+import { getActiveRegion, setActiveRegion, type RegionKey } from '../../citizen/geo';
 
 interface GovHqLayoutProps {
   children: React.ReactNode;
@@ -16,10 +17,24 @@ export const GovHqLayout: React.FC<GovHqLayoutProps> = ({ children, activePath }
   const navigate = useNavigate();
   const current = activePath || location.pathname;
 
+  const [region, setRegionState] = useState<RegionKey>(getActiveRegion());
+
+  const handleRegionChange = (newRegion: RegionKey) => {
+    setActiveRegion(newRegion);
+    setRegionState(newRegion);
+    window.dispatchEvent(new Event('climateshield_region_changed'));
+  };
+
+  useEffect(() => {
+    const handleStorage = () => setRegionState(getActiveRegion());
+    window.addEventListener('climateshield_region_changed', handleStorage);
+    return () => window.removeEventListener('climateshield_region_changed', handleStorage);
+  }, []);
+
   const navItems = [
     { label: 'Overview', path: '/gov/overview', icon: LayoutDashboard },
     { label: 'Live Map', path: '/gov/zone-cascade/4B', icon: MapIcon },
-    { label: 'Incidents', path: '/gov/response-center', icon: AlertTriangle },
+    { label: 'Incidents', path: '/gov/incidents', icon: AlertTriangle },
     { label: 'Response Center', path: '/gov/response-center', icon: Radio },
     { label: 'Simulator', path: '/gov/simulator', icon: PlayCircle },
     { label: 'Infrastructure', path: '/gov/critical-assets', icon: Building2 },
@@ -43,11 +58,35 @@ export const GovHqLayout: React.FC<GovHqLayoutProps> = ({ children, activePath }
               </div>
             </Link>
 
-            <div className="hidden xl:flex items-center gap-1.5 text-xs text-[#76777d]">
-              <span>/</span>
-              <span className="text-[#45464d]">Operations Suite</span>
-              <span>/</span>
-              <span className="text-[#0051d5] font-semibold">HQ Tactical Feed</span>
+            {/* Region Selector Ribbon */}
+            <div className="flex items-center gap-1 bg-[#0f172a] text-white px-2 py-1 rounded-xl text-xs shadow border border-slate-700">
+              <span className="text-[10px] font-bold uppercase text-slate-400 pl-1 shrink-0">
+                DEMO REGION:
+              </span>
+              <button
+                onClick={() => handleRegionChange('GPS')}
+                className={`px-2 py-0.5 text-[10px] font-bold rounded-lg transition-all ${
+                  region === 'GPS' ? 'bg-blue-600 text-white shadow' : 'text-slate-300 hover:text-white'
+                }`}
+              >
+                📍 GPS
+              </button>
+              <button
+                onClick={() => handleRegionChange('NEPAL')}
+                className={`px-2 py-0.5 text-[10px] font-bold rounded-lg transition-all ${
+                  region === 'NEPAL' ? 'bg-red-600 text-white shadow' : 'text-slate-300 hover:text-white'
+                }`}
+              >
+                🇳🇵 Nepal (Katmandu Flood)
+              </button>
+              <button
+                onClick={() => handleRegionChange('CHENNAI')}
+                className={`px-2 py-0.5 text-[10px] font-bold rounded-lg transition-all ${
+                  region === 'CHENNAI' ? 'bg-amber-600 text-white shadow' : 'text-slate-300 hover:text-white'
+                }`}
+              >
+                🇮🇳 Chennai
+              </button>
             </div>
           </div>
 

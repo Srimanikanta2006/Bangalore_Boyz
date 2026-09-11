@@ -58,6 +58,12 @@ export const zones: ZoneSeed[] = [
     latitude: 13.032, longitude: 80.262, riskLevel: 'HIGH', population: 9800,
     boundaryGeoJson: box(13.032, 80.262),
   },
+  {
+    id: 'zone_ktm', name: 'Kathmandu Valley Basin', code: 'KTM',
+    description: 'Bagmati river corridor exposed to severe monsoonal flash flooding and riverbank breach.',
+    latitude: 27.7172, longitude: 85.3140, riskLevel: 'CRITICAL', population: 45000,
+    boundaryGeoJson: box(27.7172, 85.3140, 0.05),
+  },
 ];
 
 // ---------------- DEPARTMENTS (7) ----------------
@@ -120,9 +126,12 @@ export const assets: AssetSeed[] = [
   { id: 'asset_hosp_02', assetCode: 'HOSP-02', name: 'Riverside Community Clinic', type: 'HOSPITAL', zoneId: 'zone_rc', latitude: 13.0305, longitude: 80.2605, criticality: 'MEDIUM', vulnerability: 38, operationalStatus: 'OPERATIONAL', description: 'Community clinic, 60 beds (demo facility).', metadata: { beds: 60, bedOccupancyPercent: 41, backupPower: true } },
   { id: 'asset_shel_03', assetCode: 'SHEL-03', name: 'East Basin Shelter #3', type: 'EVACUATION_SHELTER', zoneId: 'zone_eb', latitude: 13.0653, longitude: 80.2724, criticality: 'MEDIUM', vulnerability: 32, operationalStatus: 'OPERATIONAL', description: '400-person shelter (demo facility).', metadata: { capacity: 400, occupancyPercent: 12, evacuationStatus: 'OPEN' } },
   { id: 'asset_cool_07', assetCode: 'COOL-07', name: 'North Harbor Cooling Center', type: 'COOLING_CENTER', zoneId: 'zone_nh', latitude: 13.0818, longitude: 80.2873, criticality: 'MEDIUM', vulnerability: 26, operationalStatus: 'OPERATIONAL', description: 'Harbor cooling center, 180 capacity (demo facility).', metadata: { capacity: 180, occupancyPercent: 22 } },
+  { id: 'asset_ktm_hosp', assetCode: 'HOSP-KTM', name: 'Tribhuvan Medical Emergency Center', type: 'HOSPITAL', zoneId: 'zone_ktm', latitude: 27.6966, longitude: 85.3591, criticality: 'CRITICAL', vulnerability: 72, operationalStatus: 'OPERATIONAL', description: 'Central emergency hospital in Kathmandu Valley.', metadata: { beds: 500, occupancyPercent: 88, evacuationStatus: 'OPEN' } },
+  { id: 'asset_ktm_shelter', assetCode: 'SHEL-KTM', name: 'Pashupati High-Ground Relief Center', type: 'EVACUATION_SHELTER', zoneId: 'zone_ktm', latitude: 27.7080, longitude: 85.3400, criticality: 'HIGH', vulnerability: 20, operationalStatus: 'OPERATIONAL', description: 'Safe elevated relief shelter above Bagmati flood basin.', metadata: { capacity: 1200, occupancyPercent: 45, evacuationStatus: 'OPEN' } },
+  { id: 'asset_ktm_bridge', assetCode: 'BRG-KTM', name: 'Bagmati River Main Crossing Bridge', type: 'BRIDGE', zoneId: 'zone_ktm', latitude: 27.6830, longitude: 85.3080, criticality: 'CRITICAL', vulnerability: 90, operationalStatus: 'COMPROMISED', description: 'Primary bridge submerged by Bagmati river flash flood.', metadata: { waterDepthM: 2.1 } },
 ];
 
-// ---------------- ACTIVE HAZARDS (4) ----------------
+// ---------------- ACTIVE HAZARDS (5) ----------------
 
 export interface HazardSeed {
   id: string; type: string; severity: string; zoneId: string;
@@ -136,6 +145,11 @@ export const hazards: HazardSeed[] = [
     id: 'hz_ff_eb', type: 'FLASH_FLOOD', severity: 'CRITICAL', zoneId: 'zone_eb',
     rainfallRate: 65, waterDepth: 1.4, flowVelocity: 1.9, durationMinutes: 240,
     source: 'SENSOR', startedAt: hoursAgo(2), status: 'ACTIVE',
+  },
+  {
+    id: 'hz_ktm_flood', type: 'FLASH_FLOOD', severity: 'CRITICAL', zoneId: 'zone_ktm',
+    rainfallRate: 88, waterDepth: 2.1, flowVelocity: 2.4, durationMinutes: 360,
+    source: 'SENSOR', startedAt: hoursAgo(1), status: 'ACTIVE',
   },
   {
     id: 'hz_flood_nh', type: 'FLOOD', severity: 'HIGH', zoneId: 'zone_nh',

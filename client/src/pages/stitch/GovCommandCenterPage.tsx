@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GovHqLayout } from '../../components/stitch/GovHqLayout';
+import { RealLeafletMap } from '../../components/stitch/RealLeafletMap';
 import {
   fetchGovernmentOverview, fetchLiveWeather, fetchLocationOverview,
   type LiveWeather, type LocationOverview,
 } from '../../services/api';
 import { useOperatorLocation } from '../../hooks/useOperatorLocation';
+import { getActiveRegion } from '../../citizen/geo';
 import { 
   AlertTriangle, Radio, Download, Send, TrendingUp, 
   Waves, Thermometer, Zap, Hospital, Building2, 
@@ -92,6 +94,28 @@ export const GovCommandCenterPage: React.FC = () => {
     setTimeout(() => setAlertBroadcasted(false), 3000);
   };
 
+  const handleExportSitrep = () => {
+    const activeReg = getActiveRegion();
+    const sitrepData = {
+      title: `ClimateShield Emergency SITREP — ${activeReg}`,
+      generatedAt: new Date().toISOString(),
+      region: activeReg,
+      threatLevel: 'TACTICAL ESCALATION LEVEL 2',
+      activeThreats: overview?.activeThreats ?? 2,
+      criticalAssetsCompromised: overview?.criticalInfrastructure?.compromised ?? 2,
+      liveWeather: liveWeather ?? { temperatureC: 22, rainfallMmPerHour: 48.2 },
+      notes: 'Operational SITREP generated for EOC Ops dispatch.',
+    };
+
+    const blob = new Blob([JSON.stringify(sitrepData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `ClimateShield_SITREP_${activeReg}_${Date.now()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <GovHqLayout activePath="/gov/overview">
       <div className="flex flex-col w-full">
@@ -124,6 +148,7 @@ export const GovCommandCenterPage: React.FC = () => {
           <div className="flex items-center gap-3">
             <button 
               type="button"
+              onClick={handleExportSitrep}
               className="px-3.5 py-1.5 rounded-xl bg-[#eff4ff] hover:bg-[#e5eeff] text-[#0b1c30] text-xs font-semibold flex items-center gap-1.5 transition-colors border border-[#d3e4fe]"
             >
               <Download className="w-3.5 h-3.5 text-[#0051d5]" />
@@ -316,31 +341,101 @@ export const GovCommandCenterPage: React.FC = () => {
           </div>
 
           {/* Dominant Interactive GIS Canvas Container */}
-          <div className="relative w-full h-[540px] rounded-2xl overflow-hidden shadow-sm bg-[#0e1a2b] flex flex-col justify-between border border-[#1f344d]">
-            {/* SVG GIS Simulation */}
-            <svg className="absolute inset-0 w-full h-full" xmlns="http://www.w3.org/2000/svg">
-              <defs>
-                <pattern id="gisGrid" width="60" height="60" patternUnits="userSpaceOnUse">
-                  <path d="M 60 0 L 0 0 0 60" fill="none" stroke="#1f344d" strokeWidth="0.75" />
-                  <circle cx="60" cy="60" r="1.5" fill="#2e4a6b" />
-                </pattern>
-                <linearGradient id="floodGrad" x1="0%" y1="100%" x2="50%" y2="0%">
-                  <stop offset="0%" stopColor="#06b6d4" stopOpacity="0.6" />
-                  <stop offset="100%" stopColor="#0891b2" stopOpacity="0.2" />
-                </linearGradient>
-              </defs>
-
-              <rect width="100%" height="100%" fill="#0e1a2b" />
-              <rect width="100%" height="100%" fill="url(#gisGrid)" />
-
-              {/* Water Channel */}
-              <path d="M 0,0 L 450,0 C 420,120 480,240 410,340 C 350,420 220,490 0,550 Z" fill="#0a2238" />
-              <path d="M 410,340 Q 600,380 720,440 T 1100,470 T 1500,600" fill="none" stroke="#0284c7" strokeWidth="16" opacity="0.8" />
-              <path d="M 410,340 Q 600,380 720,440 T 1100,470 T 1500,600" fill="none" stroke="#38bdf8" strokeWidth="4" opacity="0.6" />
-
-              {/* Flood Polygon */}
-              <path d="M 380,290 C 480,260 590,320 660,390 C 720,450 690,520 540,540 C 420,560 360,490 320,410 Z" fill="url(#floodGrad)" stroke="#06b6d4" strokeWidth="2" strokeDasharray="6 3" />
-            </svg>
+          <div className="relative w-full h-[540px] rounded-2xl overflow-hidden shadow-sm bg-slate-100 flex flex-col justify-between border border-[#e5eeff]">
+            <RealLeafletMap
+              center={
+                getActiveRegion() === 'NEPAL'
+                  ? [27.7172, 85.3140]
+                  : [13.062, 80.275]
+              }
+              zoom={13}
+              tileTheme="osm" // Default Street Mode basemap
+              showUserLocation={true}
+              zones={[
+                getActiveRegion() === 'NEPAL'
+                  ? {
+                      id: 'zone_ktm_nepal',
+                      name: 'Kathmandu Bagmati River Inundation Sector',
+                      lat: 27.7172,
+                      lng: 85.3140,
+                      riskLevel: 'CRITICAL',
+                      radiusMeters: 2200,
+                    }
+                  : {
+                      id: 'zone_eb',
+                      name: 'East Basin Sector (Critical Inundation)',
+                      lat: 13.062,
+                      lng: 80.275,
+                      riskLevel: 'CRITICAL',
+                      radiusMeters: 1800,
+                    },
+              ]}
+              markers={
+                getActiveRegion() === 'NEPAL'
+                  ? [
+                      {
+                        id: 'inc_ktm_main',
+                        lat: 27.6830,
+                        lng: 85.3080,
+                        title: '#INC-KTM-01 Bagmati River Flood Breach',
+                        description: 'Water depth: 2.1m | Flow: 2.4m/s | Risk Score: 94/100',
+                        severity: 'CRITICAL',
+                        type: 'incident',
+                      },
+                      {
+                        id: 'asset_brg_ktm',
+                        lat: 27.6890,
+                        lng: 85.3190,
+                        title: 'Bagmati River Bridge',
+                        description: 'Status: COMPROMISED (94/100)',
+                        severity: 'CRITICAL',
+                        type: 'asset',
+                      },
+                      {
+                        id: 'asset_hosp_ktm',
+                        lat: 27.6966,
+                        lng: 85.3591,
+                        title: 'Tribhuvan Medical Emergency Hub',
+                        description: 'Level-1 Emergency Trauma Center',
+                        severity: 'HIGH',
+                        type: 'asset',
+                      },
+                    ]
+                  : [
+                      ...(overview?.incidents || []).map((inc: any, idx: number) => ({
+                        id: inc.id || `inc_${idx}`,
+                        lat: inc.latitude || 13.062 + idx * 0.008,
+                        lng: inc.longitude || 80.275 - idx * 0.006,
+                        title: inc.title || `Incident #${inc.incidentCode || inc.id}`,
+                        description: `${inc.threatType || 'HAZARD'} | Severity: ${inc.severity || 'CRITICAL'}`,
+                        severity: (inc.severity || 'CRITICAL') as any,
+                        type: 'incident' as const,
+                      })),
+                      {
+                        id: 'inc_204_main',
+                        lat: 13.064,
+                        lng: 80.276,
+                        title: '#INC-204 Bayshore Underpass Flooded',
+                        description: 'Water depth: 1.4m | Risk Score: 84/100',
+                        severity: 'CRITICAL',
+                        type: 'incident',
+                      },
+                      {
+                        id: 'asset_d07',
+                        lat: 13.061,
+                        lng: 80.273,
+                        title: 'East Basin Drain D07',
+                        description: 'Critical Drainage Pump Infrastructure',
+                        type: 'asset',
+                      },
+                    ]
+              }
+              onMarkerClick={(m) => {
+                if (m.id.includes('204') || m.id.includes('eb')) {
+                  navigate('/gov/zone-cascade/inc_204');
+                }
+              }}
+            />
 
             {/* Top GIS HUD Overlays */}
             <div className="relative z-10 flex items-center justify-between p-4">
