@@ -31,6 +31,7 @@ import explainRoutes from './routes/explain.routes';
 import orchestrateRoutes from './routes/orchestrate.routes';
 import notificationRoutes from './routes/notification.routes';
 import citizenRoutes from './routes/citizen.routes';
+import billingRoutes from './routes/billing.routes';
 import phase2ExtensionsRoutes from './routes/phase2Extensions.routes';
 
 export function createApp() {
@@ -83,6 +84,7 @@ export function createApp() {
   app.use('/api', orchestrateRoutes);
   app.use('/api', notificationRoutes);
   app.use('/api', citizenRoutes);
+  app.use('/api', billingRoutes);
   app.use('/api', phase2ExtensionsRoutes);
 
   // --- 404 + central error handler (must be last) ---

@@ -1,11 +1,26 @@
 import React, { useState } from 'react';
 import { GovHqLayout } from '../../components/stitch/GovHqLayout';
 import { getActiveRegion } from '../../citizen/geo';
+import { api } from '../../lib/api';
 import { 
   Building2, ShieldCheck, Zap, Key, FileText, 
   Sparkles, CheckCircle2, Sliders, TrendingUp, Layers, 
   Download, ArrowRight, Server, Copy, Check
 } from 'lucide-react';
+
+// Extend window for Razorpay script
+declare global { interface Window { Razorpay: new (opts: object) => { open(): void }; } }
+
+function loadRazorpayScript(): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (window.Razorpay) { resolve(); return; }
+    const s = document.createElement('script');
+    s.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    s.onload = () => resolve();
+    s.onerror = () => reject(new Error('Failed to load Razorpay'));
+    document.head.appendChild(s);
+  });
+}
 
 export const GovCommercialPortalPage: React.FC = () => {
   const activeRegion = getActiveRegion();
@@ -20,6 +35,65 @@ export const GovCommercialPortalPage: React.FC = () => {
   // Copy API key state
   const [copied, setCopied] = useState(false);
   const [esgDownloading, setEsgDownloading] = useState(false);
+
+  // Payment state
+  const [payingTier, setPayingTier] = useState<string | null>(null);
+  const [paymentStatus, setPaymentStatus] = useState<{ tier: string; status: 'success' | 'failed' | 'cancelled' } | null>(null);
+
+  const handlePayment = async (tier: 'starter' | 'pro' | 'enterprise') => {
+    setPayingTier(tier);
+    setPaymentStatus(null);
+    try {
+      await loadRazorpayScript();
+
+      // 1. Create order on backend (backend owns the price)
+      const order = await api.post<{
+        orderId: string; amount: number; currency: string; keyId: string; planLabel: string;
+      }>('/billing/orders', { planId: tier });
+
+      // 2. Open Razorpay Checkout
+      await new Promise<void>((resolve, reject) => {
+        const rzp = new window.Razorpay({
+          key: order.keyId,
+          amount: order.amount,
+          currency: order.currency,
+          name: 'ClimateShield',
+          description: order.planLabel,
+          order_id: order.orderId,
+          theme: { color: '#0051d5' },
+          handler: async (response: { razorpay_payment_id: string; razorpay_order_id: string; razorpay_signature: string }) => {
+            try {
+              // 3. Verify signature on backend
+              await api.post('/billing/payments/verify', {
+                razorpayOrderId: response.razorpay_order_id,
+                razorpayPaymentId: response.razorpay_payment_id,
+                razorpaySignature: response.razorpay_signature,
+              });
+              setPaymentStatus({ tier, status: 'success' });
+              setSelectedTier(tier);
+              resolve();
+            } catch {
+              setPaymentStatus({ tier, status: 'failed' });
+              reject(new Error('Verification failed'));
+            }
+          },
+          modal: {
+            ondismiss: () => {
+              setPaymentStatus({ tier, status: 'cancelled' });
+              reject(new Error('cancelled'));
+            },
+          },
+        });
+        rzp.open();
+      }).catch(() => {});
+    } catch (err: unknown) {
+      if (err instanceof Error && err.message !== 'cancelled') {
+        setPaymentStatus({ tier, status: 'failed' });
+      }
+    } finally {
+      setPayingTier(null);
+    }
+  };
 
   // Revenue calculation logic in INR (₹)
   const tierBasePrice = { starter: 1499, pro: 3999, enterprise: 11990 }[selectedTier];
@@ -164,10 +238,16 @@ export const GovCommercialPortalPage: React.FC = () => {
                   </li>
                 </ul>
               </div>
-              <button className={`w-full mt-6 py-2 rounded-xl text-xs font-bold transition-colors ${
-                selectedTier === 'starter' ? 'bg-blue-600 text-white' : 'bg-[#eff4ff] text-[#0051d5] hover:bg-[#e5eeff]'
-              }`}>
-                {selectedTier === 'starter' ? 'Selected Plan ✓' : 'Select Starter'}
+              <button
+                onClick={(e) => { e.stopPropagation(); handlePayment('starter'); }}
+                disabled={payingTier === 'starter'}
+                className={`w-full mt-6 py-2 rounded-xl text-xs font-bold transition-colors ${
+                  paymentStatus?.tier === 'starter' && paymentStatus.status === 'success'
+                    ? 'bg-emerald-600 text-white'
+                    : selectedTier === 'starter' ? 'bg-blue-600 text-white' : 'bg-[#eff4ff] text-[#0051d5] hover:bg-[#e5eeff]'
+                }`}
+              >
+                {payingTier === 'starter' ? 'Processing…' : paymentStatus?.tier === 'starter' && paymentStatus.status === 'success' ? '✓ Plan Activated' : selectedTier === 'starter' ? 'Pay ₹1,499' : 'Select Starter'}
               </button>
             </div>
 
@@ -214,10 +294,16 @@ export const GovCommercialPortalPage: React.FC = () => {
                   </li>
                 </ul>
               </div>
-              <button className={`w-full mt-6 py-2 rounded-xl text-xs font-bold transition-colors ${
-                selectedTier === 'pro' ? 'bg-blue-600 text-white' : 'bg-[#eff4ff] text-[#0051d5] hover:bg-[#e5eeff]'
-              }`}>
-                {selectedTier === 'pro' ? 'Selected Plan ✓' : 'Select Statewide'}
+              <button
+                onClick={(e) => { e.stopPropagation(); handlePayment('pro'); }}
+                disabled={payingTier === 'pro'}
+                className={`w-full mt-6 py-2 rounded-xl text-xs font-bold transition-colors ${
+                  paymentStatus?.tier === 'pro' && paymentStatus.status === 'success'
+                    ? 'bg-emerald-600 text-white'
+                    : selectedTier === 'pro' ? 'bg-blue-600 text-white' : 'bg-[#eff4ff] text-[#0051d5] hover:bg-[#e5eeff]'
+                }`}
+              >
+                {payingTier === 'pro' ? 'Processing…' : paymentStatus?.tier === 'pro' && paymentStatus.status === 'success' ? '✓ Plan Activated' : selectedTier === 'pro' ? 'Pay ₹3,999' : 'Select Statewide'}
               </button>
             </div>
 
@@ -257,10 +343,16 @@ export const GovCommercialPortalPage: React.FC = () => {
                   </li>
                 </ul>
               </div>
-              <button className={`w-full mt-6 py-2 rounded-xl text-xs font-bold transition-colors ${
-                selectedTier === 'enterprise' ? 'bg-blue-600 text-white' : 'bg-[#eff4ff] text-[#0051d5] hover:bg-[#e5eeff]'
-              }`}>
-                {selectedTier === 'enterprise' ? 'Selected Plan ✓' : 'Select Enterprise'}
+              <button
+                onClick={(e) => { e.stopPropagation(); handlePayment('enterprise'); }}
+                disabled={payingTier === 'enterprise'}
+                className={`w-full mt-6 py-2 rounded-xl text-xs font-bold transition-colors ${
+                  paymentStatus?.tier === 'enterprise' && paymentStatus.status === 'success'
+                    ? 'bg-emerald-600 text-white'
+                    : selectedTier === 'enterprise' ? 'bg-blue-600 text-white' : 'bg-[#eff4ff] text-[#0051d5] hover:bg-[#e5eeff]'
+                }`}
+              >
+                {payingTier === 'enterprise' ? 'Processing…' : paymentStatus?.tier === 'enterprise' && paymentStatus.status === 'success' ? '✓ Plan Activated' : selectedTier === 'enterprise' ? 'Pay ₹11,990' : 'Select Enterprise'}
               </button>
             </div>
           </div>

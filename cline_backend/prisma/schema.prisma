@@ -257,6 +257,7 @@ model User {
   notifications      Notification[]
   citizenReports     CitizenReport[]     @relation("CitizenReportReporter")
   sosEvents          SosEvent[]          @relation("SosEventRequester")
+  billingPayments    BillingPayment[]
 
   @@index([role])
   @@index([departmentId])
@@ -835,5 +836,37 @@ model EventOutbox {
 
   @@index([status, nextAttemptAt])
   @@index([eventType])
+}
+
+// ========================= BILLING =========================
+
+enum PlanId {
+  starter
+  pro
+  enterprise
+}
+
+enum PaymentStatus {
+  PENDING
+  VERIFIED
+  FAILED
+}
+
+model BillingPayment {
+  id                String        @id @default(cuid())
+  userId            String
+  user              User          @relation(fields: [userId], references: [id])
+  planId            PlanId
+  amountPaise       Int
+  currency          String        @default("INR")
+  status            PaymentStatus @default(PENDING)
+  razorpayOrderId   String        @unique
+  razorpayPaymentId String?
+  activatedAt       DateTime?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  @@index([userId])
+  @@index([razorpayOrderId])
 }
 
