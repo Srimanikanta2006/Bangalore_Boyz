@@ -7,6 +7,11 @@ export const login = wrap(async (req: Request, res: Response) => {
   res.json({ success: true, data });
 });
 
+export const register = wrap(async (req: Request, res: Response) => {
+  const data = await authService.register(req.body);
+  res.status(201).json({ success: true, data });
+});
+
 export const me = wrap(async (req: Request, res: Response) => {
   const user = await authService.getMe(req.user!.id);
   res.json({ success: true, data: { user } });

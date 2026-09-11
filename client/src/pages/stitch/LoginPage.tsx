@@ -13,7 +13,10 @@ type RoleType = 'citizen' | 'government' | 'gov-field' | 'rescue';
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login } = useAuth();
+  const { login, register } = useAuth();
+  const [mode, setMode] = useState<'signin' | 'signup'>('signin');
+  const [name, setName] = useState('');
+  const [signUpRole, setSignUpRole] = useState<'CITIZEN' | 'GOVERNMENT_OPERATOR' | 'FIELD_OPERATOR'>('CITIZEN');
   const [selectedRole, setSelectedRole] = useState<RoleType>('citizen');
   const [email, setEmail] = useState('citizen@climateshield.demo');
   const [password, setPassword] = useState('DemoGov@2024');
@@ -62,7 +65,46 @@ export const LoginPage: React.FC = () => {
     }
   };
 
+  const handleSignUp = async () => {
+    if (submitting) return;
+    setError(null);
+
+    if (!name.trim()) {
+      setError('Please enter your full name.');
+      return;
+    }
+    if (!email.trim() || !password) {
+      setError('Please enter a valid email and password.');
+      return;
+    }
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters long.');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const user = await register(name.trim(), email.trim(), password, signUpRole);
+      const target = homeForRole(user.role);
+      navigate(target, { replace: true });
+    } catch (err) {
+      const message =
+        err instanceof ApiError
+          ? err.code === 'EMAIL_TAKEN'
+            ? 'An account with this email address already exists. Please sign in.'
+            : err.message
+          : 'Registration failed. Please check your network or try again.';
+      setError(message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const handleLaunch = async () => {
+    if (mode === 'signup') {
+      await handleSignUp();
+      return;
+    }
     if (submitting) return;
     setError(null);
 
@@ -127,7 +169,7 @@ export const LoginPage: React.FC = () => {
       <main className="flex-1 flex flex-col relative w-full pt-16 pb-24 bg-surface">
         <div className="flex flex-col w-full px-edge-margin-mobile pb-6 pt-2">
           {/* Brand & Identity Banner */}
-          <div className="flex flex-col items-center text-center mt-space-xs mb-space-lg">
+          <div className="flex flex-col items-center text-center mt-space-xs mb-space-md">
             <div className="w-20 h-16 rounded-xl bg-surface-container flex items-center justify-center p-2 mb-space-sm shadow-sm">
               <img
                 alt="ClimateShield Shield Mark"
@@ -146,16 +188,127 @@ export const LoginPage: React.FC = () => {
             </p>
           </div>
 
-          {/* Operational Sign In Form Surface */}
-          <div className="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col gap-space-sm mb-space-lg">
+          {/* Mode Switcher Tabs (Sign In vs Sign Up) */}
+          <div className="grid grid-cols-2 p-1 bg-surface-container rounded-xl mb-4 text-sm font-semibold">
+            <button
+              type="button"
+              onClick={() => {
+                setMode('signin');
+                setError(null);
+              }}
+              className={`py-2 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+                mode === 'signin'
+                  ? 'bg-surface-container-lowest text-on-surface shadow-sm font-bold'
+                  : 'text-on-surface-variant hover:text-on-surface'
+              }`}
+            >
+              <span className="material-symbols-outlined text-[18px]">login</span>
+              <span>Sign In</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setMode('signup');
+                setError(null);
+              }}
+              className={`py-2 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+                mode === 'signup'
+                  ? 'bg-primary text-on-primary shadow-sm font-bold'
+                  : 'text-on-surface-variant hover:text-on-surface'
+              }`}
+            >
+              <span className="material-symbols-outlined text-[18px]">person_add</span>
+              <span>New Account</span>
+            </button>
+          </div>
+
+          {/* Operational Sign In / Sign Up Form Surface */}
+          <div className="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col gap-space-sm mb-space-lg border border-outline-variant/30">
             <div className="flex items-center justify-between">
               <span className="font-label-md text-label-md text-on-surface font-semibold tracking-tight">
-                Field Credentials
+                {mode === 'signup' ? 'Create Field Account' : 'Field Credentials'}
               </span>
               <span className="inline-flex items-center gap-1 font-code-sm text-code-sm text-secondary font-medium">
                 <span className="material-symbols-outlined text-[14px]">lock</span> TLS Encrypted
               </span>
             </div>
+
+            {/* Name Field (Sign Up Only) */}
+            {mode === 'signup' && (
+              <div className="flex flex-col gap-1">
+                <label
+                  className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-semibold"
+                  htmlFor="name"
+                >
+                  Full Name
+                </label>
+                <div className="relative flex items-center">
+                  <span className="material-symbols-outlined absolute left-3 text-[18px] text-on-surface-variant select-none">
+                    person
+                  </span>
+                  <input
+                    className="w-full h-10 pl-9 pr-3 rounded-lg bg-surface-container-low text-on-surface font-body-md text-body-md placeholder:text-outline focus:outline-none focus:bg-surface-container-highest transition-colors"
+                    id="name"
+                    placeholder="e.g. Sarah Connor"
+                    type="text"
+                    value={name}
+                    onChange={(e) => {
+                      setName(e.target.value);
+                      if (error) setError(null);
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Role Field (Sign Up Only) */}
+            {mode === 'signup' && (
+              <div className="flex flex-col gap-1.5">
+                <label className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-semibold">
+                  Account Type / Role
+                </label>
+                <div className="grid grid-cols-3 gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setSignUpRole('CITIZEN')}
+                    className={`p-2 rounded-lg border text-xs font-semibold flex flex-col items-center gap-1 transition-all ${
+                      signUpRole === 'CITIZEN'
+                        ? 'border-primary bg-primary/10 text-primary'
+                        : 'border-outline-variant/30 text-on-surface-variant hover:bg-surface-container-low'
+                    }`}
+                  >
+                    <span className="material-symbols-outlined text-[18px]">person</span>
+                    <span>Client</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setSignUpRole('GOVERNMENT_OPERATOR')}
+                    className={`p-2 rounded-lg border text-xs font-semibold flex flex-col items-center gap-1 transition-all ${
+                      signUpRole === 'GOVERNMENT_OPERATOR'
+                        ? 'border-primary bg-primary/10 text-primary'
+                        : 'border-outline-variant/30 text-on-surface-variant hover:bg-surface-container-low'
+                    }`}
+                  >
+                    <span className="material-symbols-outlined text-[18px]">account_balance</span>
+                    <span>Gov EOC</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setSignUpRole('FIELD_OPERATOR')}
+                    className={`p-2 rounded-lg border text-xs font-semibold flex flex-col items-center gap-1 transition-all ${
+                      signUpRole === 'FIELD_OPERATOR'
+                        ? 'border-primary bg-primary/10 text-primary'
+                        : 'border-outline-variant/30 text-on-surface-variant hover:bg-surface-container-low'
+                    }`}
+                  >
+                    <span className="material-symbols-outlined text-[18px]">e911_emergency</span>
+                    <span>Rescue</span>
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Email Field */}
             <div className="flex flex-col gap-1">
@@ -172,10 +325,13 @@ export const LoginPage: React.FC = () => {
                 <input
                   className="w-full h-10 pl-9 pr-3 rounded-lg bg-surface-container-low text-on-surface font-body-md text-body-md placeholder:text-outline focus:outline-none focus:bg-surface-container-highest transition-colors"
                   id="email"
-                  placeholder="officer@agency.gov or user@domain.com"
+                  placeholder="user@domain.com"
                   type="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (error) setError(null);
+                  }}
                 />
               </div>
             </div>
@@ -189,9 +345,11 @@ export const LoginPage: React.FC = () => {
                 >
                   Password
                 </label>
-                <button className="font-label-sm text-label-sm text-secondary hover:underline" type="button">
-                  Forgot?
-                </button>
+                {mode === 'signin' && (
+                  <button className="font-label-sm text-label-sm text-secondary hover:underline" type="button">
+                    Forgot?
+                  </button>
+                )}
               </div>
               <div className="relative flex items-center">
                 <span className="material-symbols-outlined absolute left-3 text-[18px] text-on-surface-variant select-none">
@@ -200,7 +358,7 @@ export const LoginPage: React.FC = () => {
                 <input
                   className="w-full h-10 pl-9 pr-10 rounded-lg bg-surface-container-low text-on-surface font-body-md text-body-md placeholder:text-outline focus:outline-none focus:bg-surface-container-highest transition-colors"
                   id="password"
-                  placeholder="Enter operational passcode"
+                  placeholder={mode === 'signup' ? 'Min 6 characters' : 'Enter operational passcode'}
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => {
@@ -233,41 +391,55 @@ export const LoginPage: React.FC = () => {
                   <span className="material-symbols-outlined text-[18px] text-red-700 mt-px shrink-0">error</span>
                   <span className="flex-1 font-medium">{error}</span>
                 </div>
-                <button
-                  type="button"
-                  onClick={handleBypass}
-                  className="self-start text-xs font-bold text-red-800 underline hover:text-red-950 flex items-center gap-1"
-                >
-                  <span>Skip authentication & enter as {roleConfigs[selectedRole].label}</span>
-                  <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
-                </button>
+                {mode === 'signin' && (
+                  <button
+                    type="button"
+                    onClick={handleBypass}
+                    className="self-start text-xs font-bold text-red-800 underline hover:text-red-950 flex items-center gap-1"
+                  >
+                    <span>Skip authentication & enter as {roleConfigs[selectedRole].label}</span>
+                    <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
+                  </button>
+                )}
               </div>
             )}
 
-            {/* Secondary Outline Action */}
+            {/* Primary Action Button */}
             <button
-              className="w-full h-10 mt-1 rounded-lg bg-surface-container text-on-surface font-body-md text-body-md font-semibold flex items-center justify-center gap-1.5 active:bg-surface-container-high transition-colors disabled:opacity-60"
+              className="w-full h-11 mt-1 rounded-lg bg-primary text-on-primary font-body-md text-body-md font-bold flex items-center justify-center gap-1.5 active:opacity-90 transition-all shadow-md disabled:opacity-60"
               type="button"
               onClick={handleLaunch}
               disabled={submitting}
             >
-              <span className="material-symbols-outlined text-[18px]">login</span>
-              <span>{submitting ? 'Signing In…' : 'Verify & Sign In'}</span>
+              <span className="material-symbols-outlined text-[18px]">
+                {mode === 'signup' ? 'person_add' : 'login'}
+              </span>
+              <span>
+                {submitting
+                  ? mode === 'signup'
+                    ? 'Creating Account…'
+                    : 'Signing In…'
+                  : mode === 'signup'
+                  ? 'Register & Launch Workspace →'
+                  : 'Verify & Sign In'}
+              </span>
             </button>
 
             {/* Demo Credential Shortcut Bar */}
-            <div className="flex items-center justify-between text-xs text-on-surface-variant px-1 mt-0.5">
-              <span>Passcode: <code className="bg-surface-container-highest px-1.5 py-0.5 rounded font-mono text-[11px] font-bold text-on-surface">DemoGov@2024</code></span>
-              <button
-                type="button"
-                onClick={handleBypass}
-                className="font-semibold text-secondary hover:underline flex items-center gap-0.5"
-                title="Bypass login and open role dashboard"
-              >
-                <span>Direct Launch</span>
-                <span className="material-symbols-outlined text-[14px]">bolt</span>
-              </button>
-            </div>
+            {mode === 'signin' && (
+              <div className="flex items-center justify-between text-xs text-on-surface-variant px-1 mt-0.5">
+                <span>Passcode: <code className="bg-surface-container-highest px-1.5 py-0.5 rounded font-mono text-[11px] font-bold text-on-surface">DemoGov@2024</code></span>
+                <button
+                  type="button"
+                  onClick={handleBypass}
+                  className="font-semibold text-secondary hover:underline flex items-center gap-0.5"
+                  title="Bypass login and open role dashboard"
+                >
+                  <span>Direct Launch</span>
+                  <span className="material-symbols-outlined text-[14px]">bolt</span>
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Role Selector Switch Section */}

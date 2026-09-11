@@ -84,6 +84,53 @@ export async function login(email: string, password: string) {
   };
 }
 
+export async function register(params: { name: string; email: string; password: string; role?: SafeUser['role'] }) {
+  const emailClean = params.email.trim().toLowerCase();
+  const existing = await prisma.user.findUnique({
+    where: { email: emailClean },
+  });
+
+  if (existing) {
+    throw new AppError('EMAIL_TAKEN', 'An account with this email address already exists.', 409);
+  }
+
+  const passwordHash = await hashPassword(params.password);
+  const user = await prisma.user.create({
+    data: {
+      name: params.name.trim(),
+      email: emailClean,
+      passwordHash,
+      role: params.role ?? 'CITIZEN',
+    },
+    include: { department: { select: { name: true } } },
+  });
+
+  const payload: JwtPayload = {
+    sub: user.id,
+    email: user.email,
+    role: user.role,
+    departmentId: user.departmentId,
+  };
+  const token = jwt.sign(payload, env.JWT_SECRET, {
+    expiresIn: env.JWT_EXPIRES_IN as jwt.SignOptions['expiresIn'],
+  });
+
+  await recordAudit({
+    userId: user.id,
+    action: AuditActions.AUTH_LOGIN,
+    entityType: 'USER',
+    entityId: user.id,
+    metadata: { role: user.role, registered: true },
+  });
+
+  return {
+    user: toSafeUser(user),
+    token,
+    tokenType: 'Bearer',
+    expiresIn: env.JWT_EXPIRES_IN,
+  };
+}
+
 export async function getMe(userId: string): Promise<SafeUser> {
   const user = await prisma.user.findUnique({
     where: { id: userId },
