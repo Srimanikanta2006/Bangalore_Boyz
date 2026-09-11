@@ -9,7 +9,14 @@
  * VITE_API_URL to call a fully-qualified backend origin instead.
  */
 
-const API_BASE = (import.meta.env?.VITE_API_URL as string) || '/api';
+function getApiBase(): string {
+  const raw = (import.meta.env?.VITE_API_URL as string | undefined)?.trim();
+  if (!raw) return '/api';
+  const clean = raw.replace(/\/+$/, '');
+  return clean.endsWith('/api') ? clean : `${clean}/api`;
+}
+
+const API_BASE = getApiBase();
 
 const CANONICAL_TOKEN_KEY = 'cs_auth_token';
 const LEGACY_TOKEN_KEY = 'cs_token';

@@ -8,8 +8,8 @@
     "dev:backend": "npm --prefix cline_backend run dev",
     "dev:server": "npm --prefix server run dev",
     "dev:client": "npm --prefix client run dev",
-    "build": "npm --prefix server run build && npm --prefix client run build",
-    "start": "npm --prefix server run start"
+    "build": "npm --prefix client run build",
+    "start": "npm --prefix client run preview"
   },
   "keywords": [
     "climate-risk",

@@ -59,6 +59,14 @@ export function createApp() {
   // depth; government writes are already fail-closed via requireRole).
   app.use(blockCitizenFromInternal);
 
+  // --- URL rewrite middleware: tolerate requests sent without the /api prefix ---
+  app.use((req, _res, next) => {
+    if (!req.path.startsWith('/api') && !req.path.startsWith(EVIDENCE_URL_PREFIX)) {
+      req.url = `/api${req.url}`;
+    }
+    next();
+  });
+
   // --- API rate limiting & routes (all mounted under /api) ---
   app.use('/api', globalApiLimiter);
   app.use('/api', healthRoutes);
