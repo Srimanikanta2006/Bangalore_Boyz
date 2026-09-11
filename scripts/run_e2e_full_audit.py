@@ -1,9 +1,10 @@
+import os
 import urllib.request
 import json
 import time
 
-BASE_GOV_URL = 'http://localhost:4000/api'
-BASE_RESCUE_URL = 'http://localhost:4001/api'
+BASE_GOV_URL = os.environ.get('E2E_GOV_URL', 'http://localhost:4000/api')
+BASE_RESCUE_URL = os.environ.get('E2E_RESCUE_URL', 'http://localhost:4001/api')
 
 results = []
 

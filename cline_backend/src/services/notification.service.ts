@@ -177,8 +177,8 @@ export async function listSentAlerts(query: NotificationQuery) {
   const items = alerts.map((a) => ({
     id: a.id,
     zoneId: a.zoneId,
-    zoneName: a.zone.name,
-    zoneCode: a.zone.code,
+    zoneName: a.zone?.name ?? 'General Zone',
+    zoneCode: a.zone?.code ?? 'ALL',
     subscriberName: a.subscriber?.name ?? 'Regional Subscriber',
     recipient: a.recipient,
     riskLevel: a.riskLevel,

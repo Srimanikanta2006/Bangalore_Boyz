@@ -96,8 +96,8 @@ const recoveryRecords = [
     assignedUnit: 'PW-HEAVY-CREW-01',
     recoveryCostINR: 1250000,
     startedAt: new Date(Date.now() - 48 * 3600 * 1000).toISOString(),
-    completedAt: null,
-    verifiedAt: null,
+    completedAt: null as string | null,
+    verifiedAt: null as string | null,
   }
 ];
 
