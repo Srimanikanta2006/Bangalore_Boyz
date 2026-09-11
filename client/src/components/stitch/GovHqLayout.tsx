@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   Shield, Search, Bell, User, LayoutDashboard, 
   Map as MapIcon, AlertTriangle, Radio, PlayCircle, 
-  Building2, BarChart3, History, Users, Satellite, LogOut
+  Building2, BarChart3, History, Users, Satellite, LogOut, DollarSign
 } from 'lucide-react';
 import { getActiveRegion, setActiveRegion, type RegionKey } from '../../citizen/geo';
 
@@ -38,6 +38,7 @@ export const GovHqLayout: React.FC<GovHqLayoutProps> = ({ children, activePath }
     { label: 'Response Center', path: '/gov/response-center', icon: Radio },
     { label: 'Simulator', path: '/gov/simulator', icon: PlayCircle },
     { label: 'Infrastructure', path: '/gov/critical-assets', icon: Building2 },
+    { label: 'Commercial Hub', path: '/gov/commercial', icon: DollarSign },
   ];
 
   return (

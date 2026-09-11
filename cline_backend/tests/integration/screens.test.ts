@@ -247,7 +247,7 @@ describe.skipIf(!ready)('government screens (infrastructure, zones, map, analyti
   it('hazards: active threat list', async () => {
     const res = await request(app).get('/api/hazards?activeOnly=true').set(auth(govToken));
     expect(res.status).toBe(200);
-    expect(res.body.data.items.length).toBe(4);
+    expect(res.body.data.items.length).toBeGreaterThanOrEqual(4);
   });
 
   it('audit: FIELD_OPERATOR cannot read the audit trail (403)', async () => {

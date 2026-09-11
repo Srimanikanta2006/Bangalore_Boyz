@@ -33,6 +33,7 @@ import { GovZoneCascadePage } from './pages/stitch/GovZoneCascadePage';
 import { GovSimulatorPage } from './pages/stitch/GovSimulatorPage';
 import { GovResponseCenterPage } from './pages/stitch/GovResponseCenterPage';
 import { GovIncidentsPage } from './pages/stitch/GovIncidentsPage';
+import { GovCommercialPortalPage } from './pages/stitch/GovCommercialPortalPage';
 
 // Navigation & Screen Switcher
 import { ScreenSwitcher } from './components/stitch/ScreenSwitcher';
@@ -91,6 +92,7 @@ export const App: React.FC = () => {
         <Route path="/gov/zone-cascade/:id" element={<RequireGovernmentLogin><GovZoneCascadePage /></RequireGovernmentLogin>} />
         <Route path="/gov/simulator" element={<RequireGovernmentLogin><GovSimulatorPage /></RequireGovernmentLogin>} />
         <Route path="/gov/response-center" element={<RequireGovernmentLogin><GovResponseCenterPage /></RequireGovernmentLogin>} />
+        <Route path="/gov/commercial" element={<RequireGovernmentLogin><GovCommercialPortalPage /></RequireGovernmentLogin>} />
 
         {/* Legacy / Console Redirects */}
         <Route path="/console" element={<Navigate to="/gov/overview" replace />} />

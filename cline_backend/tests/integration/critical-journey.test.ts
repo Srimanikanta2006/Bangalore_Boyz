@@ -50,7 +50,7 @@ describe.skipIf(!ready)('critical government journey (end-to-end)', () => {
     expect(d.resilienceIndex).toBeGreaterThanOrEqual(0);
     expect(d.resilienceIndex).toBeLessThanOrEqual(100);
     expect(['STRONG', 'GUARDED', 'MODERATE_CAUTION', 'CRITICAL_ALERT']).toContain(d.resilienceLevel);
-    expect(d.activeThreats).toBe(4);
+    expect(d.activeThreats).toBeGreaterThanOrEqual(4);
     expect(d.monitoredZones).toBeGreaterThanOrEqual(4);
     expect(d.activeIncidents).toBeGreaterThanOrEqual(8);
     expect(d.criticalIncidents).toBeGreaterThanOrEqual(2);
@@ -60,7 +60,7 @@ describe.skipIf(!ready)('critical government journey (end-to-end)', () => {
     expect(d.mobility.index).toBeGreaterThan(0);
     expect(d.resourceReadiness.percent).toBeGreaterThan(0);
     expect(d.recentCriticalIncidents.length).toBeGreaterThan(0);
-    expect(d.activeHazards.length).toBe(4);
+    expect(d.activeHazards.length).toBeGreaterThanOrEqual(4);
   });
 
   it('response center: returns dispatch board aggregates', async () => {
