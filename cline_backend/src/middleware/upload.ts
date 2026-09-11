@@ -10,7 +10,8 @@ import { AppError } from '../utils/errors';
  * (see app.ts). Limits: jpg/png/webp, <=5MB each, max 3 files per report.
  */
 
-export const EVIDENCE_DIR = path.join(process.cwd(), 'uploads', 'evidence');
+// Use __dirname-relative path so it works regardless of where the process is started from.
+export const EVIDENCE_DIR = path.join(__dirname, '..', '..', 'uploads', 'evidence');
 export const EVIDENCE_URL_PREFIX = '/media/evidence';
 
 fs.mkdirSync(EVIDENCE_DIR, { recursive: true });

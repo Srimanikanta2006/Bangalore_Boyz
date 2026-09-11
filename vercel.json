@@ -3,5 +3,8 @@
   "outputDirectory": "client/dist",
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
-  ]
+  ],
+  "env": {
+    "VITE_API_URL": "https://climateshield-backend.onrender.com/api"
+  }
 }

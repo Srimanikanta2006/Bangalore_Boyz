@@ -1,33 +1,34 @@
 services:
-  # 1. Main Express Backend API (cline_backend)
   - type: web
     name: climateshield-backend
     env: node
-    rootDir: cline_backend
-    buildCommand: npm install --include=dev && npm run build
-    startCommand: npm run start
+    buildCommand: bash cline_backend/build.sh
+    startCommand: bash cline_backend/start.sh
     healthCheckPath: /api/health
     envVars:
       - key: NODE_ENV
         value: production
+      - key: PORT
+        value: 4000
       - key: DATABASE_URL
         sync: false
       - key: DIRECT_URL
         sync: false
       - key: JWT_SECRET
         sync: false
-      - key: GEMINI_API_KEY
-        sync: false
       - key: CORS_ORIGIN
         value: "*"
-
-  # 2. Tactical Rescue Microservice Engine
-  - type: web
-    name: climateshield-rescue
-    env: node
-    buildCommand: npm install
-    startCommand: npx tsx backend/src/rescueServer.ts
-    healthCheckPath: /health
-    envVars:
-      - key: NODE_ENV
-        value: production
+      - key: DEMO_USER_PASSWORD
+        value: DemoGov@2024
+      - key: WEATHER_CACHE_SECONDS
+        value: 300
+      - key: WEATHER_POLL_INTERVAL_MINUTES
+        value: 0
+      - key: GEMINI_API_KEY
+        value: ""
+      - key: GEMINI_MODEL
+        value: gemini-2.5-flash
+      - key: RAZORPAY_KEY_ID
+        sync: false
+      - key: RAZORPAY_KEY_SECRET
+        sync: false
