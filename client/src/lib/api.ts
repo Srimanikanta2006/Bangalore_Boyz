@@ -11,9 +11,14 @@
 
 function getApiBase(): string {
   const raw = (import.meta.env?.VITE_API_URL as string | undefined)?.trim();
-  if (!raw) return '/api';
-  const clean = raw.replace(/\/+$/, '');
-  return clean.endsWith('/api') ? clean : `${clean}/api`;
+  if (raw) {
+    const clean = raw.replace(/\/+$/, '');
+    return clean.endsWith('/api') ? clean : `${clean}/api`;
+  }
+  if (typeof window !== 'undefined' && window.location.hostname && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+    return `http://${window.location.hostname}:4000/api`;
+  }
+  return '/api';
 }
 
 const API_BASE = getApiBase();

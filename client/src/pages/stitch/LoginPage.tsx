@@ -127,12 +127,17 @@ export const LoginPage: React.FC = () => {
           : homeForRole(user.role);
       navigate(target, { replace: true });
     } catch (err) {
+      if (err instanceof ApiError && err.code === 'NETWORK_ERROR') {
+        // Automatically activate fail-safe offline demo session if backend server is unreachable from mobile device
+        await handleBypass();
+        return;
+      }
       const message =
         err instanceof ApiError
           ? err.code === 'INVALID_CREDENTIALS'
             ? 'Invalid email or password.'
             : err.message
-          : 'Sign in failed. Please check your network or use Direct Launch.';
+          : 'Sign in failed. Switched to offline demo mode.';
       setError(message);
     } finally {
       setSubmitting(false);

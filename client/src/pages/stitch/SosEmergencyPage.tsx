@@ -73,7 +73,7 @@ export const SosEmergencyPage: React.FC = () => {
   const [isDispatched, setIsDispatched] = useState(false);
   const [dispatchedCode, setDispatchedCode] = useState<string | null>(null);
   const [dispatchError, setDispatchError] = useState<string | null>(null);
-  const timerRef = useRef<number | null>(null);
+  const timerRef = useRef<any>(null);
 
   const [coords, setCoords] = useState<GeoState | null>(null);
   const [address, setAddress] = useState<string | null>(null);
