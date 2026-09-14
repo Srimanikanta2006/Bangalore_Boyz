@@ -50,3 +50,8 @@ Thumbs.db
 # Local MCP & Credential Files
 mcp_config.json
 *mcp*.credentials*
+
+# Generated APKs & Test Artifacts
+*.apk
+.playwright-mcp/
+qa_reports/
