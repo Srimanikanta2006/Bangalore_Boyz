@@ -27,6 +27,12 @@ export function useGeoResource<T>(
   const refetch = useCallback(() => setReloadToken((t) => t + 1), []);
 
   useEffect(() => {
+    const handleRegionEvent = () => refetch();
+    window.addEventListener('climateshield_region_changed', handleRegionEvent);
+    return () => window.removeEventListener('climateshield_region_changed', handleRegionEvent);
+  }, [refetch]);
+
+  useEffect(() => {
     let cancelled = false;
     abortRef.current?.abort();
     const controller = new AbortController();

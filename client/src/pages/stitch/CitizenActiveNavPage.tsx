@@ -1,14 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Header } from '../../components/stitch/Header';
 import { RealLeafletMap } from '../../components/stitch/RealLeafletMap';
-import { getActiveRegion } from '../../citizen/geo';
+import { getActiveRegion, getActiveLocationDetails } from '../../citizen/geo';
 
 export const CitizenActiveNavPage: React.FC = () => {
   const navigate = useNavigate();
   const activeRegion = getActiveRegion();
+  const locDetails = getActiveLocationDetails();
 
   const [isRerouteVisible, setIsRerouteVisible] = useState(true);
+  const [regionToken, setRegionToken] = useState(0);
+
+  useEffect(() => {
+    const handleRegionEvent = () => setRegionToken((t) => t + 1);
+    window.addEventListener('climateshield_region_changed', handleRegionEvent);
+    return () => window.removeEventListener('climateshield_region_changed', handleRegionEvent);
+  }, []);
 
   // Read saved destination or default
   const savedDestRaw = localStorage.getItem('climateshield_active_dest');
@@ -16,12 +24,21 @@ export const CitizenActiveNavPage: React.FC = () => {
 
   const destName =
     savedDest?.name ??
-    (activeRegion === 'NEPAL' ? 'Pashupati High-Ground Relief Shelter' : 'North General Medical Center');
+    (activeRegion === 'NEPAL' ? 'Pashupati High-Ground Relief Shelter' : `${locDetails.name} Regional Trauma Hospital`);
 
-  const originName = activeRegion === 'NEPAL' ? 'Thamel Quarter, Kathmandu' : 'Current Location';
+  const originName = locDetails.name || (activeRegion === 'NEPAL' ? 'Thamel Quarter, Kathmandu' : 'Current Location');
 
-  const mapCenter: [number, number] =
-    activeRegion === 'NEPAL' ? [27.7172, 85.3140] : [13.062, 80.275];
+  const mapCenter: [number, number] = [locDetails.latitude, locDetails.longitude];
+
+  const destCoords: [number, number] = [
+    savedDest?.lat ?? (activeRegion === 'NEPAL' ? 27.7080 : locDetails.latitude + 0.015),
+    savedDest?.lng ?? (activeRegion === 'NEPAL' ? 85.3400 : locDetails.longitude + 0.012),
+  ];
+
+  const hazardCoords: [number, number] = [
+    activeRegion === 'NEPAL' ? 27.6830 : locDetails.latitude + (destCoords[0] - locDetails.latitude) * 0.4,
+    activeRegion === 'NEPAL' ? 85.3080 : locDetails.longitude + (destCoords[1] - locDetails.longitude) * 0.4,
+  ];
 
   // Smooth curved road polylines for safe vs hazardous route
   const safeRoutePolyline: [number, number][] =
@@ -35,10 +52,10 @@ export const CitizenActiveNavPage: React.FC = () => {
           [27.7080, 85.3400],
         ]
       : [
-          [13.062, 80.275],
-          [13.065, 80.281],
-          [13.072, 80.276],
-          [13.070, 80.260],
+          [mapCenter[0], mapCenter[1]],
+          [mapCenter[0] + (destCoords[0] - mapCenter[0]) * 0.25 + 0.004, mapCenter[1] + (destCoords[1] - mapCenter[1]) * 0.25 - 0.003],
+          [mapCenter[0] + (destCoords[0] - mapCenter[0]) * 0.65 + 0.004, mapCenter[1] + (destCoords[1] - mapCenter[1]) * 0.65 - 0.002],
+          [destCoords[0], destCoords[1]],
         ];
 
   const hazardRoutePolyline: [number, number][] =
@@ -50,10 +67,25 @@ export const CitizenActiveNavPage: React.FC = () => {
           [27.6840, 85.3110],
         ]
       : [
-          [13.062, 80.275],
-          [13.064, 80.272],
-          [13.070, 80.260],
+          [mapCenter[0], mapCenter[1]],
+          [hazardCoords[0], hazardCoords[1]],
+          [destCoords[0], destCoords[1]],
         ];
+
+  const [compassHeading, setCompassHeading] = useState(0);
+  const [isCompassActive, setIsCompassActive] = useState(false);
+  const [currentPos, setCurrentPos] = useState<[number, number]>([locDetails.latitude, locDetails.longitude]);
+
+  const rotateCompass = () => {
+    setIsCompassActive(true);
+    setCompassHeading((prev) => (prev + 45) % 360);
+  };
+
+  const handleRecenterMap = () => {
+    setCurrentPos([locDetails.latitude, locDetails.longitude]);
+    setCompassHeading(0);
+    setIsCompassActive(false);
+  };
 
   return (
     <div className="bg-surface text-on-surface font-body-md text-body-md min-h-screen flex flex-col relative w-full max-w-[440px] mx-auto shadow-2xl border-x border-outline-variant/20 overflow-hidden">
@@ -69,21 +101,36 @@ export const CitizenActiveNavPage: React.FC = () => {
       <main className="flex-1 flex flex-col relative w-full pt-16 pb-4 bg-surface">
         <div className="flex flex-col w-full relative h-[calc(100vh-8rem)] min-h-[620px]">
           
-          {/* Top Corridor Status & Elevation Pill */}
+          {/* Top Corridor Status & Elevation Pill + Navigation HUD Controls */}
           <div className="absolute top-3 left-3 right-3 z-30 flex items-center justify-between pointer-events-auto">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 font-bold text-xs shadow border border-emerald-200">
               <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse"></span>
               <span>LOW RISK CORRIDOR</span>
-              <span className="text-slate-500 font-normal">Safe MSL +18m</span>
+              <span className="text-slate-500 font-normal">Safe MSL +18.2m</span>
             </div>
 
-            <button
-              onClick={() => navigate('/citizen/routes')}
-              className="w-9 h-9 rounded-xl bg-white text-slate-800 shadow border border-slate-200 flex items-center justify-center hover:bg-slate-100 transition active:scale-95"
-              title="Recenter Map"
-            >
-              <span className="material-symbols-outlined text-[18px]">explore</span>
-            </button>
+            <div className="flex items-center gap-1.5">
+              {/* Compass Rotation Rose */}
+              <button
+                onClick={rotateCompass}
+                style={{ transform: `rotate(${compassHeading}deg)` }}
+                className={`w-9 h-9 rounded-xl shadow border transition-transform flex items-center justify-center ${
+                  isCompassActive ? 'bg-blue-600 text-white border-blue-400' : 'bg-white text-slate-800 border-slate-200 hover:bg-slate-100'
+                }`}
+                title="Rotate Compass North Heading"
+              >
+                <span className="material-symbols-outlined text-[18px]">explore</span>
+              </button>
+
+              {/* Recenter Camera */}
+              <button
+                onClick={handleRecenterMap}
+                className="w-9 h-9 rounded-xl bg-white text-slate-800 shadow border border-slate-200 flex items-center justify-center hover:bg-slate-100 transition active:scale-95"
+                title="Recenter Camera to My GPS"
+              >
+                <span className="material-symbols-outlined text-[18px]">my_location</span>
+              </button>
+            </div>
           </div>
 
           {/* Primary Next Maneuver HUD Stack matching Stitch */}
@@ -158,25 +205,17 @@ export const CitizenActiveNavPage: React.FC = () => {
               center={mapCenter}
               zoom={14}
               tileTheme="osm"
+              showUserLocation={true}
               hideStyleSwitcher={true}
               zones={[
-                activeRegion === 'NEPAL'
-                  ? {
-                      id: 'ktm_hazard_active',
-                      name: 'Bagmati River Flash Flood Inundation',
-                      lat: 27.6830,
-                      lng: 85.3080,
-                      riskLevel: 'CRITICAL',
-                      radiusMeters: 1800,
-                    }
-                  : {
-                      id: 'chennai_hazard_active',
-                      name: 'East Basin Culvert Overflow',
-                      lat: 13.064,
-                      lng: 80.276,
-                      riskLevel: 'HIGH',
-                      radiusMeters: 1200,
-                    },
+                {
+                  id: 'hazard_zone_active',
+                  name: 'Waterlogging Flood Inundation Zone',
+                  lat: hazardCoords[0],
+                  lng: hazardCoords[1],
+                  riskLevel: 'CRITICAL',
+                  radiusMeters: 1400,
+                },
               ]}
               markers={[
                 {
@@ -188,18 +227,34 @@ export const CitizenActiveNavPage: React.FC = () => {
                 },
                 {
                   id: 'dest_active',
-                  lat: activeRegion === 'NEPAL' ? 27.7080 : 13.070,
-                  lng: activeRegion === 'NEPAL' ? 85.3400 : 80.260,
+                  lat: destCoords[0],
+                  lng: destCoords[1],
                   title: `Destination: ${destName}`,
                   type: 'unit',
                 },
                 {
                   id: 'hazard_pin',
-                  lat: activeRegion === 'NEPAL' ? 27.6830 : 13.064,
-                  lng: activeRegion === 'NEPAL' ? 85.3080 : 80.276,
-                  title: 'Blocked Flood Hazard Path',
+                  lat: hazardCoords[0],
+                  lng: hazardCoords[1],
+                  title: 'Blocked Flood Hazard Path (+45cm Waterlogging)',
+                  description: 'Avoided via Highline Ridge safe corridor',
                   severity: 'CRITICAL',
                   type: 'hazard',
+                },
+              ]}
+              routeSegments={[
+                {
+                  points: safeRoutePolyline,
+                  color: 'GREEN',
+                  status: 'CLEAR',
+                  label: '🟢 Safe Resilient Route (Highline Ridge Detour)',
+                },
+                {
+                  points: hazardRoutePolyline,
+                  color: 'RED',
+                  status: 'WATER_LOGGING',
+                  label: '🔴 Impassable Flood Waterlogging Zone (+45cm Depth)',
+                  dashArray: '8,6',
                 },
               ]}
               routes={[safeRoutePolyline, hazardRoutePolyline]}

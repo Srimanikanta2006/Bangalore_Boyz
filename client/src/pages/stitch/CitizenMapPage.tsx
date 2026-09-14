@@ -6,7 +6,7 @@ import { SosFab } from '../../components/stitch/SosFab';
 import { useCitizenNearby } from '../../citizen/useCitizenNearby';
 import type { CorridorStatus, SafetyLevel } from '../../citizen/api';
 import { RealLeafletMap } from '../../components/stitch/RealLeafletMap';
-import { getActiveRegion, setActiveRegion, type RegionKey } from '../../citizen/geo';
+import { getActiveRegion, setActiveRegion, getActiveLocationDetails, type RegionKey } from '../../citizen/geo';
 
 const SAFETY_LABEL: Record<SafetyLevel, string> = {
   SAFE: 'All Clear',
@@ -28,6 +28,13 @@ export const CitizenMapPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
 
   const { data, loading, coords, refetch } = useCitizenNearby(5);
+  const locDetails = getActiveLocationDetails();
+
+  useEffect(() => {
+    const handleRegionEvent = () => setActiveRegionState(getActiveRegion());
+    window.addEventListener('climateshield_region_changed', handleRegionEvent);
+    return () => window.removeEventListener('climateshield_region_changed', handleRegionEvent);
+  }, []);
 
   const handleRegionChange = (region: RegionKey) => {
     setActiveRegion(region);
@@ -35,20 +42,10 @@ export const CitizenMapPage: React.FC = () => {
     if (region === 'GPS') refetch();
   };
 
-  // Dynamic Center based on active selected region
-  const currentCenter: [number, number] =
-    activeRegion === 'NEPAL'
-      ? [27.7172, 85.3140]
-      : activeRegion === 'CHENNAI'
-      ? [13.062, 80.275]
-      : [coords?.latitude ?? 13.062, coords?.longitude ?? 80.275];
+  // Dynamic Center based on active selected location details
+  const currentCenter: [number, number] = [locDetails.latitude, locDetails.longitude];
 
-  const wardName =
-    activeRegion === 'NEPAL'
-      ? 'Kathmandu Valley (Bagmati Basin, Nepal)'
-      : activeRegion === 'CHENNAI'
-      ? 'East Basin (Chennai)'
-      : data?.ward?.name ?? (loading ? 'Locating…' : 'Your Location');
+  const wardName = locDetails.name || data?.ward?.name || (loading ? 'Locating…' : 'Your Location');
 
   const aqiLabel =
     activeRegion === 'NEPAL'
@@ -93,68 +90,28 @@ export const CitizenMapPage: React.FC = () => {
       <main className="flex-1 flex flex-col relative w-full pt-16 pb-16 bg-surface">
         <div className="flex flex-col w-full relative select-none h-[calc(100vh-8rem)] min-h-[580px]">
           
-          {/* TOP DEMO REGION & SEARCH CONTROL BAR (Strictly non-overlapping stack) */}
-          <div className="bg-slate-900 text-white p-2 flex flex-col gap-2 z-20 shadow-md border-b border-slate-800">
-            {/* Region Selector Ribbon */}
-            <div className="flex items-center justify-between gap-1">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 pl-1 shrink-0">
-                LOCATION REGION:
-              </span>
-              <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
-                <button
-                  onClick={() => handleRegionChange('GPS')}
-                  className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all flex items-center gap-1 shrink-0 ${
-                    activeRegion === 'GPS' ? 'bg-blue-600 text-white shadow' : 'bg-slate-800 text-slate-300 hover:text-white'
-                  }`}
-                >
-                  📍 My GPS
-                </button>
-                <button
-                  onClick={() => handleRegionChange('NEPAL')}
-                  className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all flex items-center gap-1 shrink-0 ${
-                    activeRegion === 'NEPAL' ? 'bg-red-600 text-white shadow' : 'bg-slate-800 text-slate-300 hover:text-white'
-                  }`}
-                >
-                  🇳🇵 Nepal (Katmandu Flood)
-                </button>
-                <button
-                  onClick={() => handleRegionChange('CHENNAI')}
-                  className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all flex items-center gap-1 shrink-0 ${
-                    activeRegion === 'CHENNAI' ? 'bg-amber-600 text-white shadow' : 'bg-slate-800 text-slate-300 hover:text-white'
-                  }`}
-                >
-                  🇮🇳 Chennai
-                </button>
-              </div>
+          {/* TOP SAFE ROUTE SEARCH BAR */}
+          <div className="bg-slate-900 text-white px-3 py-2 flex items-center justify-between gap-2 z-20 shadow-md border-b border-slate-800">
+            <div className="flex-1 bg-slate-800/90 rounded-xl px-3 py-1.5 flex items-center gap-2 border border-slate-700">
+              <span className="material-symbols-outlined text-slate-400 text-[18px]">search</span>
+              <input
+                className="flex-1 min-w-0 bg-transparent text-white font-medium text-xs placeholder:text-slate-400 focus:outline-none"
+                placeholder="Search origin & destination for safe route…"
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') navigate('/citizen/routes');
+                }}
+              />
             </div>
-
-            {/* Origin & Destination Search Input Bar */}
-            <div className="flex items-center gap-2">
-              <div className="flex-1 bg-slate-800/90 rounded-xl px-3 py-1.5 flex items-center gap-2 border border-slate-700">
-                <span className="material-symbols-outlined text-slate-400 text-[18px]">search</span>
-                <input
-                  className="flex-1 min-w-0 bg-transparent text-white font-medium text-xs placeholder:text-slate-400 focus:outline-none"
-                  placeholder={
-                    activeRegion === 'NEPAL'
-                      ? 'Thamel Tourist Quarter → Pashupati Shelter…'
-                      : 'Search origin & destination for safe route…'
-                  }
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') navigate('/citizen/routes');
-                  }}
-                />
-              </div>
-              <button
-                onClick={() => navigate('/citizen/routes')}
-                className="px-3 py-2 rounded-xl bg-blue-600 text-white text-[11px] font-bold hover:bg-blue-700 transition shrink-0 flex items-center gap-1 shadow"
-              >
-                <span className="material-symbols-outlined text-[16px]">alt_route</span>
-                <span>Find Route</span>
-              </button>
-            </div>
+            <button
+              onClick={() => navigate('/citizen/routes')}
+              className="px-3 py-1.5 rounded-xl bg-blue-600 text-white text-[11px] font-bold hover:bg-blue-700 transition shrink-0 flex items-center gap-1 shadow"
+            >
+              <span className="material-symbols-outlined text-[16px]">alt_route</span>
+              <span>Find Route</span>
+            </button>
           </div>
 
           {/* Interactive Map Canvas */}
@@ -163,7 +120,7 @@ export const CitizenMapPage: React.FC = () => {
               center={currentCenter}
               zoom={13}
               tileTheme="osm"
-              showUserLocation={activeRegion === 'GPS'}
+              showUserLocation={true}
               zones={[
                 activeRegion === 'NEPAL'
                   ? {
@@ -175,12 +132,12 @@ export const CitizenMapPage: React.FC = () => {
                       radiusMeters: 2200,
                     }
                   : {
-                      id: 'zone_eb_chennai',
-                      name: 'East Basin Flood Catchment',
-                      lat: 13.062,
-                      lng: 80.275,
+                      id: 'zone_active_catchment',
+                      name: `${wardName} Drainage Catchment Zone`,
+                      lat: currentCenter[0] + 0.003,
+                      lng: currentCenter[1] + 0.003,
                       riskLevel: 'HIGH',
-                      radiusMeters: 1600,
+                      radiusMeters: 1400,
                     },
               ]}
               markers={
@@ -231,28 +188,28 @@ export const CitizenMapPage: React.FC = () => {
                     ]
                   : [
                       {
-                        id: 'chennai_user',
-                        lat: 13.062,
-                        lng: 80.275,
-                        title: 'Your Location: East Basin',
-                        description: 'Start Location',
+                        id: 'local_user',
+                        lat: currentCenter[0],
+                        lng: currentCenter[1],
+                        title: `Your Location: ${wardName}`,
+                        description: 'Standing Position (Live GPS)',
                         type: 'user' as const,
                       },
                       {
-                        id: 'chennai_hazard',
-                        lat: 13.064,
-                        lng: 80.276,
-                        title: 'East Basin Culvert Overflow',
-                        description: 'Water depth: 1.4m',
+                        id: 'local_hazard',
+                        lat: currentCenter[0] + 0.004,
+                        lng: currentCenter[1] + 0.003,
+                        title: 'Waterlogging & Drainage Overflow',
+                        description: 'Water depth: +45cm | Slow traffic detour',
                         severity: 'HIGH' as const,
                         type: 'hazard' as const,
                       },
                       {
-                        id: 'chennai_shelter',
-                        lat: 13.070,
-                        lng: 80.260,
-                        title: 'East Basin Safe Shelter',
-                        description: 'Safe Destination',
+                        id: 'local_shelter',
+                        lat: currentCenter[0] + 0.012,
+                        lng: currentCenter[1] + 0.009,
+                        title: `${wardName} High-Ground Relief Refuge`,
+                        description: 'Safe Evacuation Destination (+18m Elevation)',
                         type: 'unit' as const,
                       },
                     ]
@@ -260,7 +217,14 @@ export const CitizenMapPage: React.FC = () => {
               routes={
                 activeRegion === 'NEPAL'
                   ? [[[27.7172, 85.3140], [27.7120, 85.3250], [27.7080, 85.3400]]]
-                  : [[[13.062, 80.275], [13.070, 80.260]]]
+                  : [
+                      [
+                        [currentCenter[0], currentCenter[1]],
+                        [currentCenter[0] + 0.003, currentCenter[1] - 0.003],
+                        [currentCenter[0] + 0.008, currentCenter[1] - 0.001],
+                        [currentCenter[0] + 0.012, currentCenter[1] + 0.009],
+                      ]
+                    ]
               }
             />
 

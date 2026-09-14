@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Header } from '../../components/stitch/Header';
 import { Mock } from '../../components/stitch/Mock';
 import { RealLeafletMap } from '../../components/stitch/RealLeafletMap';
-import { getActiveRegion, type RegionKey } from '../../citizen/geo';
+import { getActiveRegion, getActiveLocationDetails, type RegionKey } from '../../citizen/geo';
 
 export const RescueActiveNavPage: React.FC = () => {
   const navigate = useNavigate();
@@ -11,6 +11,7 @@ export const RescueActiveNavPage: React.FC = () => {
 
   const [activeRegion, setActiveRegionState] = useState<RegionKey>(getActiveRegion());
   const isNepal = activeRegion === 'NEPAL';
+  const locDetails = getActiveLocationDetails();
 
   const [rerouteVisible, setRerouteVisible] = useState(true);
   const [missionStage, setMissionStage] = useState<'en_route' | 'on_scene' | 'triage' | 'cleared'>('en_route');
@@ -24,9 +25,7 @@ export const RescueActiveNavPage: React.FC = () => {
 
   const handleArrival = () => {
     const confirmArrival = window.confirm(
-      isNepal
-        ? 'Confirm tactical rig arrival at Bagmati River Bank Flood Zone, Kathmandu?'
-        : 'Confirm tactical rig arrival at 412 Bayshore Blvd?'
+      `Confirm tactical rig arrival at ${locDetails.name} Disaster Resurgence Zone?`
     );
     if (confirmArrival) {
       setMissionStage('on_scene');
@@ -43,11 +42,11 @@ export const RescueActiveNavPage: React.FC = () => {
     setTimeout(() => setIsFabPulsing(false), 300);
   };
 
-  // Region-Aware Coordinates & Road Directions
-  const vehicleCoords: [number, number] = isNepal ? [27.6830, 85.3080] : [13.0650, 80.2700];
-  const targetCoords: [number, number] = isNepal ? [27.6950, 85.3150] : [13.0640, 80.2760];
+  // Region & Location-Aware Coordinates & Road Directions
+  const vehicleCoords: [number, number] = [locDetails.latitude - 0.004, locDetails.longitude - 0.005];
+  const targetCoords: [number, number] = [locDetails.latitude + 0.003, locDetails.longitude + 0.004];
 
-  const mapCenter: [number, number] = isNepal ? [27.6890, 85.3115] : [13.0645, 80.2730];
+  const mapCenter: [number, number] = [locDetails.latitude, locDetails.longitude];
 
   // Curved road coordinates following streets
   const roadDirections: [number, number][][] = isNepal

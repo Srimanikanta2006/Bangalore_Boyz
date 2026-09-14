@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GovHqLayout } from '../../components/stitch/GovHqLayout';
-import { getActiveRegion, type RegionKey } from '../../citizen/geo';
+import { getActiveRegion, getActiveLocationDetails, type RegionKey } from '../../citizen/geo';
 import { 
   Building2, Search, Filter, Shield, AlertTriangle, 
   Zap, Droplet, Truck, HeartPulse, CheckCircle2, 
@@ -10,6 +10,7 @@ import {
 
 export const GovCriticalAssetMonitorPage: React.FC = () => {
   const navigate = useNavigate();
+  const locDetails = getActiveLocationDetails();
 
   const [activeRegion, setActiveRegionState] = useState<RegionKey>(getActiveRegion());
   const [activeCategory, setActiveCategory] = useState('all');
@@ -58,44 +59,31 @@ export const GovCriticalAssetMonitorPage: React.FC = () => {
       categoryLabel: 'Transit & Transportation',
       vulnerability: 82,
       status: 'HIGH RISK',
-      accessAlert: 'Submerged: 2.1m depth at culvert intake',
-      impactNote: 'Primary highway closed',
+      accessAlert: 'Submersion depth 1.8m at underpass',
+      impactNote: 'Rerouting through Highline Ridge',
       powerFailover: 'N/A',
-      telemetryLatency: '16ms',
-      actionLabel: 'Deploy High-Pumping Rig',
-    },
-    {
-      id: 'AST-KTM-04',
-      name: 'Pashupati Evacuation Shelter',
-      category: 'water',
-      categoryLabel: 'Relief & Shelter Facility',
-      vulnerability: 12,
-      status: 'OPERATIONAL (100%)',
-      accessAlert: 'High-Ground elevation: +18m MSL safety zone',
-      impactNote: '100% storm drain clear',
-      powerFailover: '100% Redundant',
-      telemetryLatency: '10ms',
-      actionLabel: 'Monitor Capacity',
+      telemetryLatency: '18ms',
+      actionLabel: 'Deploy Drainage Pump',
     },
   ];
 
   const baseAssets = [
     {
       id: 'AST-01',
-      name: 'St. Jude Regional Medical Center',
+      name: `${locDetails.name} Regional Trauma Hub`,
       category: 'healthcare',
       categoryLabel: 'Healthcare Facility',
-      vulnerability: 98,
-      status: 'CRITICAL VULNERABILITY',
-      accessAlert: 'Access: Egress Blocked by Flash Flood (Gate B & C)',
-      impactNote: '+14m ambulance diversion delay',
-      powerFailover: '100% Nominal Gen-Set',
+      vulnerability: 88,
+      status: 'HIGH VULNERABILITY',
+      accessAlert: 'Access Road: Secondary route threatened by surface runoff (+35cm)',
+      impactNote: '+12m ambulance diversion delay',
+      powerFailover: '100% Gen-Set Active',
       telemetryLatency: '18ms',
-      actionLabel: 'Dispatch Dam Barrier Rig',
+      actionLabel: 'Dispatch Triage Squad',
     },
     {
       id: 'AST-02',
-      name: 'Substation 9 East Delta',
+      name: `${locDetails.name} Substation 04`,
       category: 'power',
       categoryLabel: 'Power & Grid Substation',
       vulnerability: 82,
@@ -108,7 +96,7 @@ export const GovCriticalAssetMonitorPage: React.FC = () => {
     },
     {
       id: 'AST-03',
-      name: 'Bayshore Intermodal Underpass & Culvert',
+      name: `${locDetails.name} Intermodal Underpass & Culvert`,
       category: 'transit',
       categoryLabel: 'Transit & Transportation',
       vulnerability: 94,

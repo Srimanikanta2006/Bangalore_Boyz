@@ -11,9 +11,9 @@ Built and maintained by **Bangalore_Boyz**, with multi-developer collaboration a
 ## 🌍 What It Does
 
 - **Citizen Portal** — interactive live-street maps, safe-route calculation around active flood zones, and one-touch SOS broadcasting (location, victim count, water depth) directly to Command HQ and the nearest rescue unit.
-- **Government Command Center** — real-time incident maps with cascade/impact intelligence, infrastructure readiness tracking, downloadable vulnerability & SITREP reports, a CAD disaster simulator, and a commercial subscription/API hub for partner agencies.
-- **Rescue Tactical Ops** — credential-verified field consoles for Fire, Police, and Ambulance units with turn-by-turn hazard-aware navigation.
-- **Multi-region support** — dynamically adapts maps, telemetry, and incidents per active region (currently configured for Kathmandu's Bagmati flood basin and Chennai's East Basin flood zone, plus live GPS mode).
+- **Government Command Center** — real-time incident maps with animated live GPS rescue vehicle movement (Ambulances, Police, Fire Rigs, Boats) along hazard-coded polylines (Red 🔴 for water logging, Orange 🟠 for landslides, Green 🟢 for clear routes), rescue driver credential approval queue, infrastructure readiness tracking, downloadable vulnerability & SITREP reports, a CAD disaster simulator with traffic heatmaps, and a commercial Razorpay subscription/API hub.
+- **Rescue Tactical Ops & Driver Workflow** — driver self-registration for rescue teams, EOC operator approval management, credential-verified field consoles for Fire, Police, and Ambulance units with turn-by-turn hazard-aware navigation.
+- **Universal Google-Style Location Engine** — allows users to lock onto **My GPS** or search ANY location worldwide (e.g. Bangalore, Tokyo, London, New York, Kathmandu, Chennai) via OpenStreetMap Nominatim geocoding. Automatically generates location-anchored telemetry, critical assets, flood corridors, and rescue missions across all project pages.
 - **AI Agent Orchestration Layer** — specialist agents (Risk Analyst, Cascade, Dispatch Planner, Comms, Validation) coordinated by an explicit orchestrator that proposes an operator-approved response plan. Every agent has a deterministic fallback, so the pipeline runs even with no LLM API key — AI is never a single point of failure or an autonomous actor.
 
 ---

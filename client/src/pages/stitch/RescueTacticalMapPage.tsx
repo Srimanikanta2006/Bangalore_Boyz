@@ -3,12 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { Header } from '../../components/stitch/Header';
 import { Mock } from '../../components/stitch/Mock';
 import { RealLeafletMap } from '../../components/stitch/RealLeafletMap';
-import { getActiveRegion, setActiveRegion, type RegionKey } from '../../citizen/geo';
+import { getActiveRegion, setActiveRegion, getActiveLocationDetails, type RegionKey } from '../../citizen/geo';
 
 export const RescueTacticalMapPage: React.FC = () => {
   const navigate = useNavigate();
   const [activeRegion, setActiveRegionState] = useState<RegionKey>(getActiveRegion());
   const isNepal = activeRegion === 'NEPAL';
+  const locDetails = getActiveLocationDetails();
 
   const [activeFilter, setActiveFilter] = useState<'all' | 'high_water' | 'medical' | 'police'>('all');
   const [activeLayer, setActiveLayer] = useState<'hazards' | 'blocked' | 'corridors' | 'units'>('hazards');
@@ -47,30 +48,19 @@ export const RescueTacticalMapPage: React.FC = () => {
     navigate(`/rescue/navigate/${missionId}`);
   };
 
-  // Region-Specific Coordinates & Data
-  const mapCenter: [number, number] = isNepal ? [27.6950, 85.3150] : [13.0620, 80.2750];
+  // Region & Location-Specific Coordinates
+  const mapCenter: [number, number] = [locDetails.latitude, locDetails.longitude];
 
-  const mapZones = isNepal
-    ? [
-        {
-          id: 'tactical_sector_ktm',
-          name: 'Kathmandu Bagmati Inundation Basin Zone',
-          lat: 27.6950,
-          lng: 85.3150,
-          riskLevel: 'CRITICAL' as const,
-          radiusMeters: 1400,
-        }
-      ]
-    : [
-        {
-          id: 'tactical_sector_eb',
-          name: 'East Basin Water Resurgence Zone',
-          lat: 13.0620,
-          lng: 80.2750,
-          riskLevel: 'CRITICAL' as const,
-          radiusMeters: 1200,
-        }
-      ];
+  const mapZones = [
+    {
+      id: 'tactical_sector_active',
+      name: `${locDetails.name} Tactical Resurgence Zone`,
+      lat: locDetails.latitude,
+      lng: locDetails.longitude,
+      riskLevel: 'CRITICAL' as const,
+      radiusMeters: 1400,
+    }
+  ];
 
   const mapMarkers = isNepal
     ? [

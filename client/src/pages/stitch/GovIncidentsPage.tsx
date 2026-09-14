@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GovHqLayout } from '../../components/stitch/GovHqLayout';
-import { getActiveRegion } from '../../citizen/geo';
+import { getActiveRegion, getActiveLocationDetails } from '../../citizen/geo';
 import { 
   AlertTriangle, Filter, Search, Download, 
   CheckCircle2, Clock, MapPin, Shield, FileText, ArrowRight
@@ -10,10 +10,18 @@ import {
 export const GovIncidentsPage: React.FC = () => {
   const navigate = useNavigate();
   const activeRegion = getActiveRegion();
-  const isNepal = activeRegion === 'NEPAL';
+  const locDetails = getActiveLocationDetails();
 
   const [activeFilter, setActiveFilter] = useState<'all' | 'critical' | 'high' | 'resolved'>('all');
+  const isNepal = activeRegion === 'NEPAL';
   const [searchQuery, setSearchQuery] = useState('');
+  const [regionToken, setRegionToken] = useState(0);
+
+  useEffect(() => {
+    const handleRegionEvent = () => setRegionToken((t) => t + 1);
+    window.addEventListener('climateshield_region_changed', handleRegionEvent);
+    return () => window.removeEventListener('climateshield_region_changed', handleRegionEvent);
+  }, []);
 
   const nepalIncidents = [
     {
@@ -74,8 +82,8 @@ export const GovIncidentsPage: React.FC = () => {
     {
       id: 'INC-204',
       code: 'EB-2026-04',
-      title: 'Flash Inundation on Bayshore Arterial',
-      location: 'Bayshore Blvd at Marker 4A (St. Jude Route)',
+      title: `Flash Inundation on ${locDetails.name} Arterial`,
+      location: `${locDetails.name} Sector Main Corridor`,
       severity: 'CRITICAL',
       status: 'ACTIVE_DISPATCH',
       category: 'FLASH_FLOOD',
@@ -87,8 +95,8 @@ export const GovIncidentsPage: React.FC = () => {
     {
       id: 'INC-202',
       code: 'EB-2026-02',
-      title: 'Stranded Civilian Vehicle in Underpass',
-      location: 'Mission Valley Underpass / 4th St',
+      title: `Stranded Civilian Vehicle in ${locDetails.name} Underpass`,
+      location: `${locDetails.name} Central Underpass`,
       severity: 'CRITICAL',
       status: 'UNDER_RESCUE',
       category: 'CIVILIAN_RESCUE',

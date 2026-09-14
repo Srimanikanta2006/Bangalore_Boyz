@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Header } from '../../components/stitch/Header';
 import { StickyActionBar } from '../../components/stitch/StickyActionBar';
-import { resolveCoords, getActiveRegion, type GeoState } from '../../citizen/geo';
+import { resolveCoords, getActiveRegion, getActiveLocationDetails, searchLocation, type GeoState, type CustomLocation } from '../../citizen/geo';
 import { fetchOsrmAlternatives, type OsrmRoute } from '../../citizen/osrm';
 import { scoreRoutes, type ScoredRoute } from '../../citizen/api';
 import { RealLeafletMap } from '../../components/stitch/RealLeafletMap';
@@ -37,39 +37,61 @@ function fmtDistance(meters: number | null): string {
 export const CitizenRouteSelectPage: React.FC = () => {
   const navigate = useNavigate();
   const activeRegion = getActiveRegion();
+  const locDetails = getActiveLocationDetails();
 
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [whyOpen, setWhyOpen] = useState(true);
 
-  // Pre-defined demo destinations for Nepal & Chennai
-  const DESTINATION_OPTIONS =
-    activeRegion === 'NEPAL'
-      ? [
-          { name: 'Pashupati High-Ground Relief Shelter', lat: 27.7080, lng: 85.3400, desc: 'Safe High-Ground Evacuation Shelter' },
-          { name: 'Tribhuvan Medical Emergency Center', lat: 27.6966, lng: 85.3591, desc: 'Level-1 Emergency Trauma Hospital' },
-          { name: 'Kathmandu Model Hospital', lat: 27.7032, lng: 85.3182, desc: 'Primary Medical Clinic' },
-        ]
-      : [
-          { name: 'North General Medical Center', lat: 13.070, lng: 80.260, desc: 'Primary Medical Facility' },
-          { name: 'East Basin Relief Refuge', lat: 13.053, lng: 80.261, desc: 'High-Ground Shelter' },
-        ];
+  // Dynamic destination option defaulting to user's active area evacuation center
+  const [selectedDestOption, setSelectedDestOption] = useState({
+    name: `${locDetails.name} High-Ground Evacuation Refuge`,
+    lat: locDetails.latitude + 0.015,
+    lng: locDetails.longitude + 0.012,
+    desc: 'Safe High-Ground Shelter (+18m MSL)',
+  });
 
-  const [originInput, setOriginInput] = useState(
-    activeRegion === 'NEPAL' ? 'Thamel Tourist Quarter, Kathmandu' : 'Current Location'
-  );
-  const [selectedDestOption, setSelectedDestOption] = useState(DESTINATION_OPTIONS[0]);
+  const [destQuery, setDestQuery] = useState(selectedDestOption.name);
+  const [destResults, setDestResults] = useState<CustomLocation[]>([]);
+  const [destDropdownOpen, setDestDropdownOpen] = useState(false);
+  const [destLoading, setDestLoading] = useState(false);
 
-  const [originCoords, setOriginCoords] = useState<GeoState>(
-    activeRegion === 'NEPAL'
-      ? { latitude: 27.7172, longitude: 85.3140, usingFallback: true }
-      : { latitude: 13.062, longitude: 80.275, usingFallback: true }
-  );
+  const [originInput, setOriginInput] = useState(locDetails.name || 'Current Location');
+
+  const [originCoords, setOriginCoords] = useState<GeoState>({
+    latitude: locDetails.latitude,
+    longitude: locDetails.longitude,
+    usingFallback: false,
+  });
+
+  // Debounced Nominatim destination search
+  useEffect(() => {
+    if (!destQuery || destQuery.trim().length < 2 || destQuery === selectedDestOption.name) {
+      setDestResults([]);
+      setDestLoading(false);
+      return;
+    }
+    setDestLoading(true);
+    const timer = setTimeout(async () => {
+      const res = await searchLocation(destQuery);
+      setDestResults(res);
+      setDestLoading(false);
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [destQuery, selectedDestOption.name]);
 
   const [routes, setRoutes] = useState<ScoredRoute[] | null>(null);
   const [routePolylines, setRoutePolylines] = useState<[number, number][][]>([]);
   const [recommendedIndex, setRecommendedIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const [regionToken, setRegionToken] = useState(0);
+
+  useEffect(() => {
+    const handleRegionEvent = () => setRegionToken((t) => t + 1);
+    window.addEventListener('climateshield_region_changed', handleRegionEvent);
+    return () => window.removeEventListener('climateshield_region_changed', handleRegionEvent);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -241,27 +263,56 @@ export const CitizenRouteSelectPage: React.FC = () => {
                 <div className="ml-1.5 w-0.5 h-3 bg-slate-200"></div>
 
                 {/* Destination */}
-                <div className="flex items-center gap-2.5">
+                <div className="flex items-center gap-2.5 relative">
                   <span className="w-3 h-3 rounded-full bg-red-500 shrink-0"></span>
                   <div className="min-w-0 flex-1">
                     <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block leading-none">
                       DESTINATION
                     </span>
-                    <select
-                      className="w-full font-bold text-sm text-slate-900 bg-transparent focus:outline-none truncate mt-0.5 cursor-pointer"
-                      value={selectedDestOption.name}
+                    <input
+                      type="text"
+                      className="w-full font-bold text-sm text-slate-900 bg-transparent focus:outline-none truncate mt-0.5"
+                      value={destQuery}
+                      onFocus={() => setDestDropdownOpen(true)}
                       onChange={(e) => {
-                        const found = DESTINATION_OPTIONS.find((d) => d.name === e.target.value);
-                        if (found) setSelectedDestOption(found);
+                        setDestQuery(e.target.value);
+                        setDestDropdownOpen(true);
                       }}
-                    >
-                      {DESTINATION_OPTIONS.map((opt) => (
-                        <option key={opt.name} value={opt.name}>
-                          {opt.name}
-                        </option>
-                      ))}
-                    </select>
+                      placeholder="Search destination city or location…"
+                    />
                   </div>
+
+                  {/* Nominatim Search Dropdown */}
+                  {destDropdownOpen && destResults.length > 0 && (
+                    <div className="absolute top-full left-0 right-0 mt-2 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl z-[9999] p-1 text-white animate-in fade-in duration-150">
+                      <div className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                        Matching Destinations
+                      </div>
+                      {destResults.map((item, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => {
+                            setSelectedDestOption({
+                              name: item.name,
+                              lat: item.latitude,
+                              lng: item.longitude,
+                              desc: item.subtitle,
+                            });
+                            setDestQuery(item.name);
+                            setDestDropdownOpen(false);
+                          }}
+                          className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-800 transition-colors flex items-start gap-2"
+                        >
+                          <span className="material-symbols-outlined text-sky-400 text-sm mt-0.5">location_on</span>
+                          <div className="truncate">
+                            <div className="font-bold text-xs text-white truncate">{item.name}</div>
+                            <div className="text-[10px] text-slate-400 truncate">{item.subtitle}</div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -286,23 +337,14 @@ export const CitizenRouteSelectPage: React.FC = () => {
                 tileTheme="osm"
                 hideStyleSwitcher={true}
                 zones={[
-                  activeRegion === 'NEPAL'
-                    ? {
-                        id: 'hazard_ktm',
-                        name: 'Bagmati River Flash Flood Inundation',
-                        lat: 27.6830,
-                        lng: 85.3080,
-                        riskLevel: 'CRITICAL',
-                        radiusMeters: 1800,
-                      }
-                    : {
-                        id: 'hazard_chennai',
-                        name: 'East Basin Culvert Overflow',
-                        lat: 13.064,
-                        lng: 80.276,
-                        riskLevel: 'HIGH',
-                        radiusMeters: 1200,
-                      },
+                  {
+                    id: 'hazard_active_route',
+                    name: `Active Inundation Hazard Hotspot`,
+                    lat: (originCoords.latitude + selectedDestOption.lat) / 2 - 0.002,
+                    lng: (originCoords.longitude + selectedDestOption.lng) / 2 + 0.003,
+                    riskLevel: 'CRITICAL',
+                    radiusMeters: 1000,
+                  },
                 ]}
                 markers={[
                   {
@@ -317,7 +359,50 @@ export const CitizenRouteSelectPage: React.FC = () => {
                     lat: selectedDestOption.lat,
                     lng: selectedDestOption.lng,
                     title: `Destination: ${selectedDestOption.name}`,
-                    type: 'unit',
+                    type: 'asset',
+                    severity: 'HIGH',
+                  },
+                  {
+                    id: 'hazard_hotspot_water',
+                    lat: (originCoords.latitude + selectedDestOption.lat) / 2 - 0.002,
+                    lng: (originCoords.longitude + selectedDestOption.lng) / 2 + 0.003,
+                    title: 'Severe Waterlogging Hotspot (+45cm Depth)',
+                    description: 'Impassable for low clearance vehicles',
+                    severity: 'CRITICAL',
+                    type: 'hazard',
+                  },
+                  {
+                    id: 'hazard_hotspot_landslide',
+                    lat: (originCoords.latitude + selectedDestOption.lat) / 2 + 0.004,
+                    lng: (originCoords.longitude + selectedDestOption.lng) / 2 - 0.002,
+                    title: 'Road Damage & Landslide Debris',
+                    description: 'Single lane traffic bottleneck',
+                    severity: 'HIGH',
+                    type: 'landslide',
+                  },
+                ]}
+                routeSegments={[
+                  {
+                    points: [
+                      [originCoords.latitude, originCoords.longitude],
+                      [originCoords.latitude + (selectedDestOption.lat - originCoords.latitude) * 0.3 + 0.005, originCoords.longitude + (selectedDestOption.lng - originCoords.longitude) * 0.3],
+                      [originCoords.latitude + (selectedDestOption.lat - originCoords.latitude) * 0.7 + 0.005, originCoords.longitude + (selectedDestOption.lng - originCoords.longitude) * 0.7],
+                      [selectedDestOption.lat, selectedDestOption.lng],
+                    ],
+                    color: 'GREEN',
+                    status: 'CLEAR',
+                    label: '🟢 Recommended Safe Resilient Corridor',
+                  },
+                  {
+                    points: [
+                      [originCoords.latitude, originCoords.longitude],
+                      [(originCoords.latitude + selectedDestOption.lat) / 2 - 0.002, (originCoords.longitude + selectedDestOption.lng) / 2 + 0.003],
+                      [selectedDestOption.lat, selectedDestOption.lng],
+                    ],
+                    color: 'RED',
+                    status: 'WATER_LOGGING',
+                    label: '🔴 Waterlogging Flood Risk Path (+45cm Depth)',
+                    dashArray: '8,5',
                   },
                 ]}
                 routes={routePolylines}

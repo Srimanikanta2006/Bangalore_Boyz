@@ -6,6 +6,7 @@ import {
   Building2, BarChart3, History, Users, Satellite, LogOut, DollarSign
 } from 'lucide-react';
 import { getActiveRegion, setActiveRegion, type RegionKey } from '../../citizen/geo';
+import { LocationSearchBar } from './LocationSearchBar';
 import { useAuth } from '../../auth/AuthContext';
 
 interface GovHqLayoutProps {
@@ -61,36 +62,8 @@ export const GovHqLayout: React.FC<GovHqLayoutProps> = ({ children, activePath }
               </div>
             </Link>
 
-            {/* Region Selector Ribbon */}
-            <div className="flex items-center gap-1 bg-[#0f172a] text-white px-2 py-1 rounded-xl text-xs shadow border border-slate-700">
-              <span className="text-[10px] font-bold uppercase text-slate-400 pl-1 shrink-0">
-                DEMO REGION:
-              </span>
-              <button
-                onClick={() => handleRegionChange('GPS')}
-                className={`px-2 py-0.5 text-[10px] font-bold rounded-lg transition-all ${
-                  region === 'GPS' ? 'bg-blue-600 text-white shadow' : 'text-slate-300 hover:text-white'
-                }`}
-              >
-                📍 GPS
-              </button>
-              <button
-                onClick={() => handleRegionChange('NEPAL')}
-                className={`px-2 py-0.5 text-[10px] font-bold rounded-lg transition-all ${
-                  region === 'NEPAL' ? 'bg-red-600 text-white shadow' : 'text-slate-300 hover:text-white'
-                }`}
-              >
-                🇳🇵 Nepal (Katmandu Flood)
-              </button>
-              <button
-                onClick={() => handleRegionChange('CHENNAI')}
-                className={`px-2 py-0.5 text-[10px] font-bold rounded-lg transition-all ${
-                  region === 'CHENNAI' ? 'bg-amber-600 text-white shadow' : 'text-slate-300 hover:text-white'
-                }`}
-              >
-                🇮🇳 Chennai
-              </button>
-            </div>
+            {/* Universal Google-Style Location Search Ribbon */}
+            <LocationSearchBar />
           </div>
 
           {/* Search Bar */}

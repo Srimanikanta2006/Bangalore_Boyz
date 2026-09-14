@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { RealLeafletMap } from '../../components/stitch/RealLeafletMap';
+import { getActiveLocationDetails } from '../../citizen/geo';
 import { 
   Shield, Radio, AlertTriangle, Layers, LocateFixed, 
   Waves, Timer, ChevronDown, ChevronRight, FolderOpen, 
@@ -10,6 +11,14 @@ import {
 
 export const GovMobileMapPage: React.FC = () => {
   const navigate = useNavigate();
+  const [regionToken, setRegionToken] = useState(0);
+  const locDetails = getActiveLocationDetails();
+
+  useEffect(() => {
+    const handleRegionEvent = () => setRegionToken((t) => t + 1);
+    window.addEventListener('climateshield_region_changed', handleRegionEvent);
+    return () => window.removeEventListener('climateshield_region_changed', handleRegionEvent);
+  }, []);
 
   const [activeSector, setActiveSector] = useState('Sector 4');
   const [activeCardIndex, setActiveCardIndex] = useState(1);
@@ -62,43 +71,43 @@ export const GovMobileMapPage: React.FC = () => {
             className="absolute inset-0 w-full h-full bg-cover bg-center opacity-75"
             style={{ backgroundImage: `url('https://images.unsplash.com/photo-1547683905-f686c993aae5?auto=format&fit=crop&w=800&q=80')` }}
           />          <RealLeafletMap
-            center={[13.062, 80.275]}
+            center={[locDetails.latitude, locDetails.longitude]}
             zoom={14}
-            tileTheme="dark"
+            tileTheme="osm"
             showUserLocation={true}
             zones={[
               {
-                id: 'zone_eb_mobile',
-                name: 'East Basin Inundation Sector',
-                lat: 13.062,
-                lng: 80.275,
+                id: 'zone_mobile_active',
+                name: `${locDetails.name} Inundation Sector`,
+                lat: locDetails.latitude,
+                lng: locDetails.longitude,
                 riskLevel: 'CRITICAL',
                 radiusMeters: 1400,
               }
             ]}
             markers={[
               {
-                id: 'st_jude_hub',
-                lat: 13.080,
-                lng: 80.285,
-                title: 'St. Jude Trauma Hub',
+                id: 'trauma_hub',
+                lat: locDetails.latitude + 0.008,
+                lng: locDetails.longitude + 0.006,
+                title: `${locDetails.name} Trauma Hub`,
                 description: 'Level-1 Emergency Facility | 84% Capacity',
                 severity: 'HIGH',
                 type: 'asset',
               },
               {
                 id: 'pump_unit_4',
-                lat: 13.065,
-                lng: 80.270,
+                lat: locDetails.latitude - 0.005,
+                lng: locDetails.longitude - 0.005,
                 title: 'Heavy Pump Unit 4',
                 description: 'Capacity: 1200 L/min | Status: ACTIVE',
                 type: 'unit',
               },
               {
-                id: 'inc_bayshore_m',
-                lat: 13.064,
-                lng: 80.276,
-                title: 'Bayshore Inundation Site',
+                id: 'inc_active_site',
+                lat: locDetails.latitude,
+                lng: locDetails.longitude,
+                title: `${locDetails.name} Inundation Site`,
                 description: 'Water depth: 1.4m | Traffic Blocked',
                 severity: 'CRITICAL',
                 type: 'incident',

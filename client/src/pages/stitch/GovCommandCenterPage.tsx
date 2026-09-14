@@ -7,7 +7,7 @@ import {
   type LiveWeather, type LocationOverview,
 } from '../../services/api';
 import { useOperatorLocation } from '../../hooks/useOperatorLocation';
-import { getActiveRegion } from '../../citizen/geo';
+import { getActiveRegion, getActiveLocationDetails } from '../../citizen/geo';
 import { 
   AlertTriangle, Radio, Download, Send, TrendingUp, 
   Waves, Thermometer, Zap, Hospital, Building2, 
@@ -20,6 +20,7 @@ const WEATHER_POLL_INTERVAL_MS = 60000;
 export const GovCommandCenterPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useOperatorLocation();
+  const locDetails = getActiveLocationDetails();
   const [alertBroadcasted, setAlertBroadcasted] = useState(false);
   const [overview, setOverview] = useState<any | null>(null);
   const [liveWeather, setLiveWeather] = useState<LiveWeather | null>(null);
@@ -343,110 +344,63 @@ export const GovCommandCenterPage: React.FC = () => {
           {/* Dominant Interactive GIS Canvas Container */}
           <div className="relative w-full h-[540px] rounded-2xl overflow-hidden shadow-sm bg-slate-100 flex flex-col justify-between border border-[#e5eeff]">
             <RealLeafletMap
-              center={
-                getActiveRegion() === 'NEPAL'
-                  ? [27.7172, 85.3140]
-                  : [13.062, 80.275]
-              }
+              center={[locDetails.latitude, locDetails.longitude]}
               zoom={13}
-              tileTheme="osm" // Default Street Mode basemap
+              tileTheme="osm"
               showUserLocation={true}
               zones={[
-                getActiveRegion() === 'NEPAL'
-                  ? {
-                      id: 'zone_ktm_nepal',
-                      name: 'Kathmandu Bagmati River Inundation Sector',
-                      lat: 27.7172,
-                      lng: 85.3140,
-                      riskLevel: 'CRITICAL',
-                      radiusMeters: 2200,
-                    }
-                  : {
-                      id: 'zone_eb',
-                      name: 'East Basin Sector (Critical Inundation)',
-                      lat: 13.062,
-                      lng: 80.275,
-                      riskLevel: 'CRITICAL',
-                      radiusMeters: 1800,
-                    },
+                {
+                  id: 'zone_active_loc',
+                  name: `${locDetails.name} Critical Inundation Sector`,
+                  lat: locDetails.latitude,
+                  lng: locDetails.longitude,
+                  riskLevel: 'CRITICAL',
+                  radiusMeters: 1800,
+                },
               ]}
-              markers={
-                getActiveRegion() === 'NEPAL'
-                  ? [
-                      {
-                        id: 'inc_ktm_main',
-                        lat: 27.6830,
-                        lng: 85.3080,
-                        title: '#INC-KTM-01 Bagmati River Flood Breach',
-                        description: 'Water depth: 2.1m | Flow: 2.4m/s | Risk Score: 94/100',
-                        severity: 'CRITICAL',
-                        type: 'incident',
-                      },
-                      {
-                        id: 'asset_brg_ktm',
-                        lat: 27.6890,
-                        lng: 85.3190,
-                        title: 'Bagmati River Bridge',
-                        description: 'Status: COMPROMISED (94/100)',
-                        severity: 'CRITICAL',
-                        type: 'asset',
-                      },
-                      {
-                        id: 'asset_hosp_ktm',
-                        lat: 27.6966,
-                        lng: 85.3591,
-                        title: 'Tribhuvan Medical Emergency Hub',
-                        description: 'Level-1 Emergency Trauma Center',
-                        severity: 'HIGH',
-                        type: 'asset',
-                      },
-                    ]
-                  : [
-                      ...(overview?.incidents || []).map((inc: any, idx: number) => ({
-                        id: inc.id || `inc_${idx}`,
-                        lat: inc.latitude || 13.062 + idx * 0.008,
-                        lng: inc.longitude || 80.275 - idx * 0.006,
-                        title: inc.title || `Incident #${inc.incidentCode || inc.id}`,
-                        description: `${inc.threatType || 'HAZARD'} | Severity: ${inc.severity || 'CRITICAL'}`,
-                        severity: (inc.severity || 'CRITICAL') as any,
-                        type: 'incident' as const,
-                      })),
-                      {
-                        id: 'inc_204_main',
-                        lat: 13.064,
-                        lng: 80.276,
-                        title: '#INC-204 Bayshore Underpass Flooded',
-                        description: 'Water depth: 1.4m | Risk Score: 84/100',
-                        severity: 'CRITICAL',
-                        type: 'incident',
-                      },
-                      {
-                        id: 'asset_d07',
-                        lat: 13.061,
-                        lng: 80.273,
-                        title: 'East Basin Drain D07',
-                        description: 'Critical Drainage Pump Infrastructure',
-                        type: 'asset',
-                      },
-                    ]
-              }
+              markers={[
+                {
+                  id: 'inc_active_primary',
+                  lat: locDetails.latitude,
+                  lng: locDetails.longitude,
+                  title: `#INC-204 · ${locDetails.name} Underpass Inundation`,
+                  description: 'Water depth: 1.4m | Risk Score: 88/100 | High Runoff',
+                  severity: 'CRITICAL',
+                  type: 'incident',
+                },
+                {
+                  id: 'asset_trauma_center',
+                  lat: locDetails.latitude + 0.008,
+                  lng: locDetails.longitude + 0.006,
+                  title: `${locDetails.name} Emergency Trauma Facility`,
+                  description: 'Level-1 Emergency Hub | 84% Operational Capacity',
+                  severity: 'HIGH',
+                  type: 'asset',
+                },
+                {
+                  id: 'asset_drain_main',
+                  lat: locDetails.latitude - 0.006,
+                  lng: locDetails.longitude - 0.008,
+                  title: `${locDetails.name} Primary Pumping Station`,
+                  description: 'Critical Drainage Pump Infrastructure',
+                  type: 'asset',
+                },
+              ]}
               onMarkerClick={(m) => {
-                if (m.id.includes('204') || m.id.includes('eb')) {
-                  navigate('/gov/zone-cascade/inc_204');
-                }
+                navigate('/gov/zone-cascade/EB');
               }}
             />
 
             {/* Top GIS HUD Overlays */}
-            <div className="relative z-10 flex items-center justify-between p-4">
-              <div className="flex items-center gap-3 bg-black/75 backdrop-blur-md px-4 py-2 rounded-xl border border-white/10 text-white text-xs">
+            <div className="relative z-10 flex items-center justify-between p-4 pointer-events-none">
+              <div className="flex items-center gap-3 bg-black/75 backdrop-blur-md px-4 py-2 rounded-xl border border-white/10 text-white text-xs pointer-events-auto">
                 <span className="w-2.5 h-2.5 rounded-full bg-[#dc2626] animate-pulse" />
                 <span className="font-bold">LIVE EOC SYNTHETIC GIS</span>
                 <span className="text-slate-400">|</span>
-                <span className="font-mono text-[#38bdf8]">SECTOR 04-B WATERFRONT</span>
+                <span className="font-mono text-[#38bdf8] uppercase">{locDetails.name} SECTOR</span>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 pointer-events-auto">
                 <button 
                   onClick={() => navigate('/gov/zone-cascade/EB')}
                   className="px-3 py-1.5 rounded-xl bg-black/75 backdrop-blur-md border border-white/10 text-white text-xs font-semibold hover:bg-white/10 transition-colors flex items-center gap-1.5"
@@ -454,21 +408,6 @@ export const GovCommandCenterPage: React.FC = () => {
                   <Layers className="w-3.5 h-3.5 text-[#38bdf8]" />
                   <span>Cascade Impact View</span>
                 </button>
-              </div>
-            </div>
-
-            {/* Interactive Target Callouts on Canvas */}
-            <div 
-              onClick={() => navigate('/gov/zone-cascade/EB')}
-              className="absolute top-[48%] left-[45%] z-20 flex flex-col items-center cursor-pointer group"
-            >
-              <div className="w-6 h-6 rounded-full bg-[#dc2626] text-white flex items-center justify-center font-bold shadow-lg animate-bounce">
-                !
-              </div>
-              <div className="mt-1 bg-black/85 backdrop-blur px-3 py-1.5 rounded-xl border border-red-500/50 text-white text-center">
-                <span className="text-[10px] text-red-400 font-mono font-bold block">#INC-204 • CRITICAL</span>
-                <span className="text-xs font-bold block">Bayshore Underpass Flooded</span>
-                <span className="text-[10px] text-slate-300">Water Depth 1.4m</span>
               </div>
             </div>
 
