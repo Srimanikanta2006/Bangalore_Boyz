@@ -1,5 +1,13 @@
 {
+  "version": 2,
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "framework": "vite",
   "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "https://bangalore-boyz-backend.onrender.com/api/$1"
+    },
     {
       "source": "/(.*)",
       "destination": "/index.html"
