@@ -51,11 +51,11 @@ export const GovHqLayout: React.FC<GovHqLayoutProps> = ({ children, activePath }
         <div className="w-full h-14 px-4 flex items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <Link to="/gov/overview" className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-[#0f172a] text-white flex items-center justify-center font-bold text-xs">
-                CS
+              <div className="w-8 h-8 rounded-lg bg-slate-900 text-white flex items-center justify-center font-bold text-xs overflow-hidden border border-slate-700">
+                <img src="/logo.png" alt="Namma Rakshak Logo" className="w-full h-full object-cover" />
               </div>
               <div className="flex items-center gap-1.5">
-                <span className="font-bold text-base tracking-tight text-[#0b1c30]">ClimateShield</span>
+                <span className="font-bold text-base tracking-tight text-[#0b1c30]">Namma Rakshak</span>
                 <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-[#e5eeff] text-[#45464d]">
                   EOC OPS
                 </span>

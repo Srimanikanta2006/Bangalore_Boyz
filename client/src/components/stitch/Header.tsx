@@ -13,7 +13,7 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({
   title,
-  subtitle = 'ClimateShield Citizen',
+  subtitle = 'Namma Rakshak',
   hasBack = false,
   onBack,
   showLivePill = true,
@@ -44,8 +44,8 @@ export const Header: React.FC<HeaderProps> = ({
               <span className="material-symbols-outlined text-[22px]">arrow_back</span>
             </button>
           ) : (
-            <div className="w-9 h-9 rounded-lg bg-primary-container text-on-primary flex items-center justify-center shrink-0">
-              <span className="material-symbols-outlined text-[20px] text-tertiary-fixed">{icon}</span>
+            <div className="w-9 h-9 rounded-lg bg-surface-container flex items-center justify-center shrink-0 overflow-hidden shadow-sm border border-slate-200">
+              <img src="/logo.png" alt="Namma Rakshak Logo" className="w-full h-full object-cover" />
             </div>
           )}
 

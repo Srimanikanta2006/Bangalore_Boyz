@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Namma Rakshak</string>
+    <string name="title_activity_main">Namma Rakshak</string>
+    <string name="package_name">com.climateshield.app</string>
+    <string name="custom_url_scheme">com.climateshield.app</string>
+</resources>

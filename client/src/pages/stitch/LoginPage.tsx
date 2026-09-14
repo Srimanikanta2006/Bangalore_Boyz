@@ -189,25 +189,25 @@ export const LoginPage: React.FC = () => {
   return (
     <div className="bg-surface text-on-surface font-body-md text-body-md min-h-screen flex flex-col relative w-full max-w-[440px] mx-auto shadow-2xl border-x border-outline-variant/20">
       {/* Header */}
-      <Header title="Authentication" subtitle="ClimateShield Platform" />
+      <Header title="Authentication" subtitle="Namma Rakshak Platform" />
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col relative w-full pt-16 pb-24 bg-surface">
         <div className="flex flex-col w-full px-edge-margin-mobile pb-6 pt-2">
           {/* Brand & Identity Banner */}
           <div className="flex flex-col items-center text-center mt-space-xs mb-space-md">
-            <div className="w-20 h-16 rounded-xl bg-surface-container flex items-center justify-center p-2 mb-space-sm shadow-sm">
+            <div className="w-20 h-20 rounded-2xl bg-surface-container flex items-center justify-center p-1.5 mb-space-sm shadow-md overflow-hidden border border-slate-200">
               <img
-                alt="ClimateShield Shield Mark"
-                className="w-full h-full object-contain rounded-lg"
-                src="https://lh3.googleusercontent.com/aida/AEtjO1WZa1gNvntWWeiT4QhM-l_fIhJeTNPgwhOocSm5zkFiyeUn3CdWKg2P6QBAp2739f4ineyLsZACoh0wcEewdNPLn7dJp1NR4H3lnvVimUYZHBtoiKTEcHeUelauAMp_CGDEiOGu2-Yqz4_Vqk5IejETJ6u1R9tsOCq5DwbAv411fFrUovtU623EzW2rGPgJX0iZQ2U-lv-rR-wRns1wPkTfcV5BBGcpGIRxWJQowEeXYjkRRS5BZt3IWUg"
+                alt="Namma Rakshak App Logo"
+                className="w-full h-full object-cover rounded-xl"
+                src="/logo.png"
               />
             </div>
             <span className="font-label-sm text-label-sm uppercase tracking-widest text-on-surface-variant font-bold mb-1">
-              <Mock label="Release Version">Resilience System 4.2</Mock>
+              <Mock label="Release Version">Urban Safety &amp; Resilience System</Mock>
             </span>
             <h2 className="font-headline-lg-mobile text-headline-lg-mobile text-on-surface font-bold tracking-tight">
-              ClimateShield
+              Namma Rakshak
             </h2>
             <p className="font-body-sm text-body-sm text-on-surface-variant max-w-[270px] mt-1 leading-relaxed">
               Precision Climate Risk &amp; Emergency Mobility Platform

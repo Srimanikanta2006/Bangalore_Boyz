@@ -2,7 +2,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.climateshield.app',
-  appName: 'ClimateShield',
+  appName: 'Namma Rakshak',
   webDir: 'dist'
 };
 
