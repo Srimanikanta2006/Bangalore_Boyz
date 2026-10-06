@@ -5,7 +5,7 @@ set -e
 
 echo "=== Installing cline_backend dependencies ==="
 cd cline_backend
-npm install
+npm install --include=dev
 
 echo "=== Generating Prisma client ==="
 npx prisma generate
