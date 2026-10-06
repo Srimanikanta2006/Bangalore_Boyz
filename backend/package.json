@@ -1,0 +1,13 @@
+{
+  "name": "climateshield-rescue",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "ClimateShield tactical rescue microservice (mission dossiers, tactical navigation, command console)",
+  "scripts": {
+    "start": "tsx src/rescueServer.ts"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.2"
+  }
+}
