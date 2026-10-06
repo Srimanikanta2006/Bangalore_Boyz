@@ -1,6 +1,19 @@
 # ClimateShield — Production Deployment Guide
 
+> **✅ LIVE PRODUCTION (deployed & verified 2026-10-06)**
+> - **Frontend (all 22+ screens):** https://bangalore-boyz.vercel.app
+> - **Main API (Express + Prisma + Supabase):** https://bangalore-boyz-backend.onrender.com/api
+> - **Tactical Rescue Microservice:** https://bangalore-boyz-rescue.onrender.com/api
+> - **Database:** Supabase PostgreSQL (region: ap-southeast-1 / Singapore pooler) — all 7 migrations applied, demo data seeded
+> - **Verification:** 12/12 E2E integration audit PASSED; all SPA routes return HTTP 200; all screen API endpoints live
+>
+> **Demo login (all roles share password `DemoGov@2024`):**
+> `government@climateshield.demo` (GOV operator) · `admin@climateshield.demo` (ADMIN) ·
+> `dispatcher@climateshield.demo` (DISPATCHER) · `field@climateshield.demo` (FIELD) ·
+> `analyst@climateshield.demo` (ANALYST) · `citizen@climateshield.demo` (CITIZEN)
+
 ## 1. System Architecture
+
 
 ```text
                     ┌─────────────────────┐
@@ -114,3 +127,33 @@ E2E_RESCUE_URL=https://climateshield-rescue.onrender.com/api \
 python scripts/run_e2e_full_audit.py
 ```
 Expected Output: `12/12 Steps PASSED [100%]`.
+
+---
+
+## 5. Operational Notes (2026-10-06 deployment)
+
+### Migrations & seeding are OUT-OF-BAND
+The Render start script (`cline_backend/start.sh`) starts the API server **directly** — it does NOT run
+`prisma migrate deploy` or the seed at boot (a previous in-boot migration run missed Render's port-binding
+window and the deploy timed out). Instead, from any machine with Supabase DB access:
+
+```bash
+cd cline_backend
+DATABASE_URL="postgresql://postgres.<REF>:<PASS>@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres?pgbouncer=true" \
+DIRECT_URL="postgresql://postgres:<PASS>@db.<REF>.supabase.co:5432/postgres" \
+  npx prisma migrate deploy
+# Only for a FRESH database (seed wipes + recreates the demo dataset):
+DATABASE_URL=... DIRECT_URL=... JWT_SECRET=any-16-char-string DEMO_USER_PASSWORD=DemoGov@2024 npx tsx prisma/seed.ts
+```
+
+### Render deploys are manual-triggered
+The Render workspace has no GitHub login connection, so push-triggered auto-deploys do not fire.
+Trigger a redeploy via API: `POST https://api.render.com/v1/services/<service-id>/deploys`
+(or connect the GitHub account in the Render dashboard to enable auto-deploys).
+
+### Render free tier
+Both backend services spin down after inactivity; the first request after idle takes ~50-60s to cold-start.
+
+### Frontend API routing
+The Vercel deployment bakes `VITE_API_URL=https://bangalore-boyz-backend.onrender.com` at build time AND
+keeps the `/api/*` rewrite in `client/vercel.json` as a fallback path. Both target the same Render service.
