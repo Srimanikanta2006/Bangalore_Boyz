@@ -1,20 +1,11 @@
 #!/usr/bin/env bash
-# Render start script for cline_backend
+# Render start script for cline_backend.
+# NOTE (2026-10-06): Prisma migrations and demo seeding are run OUT-OF-BAND
+# (from a dev machine with DB access - see docs/DEPLOYMENT.md) BEFORE the
+# Render deploy. Running them here previously caused the server to miss
+# Render's port-binding window and the deploy to time out.
 set -e
 
-echo "=== Running Prisma migrations ==="
+echo "=== Starting ClimateShield API server ==="
 cd cline_backend
-npx prisma migrate deploy
-
-echo "=== Checking whether demo seed is needed ==="
-SEED_MARKER=$(node -e "try{const {PrismaClient}=require('@prisma/client'); const p=new PrismaClient(); p.user.count().then(c=>{console.log(c>0?'SEEDED':'EMPTY'); return p.\$disconnect();}).catch(()=>console.log('EMPTY'));}catch(e){console.log('EMPTY')}")
-
-if [ "$SEED_MARKER" = "EMPTY" ]; then
-  echo "=== Database is empty - seeding demo data ==="
-  npx tsx prisma/seed.ts || echo "=== Seed failed, starting server with existing data ==="
-else
-  echo "=== Database already seeded - skipping seed ==="
-fi
-
-echo "=== Starting server ==="
-node dist/server.js
+exec node dist/server.js
